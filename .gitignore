@@ -1,0 +1,23 @@
+# vscode
+.vscode/
+
+# python
+__pycache__/
+
+# project
+*.json
+*.log
+
+# saved models and weights
+ckpts/
+*.pt
+*.pkl
+*.npy
+
+# tree-sitter
+tree-sitter/
+parser/
+*.so
+
+# wandb
+wandb/
