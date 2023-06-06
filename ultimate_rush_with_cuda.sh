@@ -3,9 +3,7 @@ if [[ $# -lt 1 ]]; then
     return 1
 fi
 
-conda activate torch112
 GPU_ID=$(python find_gpu.py)
-# GPU_ID=6
 
 echo "Using GPU $GPU_ID"
 echo "Using dataset $1"

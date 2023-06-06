@@ -24,8 +24,6 @@ FILE=eval_main.py
 MODEL=gru
 CHECKPOINT_PATH="./ckpts/4bit_gru_tau_42_csn_java/models_best.pt"
 
-conda activate torch112
-
 CUDA_VISIBLE_DEVICES=$1 python $FILE \
     --checkpoint_path $CHECKPOINT_PATH \
     --lang $LANG \

@@ -21,7 +21,7 @@ fi
 FILE=eval_rewater.py
 CHECKPOINT_PATH="./ckpts/4bit_gru_tau_42_csn_java/models_best.pt"
 ADV_PATH="./ckpts/4bit_gru_seed_1337_csn_java/models_best.pt"
-conda activate torch112
+
 CUDA_VISIBLE_DEVICES=$1 python $FILE \
     --checkpoint_path $CHECKPOINT_PATH \
     --adv_path $ADV_PATH \
