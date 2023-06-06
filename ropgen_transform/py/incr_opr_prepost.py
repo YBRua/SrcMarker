@@ -176,7 +176,7 @@ def program_transform(program_path, style1, style2, output_xml_path='./style/sty
 
 
 def etree_transform(evaluator, dst_style: str):
-    # TODO (YBRua): current implementation is inefficient, should be optimized
+    # TODO: current implementation is inefficient, should be optimized
     POSSIBLE_STYLES = ['10.1', '10.2', '10.3', '10.4']
     for src_style in POSSIBLE_STYLES:
         if src_style == dst_style:
