@@ -5,6 +5,10 @@
 
 ## Getting Started
 
+### Getting the Code
+
+It seems this anonymous repository does not support downloading all files simultaneously. Therefore we have packed all source code in this repository into `SrcMarker.zip`. The zip file contains exactly the same files as in this repository, so it would be a bit more convenient if you want to download all source code.
+
 ### Setting up the Environment
 
 #### Installing Python Packages and Dependencies
@@ -15,17 +19,21 @@ You will (of course) need Python to execute the code
 
 The following packages are **required** to run the main training and evaluation scripts
 
-- [PyTorch](https://pytorch.org/get-started/locally/) (PyTorch 1.12)
+- [PyTorch](https://pytorch.org/get-started/locally/) (We have used PyTorch 1.12 in our experiments)
 - [tree-sitter](https://tree-sitter.github.io/)
 - [Huggingface Transformers](https://huggingface.co/)
 - tqdm
 - inflection
 - sctokenizer
 
-The following packages are optional, only required by certain experiment scripts
+Use pip or conda to install all the packages above.
+
+The followings are optional, only required by certain experiment scripts
 
 - [SrcML](https://www.srcml.org/)
   - only required if running the transform pipeline provided by RopGen
+
+Note that SrcML is NOT a Python package, it is instead a commandline interface and should be directly installed on your machine.
 
 #### Building tree-sitter Parsers
 
