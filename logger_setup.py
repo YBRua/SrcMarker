@@ -9,7 +9,7 @@ class DefaultLogger:
 
 
 def setup_evaluation_logger(args, prefix: str = 'eval'):
-    logger = logging.getLogger('让我毕业球球了.txt')
+    logger = logging.getLogger('Evaluation')
     logger.setLevel(logging.INFO)
 
     timestamp = datetime.now().strftime("%Y-%m-%d-%H-%M-%S")
@@ -32,7 +32,7 @@ def setup_evaluation_logger(args, prefix: str = 'eval'):
 
 
 def setup_logger(args):
-    logger = logging.getLogger('让我毕业球球了')
+    logger = logging.getLogger('Train')
     logger.setLevel(logging.INFO)
 
     stream_handler = logging.StreamHandler()
