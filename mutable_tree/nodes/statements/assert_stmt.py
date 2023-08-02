@@ -25,12 +25,6 @@ class AssertStatement(Statement):
         if self.message is not None and not is_expression(self.message):
             raise TypeError(f'Invalid type: {self.message.node_type} for assert message')
 
-    def to_string(self) -> str:
-        if self.message is not None:
-            return f'assert {self.condition.to_string()} : {self.message.to_string()};'
-        else:
-            return f'assert {self.condition.to_string()};'
-
     def get_children(self) -> List[Node]:
         if self.message is not None:
             return [self.condition, self.message]

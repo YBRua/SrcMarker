@@ -24,7 +24,7 @@ from models import (
 from code_transform_provider import CodeTransformProvider
 from runtime_data_manager import InMemoryJitRuntimeDataManager
 from trainers import UltimateWMTrainer, UltimateVarWMTrainer, UltimateTransformTrainer
-from data_processing import JsonlDatasetProcessor, DynamicWMCollator
+from data_processing import JsonlWMDatasetProcessor, DynamicWMCollator
 import mutable_tree.transformers as ast_transformers
 
 
@@ -33,10 +33,11 @@ def parse_args():
     parser.add_argument('--epochs', type=int, default=10)
     parser.add_argument('--seed', type=int, default=42)
 
-    parser.add_argument('--dataset',
-                        choices=['github_c_funcs', 'github_java_funcs', 'csn_java'],
-                        default='github_c_funcs')
-    parser.add_argument('--lang', choices=['cpp', 'java'], default='c')
+    parser.add_argument(
+        '--dataset',
+        choices=['github_c_funcs', 'github_java_funcs', 'csn_java', 'csn_js'],
+        default='github_c_funcs')
+    parser.add_argument('--lang', choices=['cpp', 'java', 'javascript'], default='c')
     parser.add_argument('--dataset_dir', type=str, default='./datasets/github_c_funcs')
 
     parser.add_argument('--log_prefix', type=str, default='')
@@ -44,12 +45,16 @@ def parse_args():
     parser.add_argument('--style_only', action='store_true')
     parser.add_argument('--var_only', action='store_true')
     parser.add_argument('--var_nomask', action='store_true')
+    parser.add_argument('--varmask_prob', type=float, default=0.5)
     parser.add_argument('--batch_size', type=int, default=32)
     parser.add_argument('--wv', type=float, default=0.5)
     parser.add_argument('--wt', type=float, default=0.5)
     parser.add_argument('--model_arch', choices=['gru', 'transformer'], default='gru')
     parser.add_argument('--scheduler', action='store_true')
     parser.add_argument('--shared_encoder', action='store_true')
+    parser.add_argument('--var_transform_mode',
+                        choices=['replace', 'append'],
+                        default='replace')
 
     return parser.parse_args()
 
@@ -65,6 +70,8 @@ def main():
     BATCH_SIZE = args.batch_size
     MODEL_ARCH = args.model_arch
     SHARED_ENCODER = args.shared_encoder
+    VARMASK_PROB = args.varmask_prob
+    VAR_TRANSFORM_MODE = args.var_transform_mode
 
     logger = setup_logger(args)
     logger.info(args)
@@ -75,7 +82,7 @@ def main():
     random.seed(SEED)
 
     # load datasets
-    dataset_processor = JsonlDatasetProcessor(lang=LANG)
+    dataset_processor = JsonlWMDatasetProcessor(lang=LANG)
     logger.info('Processing original dataset')
     instance_dict = dataset_processor.load_jsonls(DATASET_DIR)
     train_instances = instance_dict['train']
@@ -101,6 +108,7 @@ def main():
         ast_transformers.CompoundIfTransformer(),
         ast_transformers.ConditionTransformer(),
         ast_transformers.LoopTransformer(),
+        ast_transformers.InfiniteLoopTransformer(),
         ast_transformers.UpdateTransformer(),
         ast_transformers.SameTypeDeclarationTransformer(),
         ast_transformers.VarDeclLocationTransformer(),
@@ -131,39 +139,44 @@ def main():
                              collate_fn=DynamicWMCollator(N_BITS))
 
     logger.info(f'Using {MODEL_ARCH}')
+    EMBEDDING_DIM = 768
+    FEATURE_DIM = 768
     if MODEL_ARCH == 'gru':
-        FEATURE_DIM = 768
         encoder = GRUEncoder(vocab_size=len(vocab),
                              hidden_size=FEATURE_DIM,
-                             embedding_size=FEATURE_DIM)
+                             embedding_size=EMBEDDING_DIM)
         if SHARED_ENCODER:
             extract_encoder = None
         else:
             extract_encoder = ExtractGRUEncoder(vocab_size=len(vocab),
                                                 hidden_size=FEATURE_DIM,
-                                                embedding_size=FEATURE_DIM)
+                                                embedding_size=EMBEDDING_DIM)
         encoder_lr = 1e-3
     elif MODEL_ARCH == 'transformer':
-        FEATURE_DIM = 768
         encoder = TransformerEncoderExtractor(vocab_size=len(vocab),
-                                              embedding_size=FEATURE_DIM,
+                                              embedding_size=EMBEDDING_DIM,
                                               hidden_size=FEATURE_DIM)
         if SHARED_ENCODER:
             extract_encoder = None
         else:
             extract_encoder = TransformerEncoderExtractor(vocab_size=len(vocab),
-                                                          embedding_size=FEATURE_DIM,
+                                                          embedding_size=EMBEDDING_DIM,
                                                           hidden_size=FEATURE_DIM)
         encoder_lr = 3e-4
         if not args.scheduler:
             encoder_lr = 5e-5
     logger.info(f'learning rate: {encoder_lr}')
 
+    if VAR_TRANSFORM_MODE == 'replace':
+        vmask = vocab.get_valid_identifier_mask()
+    else:
+        vmask = vocab.get_valid_highfreq_mask(32 * 2**N_BITS)
+
     selector = TransformSelector(vocab_size=len(vocab),
                                  transform_capacity=transform_capacity,
                                  input_dim=FEATURE_DIM,
-                                 vocab_mask=vocab.get_valid_identifier_mask(),
-                                 random_mask_prob=0.5)
+                                 vocab_mask=vmask,
+                                 random_mask_prob=VARMASK_PROB)
 
     if args.var_only:
         approximator = VarApproximator(vocab_size=len(vocab),
@@ -295,7 +308,8 @@ def main():
                                     w_style=args.wt,
                                     scheduler=scheduler,
                                     logger=logger,
-                                    ckpt_dir=save_dir_name)
+                                    ckpt_dir=save_dir_name,
+                                    var_transform_mode=VAR_TRANSFORM_MODE)
         trainer.set_var_random_mask_enabled(not args.var_nomask)
         logger.info(f'w_var: {args.wv}, w_style: {args.wt}')
         logger.info(f'var mask enabled: {not args.var_nomask}')

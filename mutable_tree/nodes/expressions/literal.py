@@ -14,9 +14,6 @@ class Literal(Expression):
         if self.node_type != NodeType.LITERAL:
             raise TypeError(f'Invalid type: {self.node_type} for Literal')
 
-    def to_string(self) -> str:
-        return str(self.value)
-
     def get_children(self):
         return []
 

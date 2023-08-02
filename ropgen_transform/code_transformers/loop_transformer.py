@@ -1,9 +1,9 @@
-from .transformer import CodeTransformer
+from .transformer import RopGenCodeTransformer
 from ..xml_utils import init_parser, load_doc
 from ropgen_transform.py import for_while, while_for
 
 
-class LoopTransformer(CodeTransformer):
+class LoopTransformer(RopGenCodeTransformer):
     def __init__(self) -> None:
         super().__init__()
 

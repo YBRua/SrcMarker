@@ -13,9 +13,6 @@ class ThisExpression(Expression):
         if self.node_type != NodeType.THIS_EXPR:
             raise TypeError(f'Invalid type: {self.node_type} for ThisExpression')
 
-    def to_string(self) -> str:
-        return 'this'
-
     def get_children(self) -> List[Node]:
         return []
 

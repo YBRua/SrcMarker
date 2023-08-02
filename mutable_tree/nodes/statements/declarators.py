@@ -33,21 +33,36 @@ class InitializingDeclarator(Declarator):
         if not is_declarator(self.declarator):
             throw_invalid_type(self.declarator.node_type, self, attr='declarator')
         if (not is_expression(self.value)
-                and self.value.node_type != NodeType.EXPRESSION_LIST):
+                and self.value.node_type != NodeType.EXPRESSION_LIST
+                and self.value.node_type != NodeType.FUNCTION_DEFINITION):
+            # FIXME: function definition is not an expression
             throw_invalid_type(self.value.node_type, self, attr='value')
-
-    def to_string(self) -> str:
-        if is_expression(self.value):
-            return f'{self.declarator.to_string()} = {self.value.to_string()}'
-        else:
-            arg_list = ', '.join(arg.to_string() for arg in self.value.get_children())
-            return f'{self.declarator.to_string()}({arg_list})'
 
     def get_children(self) -> List[Node]:
         return [self.declarator, self.value]
 
     def get_children_names(self) -> List[str]:
         return ['declarator', 'value']
+
+
+class DestructuringDeclarator(Declarator):
+
+    def __init__(self, node_type: NodeType, pattern: Expression):
+        super().__init__(node_type)
+        self.pattern = pattern
+        self._check_types()
+
+    def _check_types(self):
+        if self.node_type != NodeType.DESTRUCTURING_DECLARATOR:
+            throw_invalid_type(self.node_type, self)
+        if not is_expression(self.pattern):
+            throw_invalid_type(self.pattern.node_type, self, attr='pattern')
+
+    def get_children(self) -> List[Node]:
+        return [self.pattern]
+
+    def get_children_names(self) -> List[str]:
+        return ['pattern']
 
 
 class VariableDeclarator(Declarator):
@@ -61,14 +76,28 @@ class VariableDeclarator(Declarator):
         if self.node_type != NodeType.VARIABLE_DECLARATOR:
             throw_invalid_type(self.node_type, self)
 
-    def to_string(self) -> str:
-        return self.decl_id.to_string()
-
     def get_children(self) -> List[Node]:
         return [self.decl_id]
 
     def get_children_names(self) -> List[str]:
         return ['decl_id']
+
+
+class AnonymousDeclarator(Declarator):
+
+    def __init__(self, node_type: NodeType):
+        super().__init__(node_type)
+        self._check_types()
+
+    def _check_types(self):
+        if self.node_type != NodeType.ANONYMOUS_DECLARATOR:
+            throw_invalid_type(self.node_type, self)
+
+    def get_children(self) -> List[Node]:
+        return []
+
+    def get_children_names(self) -> List[str]:
+        return []
 
 
 class PointerDeclarator(Declarator):
@@ -83,9 +112,6 @@ class PointerDeclarator(Declarator):
             throw_invalid_type(self.node_type, self)
         if not is_declarator(self.declarator):
             throw_invalid_type(self.declarator.node_type, self, attr='declarator')
-
-    def to_string(self) -> str:
-        return f'*{self.declarator.to_string()}'
 
     def get_children(self) -> List[Node]:
         return [self.declarator]
@@ -107,9 +133,6 @@ class ReferenceDeclarator(Declarator):
             throw_invalid_type(self.node_type, self)
         if not is_declarator(self.declarator):
             throw_invalid_type(self.declarator.node_type, self, attr='declarator')
-
-    def to_string(self) -> str:
-        return f'{"&" if not self.r_ref else "&&"}{self.declarator.to_string()}'
 
     def get_children(self) -> List[Node]:
         return [self.declarator]
@@ -134,9 +157,6 @@ class ArrayDeclarator(Declarator):
             throw_invalid_type(self.declarator.node_type, self, attr='declarator')
         if self.dim.node_type != NodeType.DIMENSION_SPECIFIER:
             throw_invalid_type(self.dim.node_type, self, attr='dim')
-
-    def to_string(self) -> str:
-        return f'{self.declarator.to_string()}{self.dim.to_string()}'
 
     def get_children(self) -> List[Node]:
         return [self.declarator, self.dim]

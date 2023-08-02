@@ -18,9 +18,6 @@ class BlockStatement(Statement):
         if self.stmts.node_type != NodeType.STATEMENT_LIST:
             throw_invalid_type(self.stmts.node_type, self, 'stmts')
 
-    def to_string(self) -> str:
-        return '{\n' + '\n'.join(s.to_string() for s in self.stmts.get_children()) + '\n}'
-
     def get_children(self) -> List[Node]:
         return [self.stmts]
 

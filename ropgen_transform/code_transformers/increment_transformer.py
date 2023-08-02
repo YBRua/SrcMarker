@@ -1,9 +1,9 @@
-from .transformer import CodeTransformer
+from .transformer import RopGenCodeTransformer
 from ..xml_utils import load_doc, init_parser
 from ropgen_transform.py import incr_opr_prepost, incr_opr_usage
 
 
-class IncrementTransformer(CodeTransformer):
+class IncrementTransformer(RopGenCodeTransformer):
     def __init__(self) -> None:
         super().__init__()
 

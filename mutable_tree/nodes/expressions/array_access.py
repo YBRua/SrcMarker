@@ -7,10 +7,15 @@ from .expression import is_primary_expression, is_expression
 
 class ArrayAccess(Expression):
 
-    def __init__(self, node_type: NodeType, array: Expression, index: Expression):
+    def __init__(self,
+                 node_type: NodeType,
+                 array: Expression,
+                 index: Expression,
+                 optional: bool = False):
         super().__init__(node_type)
         self.array = array
         self.index = index
+        self.optional = optional
         self._check_types()
 
     def _check_types(self):
@@ -20,9 +25,6 @@ class ArrayAccess(Expression):
             raise TypeError(f'Invalid type: {self.array.node_type} for array')
         if not is_expression(self.index):
             raise TypeError(f'Invalid type: {self.index.node_type} for array index')
-
-    def to_string(self) -> str:
-        return f'{self.array.to_string()}[{self.index.to_string()}]'
 
     def get_children(self) -> List[Node]:
         return [self.array, self.index]

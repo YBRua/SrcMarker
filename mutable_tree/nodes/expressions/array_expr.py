@@ -18,9 +18,6 @@ class ArrayExpression(Expression):
         if self.elements.node_type != NodeType.EXPRESSION_LIST:
             throw_invalid_type(self.elements.node_type, self, 'elements')
 
-    def to_string(self) -> str:
-        return f'{{{", ".join(e.to_string() for e in self.elements.get_children())}}}'
-
     def get_children(self) -> List[Node]:
         return [self.elements]
 

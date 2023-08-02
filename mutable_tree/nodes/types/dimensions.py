@@ -17,12 +17,6 @@ class DimensionSpecifier(Node):
         if self.expr is not None and not is_expression(self.expr):
             throw_invalid_type(self.expr.node_type, self, 'expr')
 
-    def to_string(self) -> str:
-        if self.expr is not None:
-            return f'[{self.expr.to_string()}]'
-        else:
-            return '[]'
-
     def get_children(self) -> List[Node]:
         if self.expr is not None:
             return [self.expr]
@@ -47,6 +41,3 @@ class Dimensions(NodeList):
         for i, dim in enumerate(self.node_list):
             if dim.node_type != NodeType.DIMENSION_SPECIFIER:
                 throw_invalid_type(dim.node_type, self, f'dim#{i}')
-
-    def to_string(self) -> str:
-        return ''.join(dim.to_string() for dim in self.node_list)

@@ -30,11 +30,6 @@ class ScopeResolution(Node):
     def get_children_names(self) -> List[str]:
         return ['scope']
 
-    def to_string(self) -> str:
-        if self.scope is None:
-            return '::'
-        return f'{self.scope.to_string()}::'
-
 
 class QualifiedIdentifier(Expression):
 
@@ -58,9 +53,6 @@ class QualifiedIdentifier(Expression):
                 and self.name.node_type != NodeType.QUALIFIED_IDENTIFIER
                 and self.name.node_type != NodeType.TYPE_IDENTIFIER):
             throw_invalid_type(self.name.node_type, self, attr='name')
-
-    def to_string(self) -> str:
-        return f'{self.scope.to_string()}{self.name.to_string()}'
 
     def get_children(self) -> List[Node]:
         return [self.scope, self.name]

@@ -1,4 +1,4 @@
-class CodeTransformer:
+class RopGenCodeTransformer:
     def get_available_transforms(self):
         raise NotImplementedError("This method should be implemented by subclasses")
 

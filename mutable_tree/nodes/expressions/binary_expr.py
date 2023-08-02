@@ -27,6 +27,12 @@ class BinaryOps(Enum):
     LSHIFT = '<<'
     RSHIFT = '>>'
     LRSHIFT = '>>>'
+    EXP = '**'
+    EQQ = '==='  # javascript
+    NEQQ = '!=='  # javascript
+    NULL_COALESCING = '??'
+    INSTANCEOF = 'instanceof'  # javascript
+    IN = 'in'
 
 
 _binary_op_map = {
@@ -48,7 +54,15 @@ _binary_op_map = {
     '%': BinaryOps.MOD,
     '<<': BinaryOps.LSHIFT,
     '>>': BinaryOps.RSHIFT,
-    '>>>': BinaryOps.LRSHIFT
+    '>>>': BinaryOps.LRSHIFT,
+    'or': BinaryOps.OR,
+    'and': BinaryOps.AND,
+    '**': BinaryOps.EXP,
+    '===': BinaryOps.EQQ,
+    '!==': BinaryOps.NEQQ,
+    '??': BinaryOps.NULL_COALESCING,
+    'instanceof': BinaryOps.INSTANCEOF,
+    'in': BinaryOps.IN,
 }
 
 
@@ -73,9 +87,6 @@ class BinaryExpression(Expression):
             raise TypeError(f'Invalid type: {self.left.node_type} for BinOp LHS')
         if not is_expression(self.right):
             raise TypeError(f'Invalid type: {self.right.node_type} for BinOp RHS')
-
-    def to_string(self) -> str:
-        return f'{self.left.to_string()} {self.op.value} {self.right.to_string()}'
 
     def get_children(self) -> List[Node]:
         return [self.left, self.right]

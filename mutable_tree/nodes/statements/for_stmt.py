@@ -49,29 +49,6 @@ class ForStatement(Statement):
         if not is_statement(self.body):
             throw_invalid_type(self.body.node_type, self, attr='body')
 
-    def to_string(self) -> str:
-        if self.init is None:
-            init_str = ';'
-        elif self.is_init_decl:
-            init_str = self.init.to_string()
-        else:
-            init_str = ', '.join(
-                init.to_string() for init in self.init.get_children()) + ';'
-
-        if self.condition is None:
-            cond_str = ';'
-        else:
-            cond_str = ' ' + self.condition.to_string() + ';'
-
-        if self.update is None:
-            update_str = ''
-        else:
-            update_str = ' ' + ', '.join(
-                u.to_string() for u in self.update.get_children())
-
-        body_str = self.body.to_string()
-        return f'for ({init_str}{cond_str}{update_str}) {body_str}'
-
     def get_children(self) -> List[Node]:
         children = []
         if self.init is not None:

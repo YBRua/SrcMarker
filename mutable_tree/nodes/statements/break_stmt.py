@@ -17,12 +17,6 @@ class BreakStatement(Statement):
         if self.label is not None and self.label.node_type != NodeType.IDENTIFIER:
             raise TypeError(f'Invalid type: {self.label.node_type} for break label')
 
-    def to_string(self) -> str:
-        if self.label is not None:
-            return f'break {self.label.to_string()};'
-        else:
-            return 'break;'
-
     def get_children(self) -> List[Node]:
         if self.label is not None:
             return [self.label]

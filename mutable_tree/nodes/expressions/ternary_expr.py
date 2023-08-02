@@ -27,11 +27,6 @@ class TernaryExpression(Expression):
             raise TypeError(
                 f'Invalid type: {self.alternative.node_type} for ternary alternative')
 
-    def to_string(self) -> str:
-        return (f'{self.condition.to_string()} ? '
-                f'{self.consequence.to_string()} : '
-                f'{self.alternative.to_string()}')
-
     def get_children(self) -> List[Node]:
         return [self.condition, self.consequence, self.alternative]
 

@@ -17,9 +17,6 @@ class Program(Node):
         if self.main.node_type != NodeType.STATEMENT_LIST:
             throw_invalid_type(self.main.node_type, self, 'main')
 
-    def to_string(self) -> str:
-        return '\n'.join(s.to_string() for s in self.main.get_children())
-
     def get_children(self) -> List[Node]:
         return [self.main]
 

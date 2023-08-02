@@ -13,6 +13,8 @@ elif [[ $2 == "github_java_funcs" ]]; then
     LANG="java"
 elif [[ $2 == "csn_java" ]]; then
     LANG="java"
+elif [[ $2 == "csn_js" ]]; then
+    LANG="javascript"
 else
     echo "Unknown dataset $2"
     return 1
@@ -21,8 +23,11 @@ fi
 # NOTE: you may have to modify the variables below
 NBITS=4
 FILE=eval_main.py
-MODEL=gru
-CHECKPOINT_PATH="./ckpts/4bit_gru_tau_42_csn_java/models_best.pt"
+MODEL=transformer
+VARMASK_PROB=0.5
+CHECKPOINT_PATH="./ckpts/4bit_transformer_main_nosched_42_csn_java/models_best.pt"
+
+conda activate torch112
 
 CUDA_VISIBLE_DEVICES=$1 python $FILE \
     --checkpoint_path $CHECKPOINT_PATH \
@@ -32,17 +37,8 @@ CUDA_VISIBLE_DEVICES=$1 python $FILE \
     --n_bits $NBITS \
     --model_arch=$MODEL \
     --shared_encoder \
+    --varmask_prob $VARMASK_PROB \
     --write_output
-
-# CUDA_VISIBLE_DEVICES=$1 python $FILE \
-#     --checkpoint_path $CHECKPOINT_PATH \
-#     --lang $LANG \
-#     --dataset $2 \
-#     --dataset_dir ./datasets/$2 \
-#     --use_natgen \
-#     --n_bits $NBITS \
-#     --model_arch=$MODEL \
-#     --shared_encoder
 
 # CUDA_VISIBLE_DEVICES=$1 python $FILE \
 #     --checkpoint_path $CHECKPOINT_PATH \
@@ -52,6 +48,7 @@ CUDA_VISIBLE_DEVICES=$1 python $FILE \
 #     --n_bits $NBITS \
 #     --model_arch=$MODEL \
 #     --shared_encoder \
+#     --varmask_prob $VARMASK_PROB \
 #     --all_adv
 
 # for prop in 0.25 0.5 0.75 1.0
@@ -65,6 +62,7 @@ CUDA_VISIBLE_DEVICES=$1 python $FILE \
 #     --var_adv_proportion $prop \
 #     --n_bits $NBITS \
 #     --model_arch=$MODEL \
+#     --varmask_prob $VARMASK_PROB \
 #     --shared_encoder
 # done
 
@@ -79,5 +77,6 @@ CUDA_VISIBLE_DEVICES=$1 python $FILE \
 #     --n_trans_adv $n_adv \
 #     --n_bits $NBITS \
 #     --model_arch=$MODEL \
+#     --varmask_prob $VARMASK_PROB \
 #     --shared_encoder
 # done

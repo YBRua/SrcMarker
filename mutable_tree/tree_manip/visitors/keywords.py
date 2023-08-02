@@ -15,7 +15,8 @@ C_KEYWORDS = [
     'register', 'restrict', 'return', 'short', 'signed', 'sizeof', 'static', 'struct',
     'switch', 'typedef', 'union', 'unsigned', 'using', 'void', 'volatile', 'while',
     '_Alignas', '_Alignof', '_Atomic', '_Bool', '_Complex', '_Decimal128', '_Decimal32',
-    '_Decimal64', '_Generic', '_Imaginary', '_Noreturn', '_Static_assert', '_Thread_local'
+    '_Decimal64', '_Generic', '_Imaginary', '_Noreturn', '_Static_assert',
+    '_Thread_local', 'and', 'or', 'not'
 ]
 
 ALL_KEYWORDS_SET = set(JAVA_KEYWORDS + C_KEYWORDS)

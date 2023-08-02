@@ -14,9 +14,6 @@ class Modifier(Node):
         if self.node_type != NodeType.MODIFIER:
             throw_invalid_type(self.node_type, NodeType.MODIFIER)
 
-    def to_string(self) -> str:
-        return self.modifier
-
     def get_children(self) -> List[Node]:
         return []
 
@@ -40,6 +37,3 @@ class ModifierList(NodeList):
                 throw_invalid_type(modifier.node_type,
                                    NodeType.MODIFIER,
                                    attr=f'modifier#{i}')
-
-    def to_string(self) -> str:
-        return ' '.join(mod.to_string() for mod in self.node_list)

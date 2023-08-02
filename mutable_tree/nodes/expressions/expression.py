@@ -8,7 +8,7 @@ class Expression(Node):
 
 
 def is_expression(node: Node):
-    return isinstance(node, Expression)
+    return isinstance(node, Expression) or node.node_type == NodeType.FUNCTION_DEFINITION
 
 
 def is_primary_expression(node: Node):

@@ -1,1 +1,2 @@
 from .java_c_processor import JavaAndCPPProcessor
+from .javascript_processor import JavascriptProcessor

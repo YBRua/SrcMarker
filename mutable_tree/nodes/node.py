@@ -22,6 +22,8 @@ class NodeType(Enum):
     POINTER_EXPR = 'PointerExpression'
     DELETE_EXPR = 'DeleteExpression'
     COMPOUND_LITERAL_EXPR = 'CompoundLiteralExpression'
+    SPREAD_ELEMENT = 'SpreadElement'
+    AWAIT_EXPR = 'AwaitExpression'
 
     # primary expressions
     LITERAL = 'Literal'
@@ -58,6 +60,7 @@ class NodeType(Enum):
     WHILE_STMT = 'WhileStatement'
     YIELD_STMT = 'YieldStatement'
     GOTO_STMT = 'GotoStatement'
+    WITH_STMT = 'WithStatement'
 
     # declarations & definitions (are also statements)
     FUNCTION_DECLARATOR = 'FunctionDeclarator'
@@ -71,6 +74,8 @@ class NodeType(Enum):
     REFERENCE_DECLARATOR = 'ReferenceDeclarator'
     ARRAY_DECLARATOR = 'ArrayDeclarator'
     INITIALIZING_DECLARATOR = 'InitializingDeclarator'
+    ANONYMOUS_DECLARATOR = 'AnonymousDeclarator'
+    DESTRUCTURING_DECLARATOR = 'DestructuringDeclarator'
 
     DECLARATOR_LIST = 'DeclaratorList'
 
@@ -98,11 +103,17 @@ class NodeType(Enum):
 
     MODIFIER = 'Modifier'
     MODIFIER_LIST = 'ModifierList'
-    INFERRED_PARAMETER = 'UntypedParameter'
+    UNTYPED_PARAMETER = 'UntypedParameter'
     FORMAL_PARAMETER = 'FormalParameter'
     FORMAL_PARAMETER_LIST = 'FormalParameterList'
     SPREAD_PARAMETER = 'SpreadParameter'
     VARIADIC_PARAMETER = 'VariadicParameter'
+
+    # object
+    OBJECT = 'Object'
+    KEYVALUE_PAIR = 'KeyValuePair'
+    OBJECT_MEMBERS = 'ObjectMembers'
+    COMPUTED_PROPERTY_NAME = 'ComputedPropertyName'
 
 
 class Node:
@@ -113,9 +124,6 @@ class Node:
 
     def _check_types(self):
         raise NotImplementedError('Base class Node should never be initialized')
-
-    def to_string(self) -> str:
-        raise NotImplementedError()
 
     def get_children(self) -> List['Node']:
         raise NotImplementedError()

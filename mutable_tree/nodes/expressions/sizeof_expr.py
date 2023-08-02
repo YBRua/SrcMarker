@@ -20,12 +20,6 @@ class SizeofExpression(Expression):
                 and self.operand.node_type != NodeType.TYPE_IDENTIFIER):
             throw_invalid_type(self.operand.node_type, self, attr='operand')
 
-    def to_string(self) -> str:
-        if is_expression(self.operand):
-            return f'sizeof {self.operand.to_string()}'
-        else:
-            return f'sizeof({self.operand.to_string()})'
-
     def get_children(self) -> List[Node]:
         return [self.operand]
 

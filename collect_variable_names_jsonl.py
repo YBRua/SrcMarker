@@ -4,20 +4,37 @@ import pprint
 import tree_sitter
 from tqdm import tqdm
 from collections import Counter
-from data_processing import JsonlDatasetProcessor
+from data_processing import JsonlWMDatasetProcessor
 from code_transform_provider import CodeTransformProvider
 from mutable_tree.nodes import (Node, Identifier, LocalVariableDeclaration,
-                                FunctionDeclarator, Declarator, VariableDeclarator)
+                                FunctionDeclarator, Declarator, VariableDeclarator,
+                                CallExpression, FunctionHeader, FieldAccess)
 from typing import List
 
 
 def variable_collector(node: Node) -> List[str]:
     variable_names: List[str] = []
 
+    def _find_identifier_from_func_declarator(node: Declarator):
+        if isinstance(node, FunctionDeclarator):
+            _find_identifier(node.parameters)
+        elif isinstance(node, VariableDeclarator):
+            return
+        else:
+            _find_identifier(node.declarator)
+
+    def _find_identifier_from_field_access(node: FieldAccess):
+        _find_identifier(node.object)
+
     def _find_identifier(node: Node):
         if isinstance(node, Identifier):
-            if node.name not in variable_names:
-                variable_names.append(node.name)
+            variable_names.append(node.name)
+        elif isinstance(node, CallExpression):
+            return
+        elif isinstance(node, FieldAccess):
+            _find_identifier_from_field_access(node)
+        elif isinstance(node, FunctionHeader):
+            _find_identifier_from_func_declarator(node.func_decl)
         else:
             for child_name in node.get_children_names():
                 child = node.get_child_at(child_name)
@@ -48,12 +65,7 @@ def variable_collector(node: Node) -> List[str]:
         for child_attr in node.get_children_names():
             child = node.get_child_at(child_attr)
             if child is not None:
-                if isinstance(child, LocalVariableDeclaration):
-                    _collect_local_variable_declaration(child)
-                elif isinstance(child, FunctionDeclarator):
-                    _collect_formal_parameters(child)
-                else:
-                    _variable_collector(child)
+                _find_identifier(child)
 
     _variable_collector(node)
     return variable_names
@@ -65,10 +77,12 @@ def main(args):
         return
 
     DATASET = args[0]
-    if DATASET in {'csn_java', 'github_java_funcs'}:
+    if DATASET in {'csn_java', 'github_java_funcs', 'mbjp'}:
         LANG = 'java'
-    elif DATASET in {'github_c_funcs'}:
+    elif DATASET in {'github_c_funcs', 'mbcpp'}:
         LANG = 'cpp'
+    elif DATASET in {'csn_js', 'mbjsp'}:
+        LANG = 'javascript'
     else:
         raise ValueError(f'Unknown dataset: {DATASET}')
 
@@ -79,13 +93,16 @@ def main(args):
     parser.set_language(parser_lang)
     transform_computer = CodeTransformProvider(LANG, parser, [])
 
-    data_processor = JsonlDatasetProcessor(LANG)
-    instances = data_processor.load_jsonls_fast(DATA_DIR, show_progress=False)
-    train_instances = instances['train']
-    valid_instances = instances['valid']
-    test_instances = instances['test']
+    data_processor = JsonlWMDatasetProcessor(LANG)
+    if DATASET in {'mbjsp', 'mbjp', 'mbcpp'}:
+        all_instances = data_processor._load_jsonl_fast(DATA_DIR, split='test')
+    else:
+        instances = data_processor.load_jsonls_fast(DATA_DIR, show_progress=False)
+        train_instances = instances['train']
+        valid_instances = instances['valid']
+        test_instances = instances['test']
 
-    all_instances = train_instances + valid_instances + test_instances
+        all_instances = train_instances + valid_instances + test_instances
 
     all_variable_names = set()
     variable_names_per_file = dict()
@@ -94,7 +111,7 @@ def main(args):
         code = instance.source
         mutable_root = transform_computer.to_mutable_tree(code)
         variable_names = variable_collector(mutable_root)
-        variable_names_per_file[instance.id] = list(variable_names)
+        variable_names_per_file[instance.id] = dict(Counter(variable_names))
         all_variable_names.update(variable_names)
 
     res_dict = {

@@ -35,9 +35,6 @@ class PointerExpression(Expression):
         if not is_expression(self.operand):
             throw_invalid_type(self.operand.node_type, self, attr='operand')
 
-    def to_string(self) -> str:
-        return f'{self.op.value}{self.operand.to_string()}'
-
     def get_children(self) -> List[Node]:
         return [self.operand]
 

@@ -1,9 +1,9 @@
-from .transformer import CodeTransformer
+from .transformer import RopGenCodeTransformer
 from ropgen_transform.py import var_name_style
 from ropgen_transform.xml_utils import init_parser, load_doc
 
 
-class VarNameStyleTransformer(CodeTransformer):
+class VarNameStyleTransformer(RopGenCodeTransformer):
 
     def __init__(self) -> None:
         super().__init__()

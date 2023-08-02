@@ -3,8 +3,9 @@ from ..expressions import Expression
 from ..expressions import is_expression
 from .block_stmt import BlockStatement
 from .func_declaration import FormalParameterList
+from ..miscs import ModifierList
 from ..utils import throw_invalid_type
-from typing import List, Union
+from typing import List, Union, Optional
 
 
 class LambdaExpression(Expression):
@@ -13,11 +14,14 @@ class LambdaExpression(Expression):
                  node_type: NodeType,
                  lambda_params: FormalParameterList,
                  body: Union[Expression, BlockStatement],
-                 parenthesized: bool = False):
+                 parenthesized: bool = False,
+                 modifiers: Optional[ModifierList] = None):
         super().__init__(node_type)
         self.params = lambda_params
         self.body = body
         self.parenthesized = parenthesized
+        self.modifiers = modifiers
+        self._check_types()
 
     def _check_types(self):
         if self.node_type != NodeType.LAMBDA_EXPR:
@@ -26,19 +30,12 @@ class LambdaExpression(Expression):
             throw_invalid_type(self.params.node_type, self, 'params')
         if (self.body.node_type != NodeType.BLOCK_STMT and not is_expression(self.body)):
             throw_invalid_type(self.body.node_type, self, 'body')
-
-    def to_string(self) -> str:
-        params_str = ', '.join(
-            [param.to_string() for param in self.params.get_children()])
-
-        body_str = self.body.to_string()
-        if not self.parenthesized:
-            return f'{params_str} -> {body_str}'
-        else:
-            return f'({params_str}) -> {body_str}'
+        if (self.modifiers is not None
+                and self.modifiers.node_type != NodeType.MODIFIER_LIST):
+            throw_invalid_type(self.modifiers.node_type, self, 'modifiers')
 
     def get_children(self) -> List[Node]:
-        return [self.params, self.body]
+        return [self.params, self.body, self.modifiers]
 
     def get_children_names(self) -> List[str]:
-        return ['params', 'body']
+        return ['params', 'body', 'modifiers']

@@ -13,7 +13,7 @@ def get_ancestor_type_chains(node: tree_sitter.Node) -> List[str]:
     return types
 
 
-class TransformationBase:
+class NatGenBaseTransformer:
     def __init__(self, parser_path: str, language: str):
         if not os.path.exists(parser_path):
             raise ValueError(
@@ -108,3 +108,13 @@ class TransformationBase:
             The second member might be other metadata (e.g. nde types) of the transformed code. It can be None as well.
         """
         pass
+
+    def get_available_transforms(self) -> List[str]:
+        """
+        Returns a list of available transformations.
+        :return:
+        """
+        raise NotImplementedError()
+
+    def transform(self, code: str, transform: str):
+        raise NotImplementedError()

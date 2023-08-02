@@ -1,9 +1,9 @@
-from .transformer import CodeTransformer
+from .transformer import RopGenCodeTransformer
 from ..xml_utils import load_doc, init_parser
 from ropgen_transform.py import var_init_merge, var_init_pos
 
 
-class LocalVarInitTransformer(CodeTransformer):
+class LocalVarInitTransformer(RopGenCodeTransformer):
     def __init__(self) -> None:
         super().__init__()
 

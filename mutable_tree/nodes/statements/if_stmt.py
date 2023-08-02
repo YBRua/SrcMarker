@@ -29,15 +29,6 @@ class IfStatement(Statement):
         if self.alternate is not None and not is_statement(self.alternate):
             throw_invalid_type(self.alternate.node_type, self, attr='alternate')
 
-    def to_string(self) -> str:
-        cond_str = self.condition.to_string()
-        then_str = self.consequence.to_string()
-        if self.alternate is None:
-            return f'if ({cond_str}) {then_str}'
-        else:
-            else_str = self.alternate.to_string()
-            return f'if ({cond_str}) {then_str} else {else_str}'
-
     def get_children(self) -> List[Node]:
         if self.alternate is None:
             return [self.condition, self.consequence]

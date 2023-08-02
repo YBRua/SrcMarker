@@ -26,16 +26,10 @@ class TryResource(Node):
 
         res_type = self.resource.node_type
         if res_type not in {
-                NodeType.IDENTIFIER, NodeType.FIELD_ACCESS, NodeType.LOCAL_VARIABLE_DECLARATION
+                NodeType.IDENTIFIER, NodeType.FIELD_ACCESS,
+                NodeType.LOCAL_VARIABLE_DECLARATION
         }:
             throw_invalid_type(res_type, self, attr='resource')
-
-    def to_string(self) -> str:
-        resource_str = self.resource.to_string()
-        if is_expression(self.resource):
-            return resource_str
-        else:
-            return resource_str[:-1]  # remove semicolon
 
     def get_children_names(self) -> List[str]:
         return ['resource']
@@ -87,23 +81,6 @@ class TryWithResourcesStatement(Statement):
             throw_invalid_type(self.handlers.node_type, self, attr='handlers')
         if self.resources.node_type != NodeType.TRY_RESOURCE_LIST:
             throw_invalid_type(self.resources.node_type, self, attr='resources')
-
-    def to_string(self) -> str:
-        resource_str = '; '.join(res.to_string() for res in self.resources.get_children())
-        body_str = self.body.to_string()
-
-        res_str = f'try ({resource_str}) {body_str}'
-
-        if self.handlers is not None:
-            handlers_str = '\n'.join(
-                [handler.to_string() for handler in self.handlers.get_children()])
-            res_str += f'\n{handlers_str}'
-
-        if self.finalizer is not None:
-            finalizer_str = self.finalizer.to_string()
-            res_str += f'\n{finalizer_str}'
-
-        return res_str
 
     def get_children_names(self) -> List[str]:
         return ['resources', 'body', 'handlers', 'finalizer']

@@ -18,9 +18,6 @@ class GotoStatement(Statement):
         if self.label.node_type != NodeType.IDENTIFIER:
             throw_invalid_type(self.label.node_type, self, attr='label')
 
-    def to_string(self) -> str:
-        return f'goto {self.label.to_string()};'
-
     def get_children(self) -> List[Node]:
         return [self.label]
 

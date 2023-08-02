@@ -16,7 +16,7 @@ from logger_setup import DefaultLogger
 from runtime_data_manager import InMemoryJitRuntimeDataManager
 from typing import Optional
 
-from collections import defaultdict
+from collections import defaultdict, Counter
 
 
 class UltimateWMTrainer:
@@ -39,7 +39,11 @@ class UltimateWMTrainer:
                  w_style: float,
                  scheduler: Optional[optim.lr_scheduler._LRScheduler] = None,
                  logger: Optional[logging.Logger] = None,
-                 ckpt_dir: str = 'my_model'):
+                 ckpt_dir: str = 'my_model',
+                 var_transform_mode: str = 'replace'):
+        self.var_transform_mode = var_transform_mode
+        if self.var_transform_mode not in {'replace', 'append'}:
+            raise ValueError('var_transform_mode must be either replace or append')
 
         self.code_encoder = code_encoder
         self.extract_encoder = extract_encoder
@@ -142,11 +146,11 @@ class UltimateWMTrainer:
                                             padding_mask)
 
             # transformed code feature
-            ss_instances = self.transform_manager.get_transformed_codes_by_pred(
-                instance_ids, ss_ids.tolist())
-
+            ori_instances = self.transform_manager.get_original_instances(instance_ids)
             t_instances, _ = self.transform_manager.varname_transform_on_instances(
-                ss_instances, vs_ids.tolist())
+                ori_instances, vs_ids.tolist(), mode=self.var_transform_mode)
+            t_instances = self.transform_manager.transform_on_instances(
+                t_instances, ss_ids.tolist())
 
             for wmid, vs in zip(wmids.tolist(), vs_ids.tolist()):
                 word = self.transform_manager.vocab.get_token_by_id(vs)
@@ -175,7 +179,7 @@ class UltimateWMTrainer:
             tprobs = torch.sigmoid(toutputs)
             t_loss = self.loss_fn(tprobs, wms)
 
-            warper_dist_loss = warper_dist_loss * 0.1
+            warper_dist_loss = 0.25 * warper_dist_loss
             loss = decode_loss + t_loss + warper_dist_loss
             loss.backward()
 
@@ -204,7 +208,7 @@ class UltimateWMTrainer:
                 f'| warp {avg_warp_loss:.4f} | decode {avg_decode_loss:.4f} |')
 
         # for wmid, vs in var_selection.items():
-        #     self.logger.info(f'wmid: {wmid} | vs: {Counter(vs)}')
+        #     self.logger.info(f'wmid: {wmid} | vs: {Counter(vs).most_common(10)}')
 
         res_dict = {
             'epoch': eid,
@@ -279,10 +283,11 @@ class UltimateWMTrainer:
             feat_warped = self.approximator(code_feature, vs_embds, ss_embds,
                                             padding_mask)
 
-            instances = self.transform_manager.get_transformed_codes_by_pred(
-                instance_ids, ss_ids.tolist())
+            ori_instances = self.transform_manager.get_original_instances(instance_ids)
             instances, _ = self.transform_manager.varname_transform_on_instances(
-                instances, vs_ids.tolist())
+                ori_instances, vs_ids.tolist(), mode=self.var_transform_mode)
+            instances = self.transform_manager.transform_on_instances(
+                instances, ss_ids.tolist())
 
             # simulated decoding process
             xx, ll, mm = self.transform_manager.load_to_tensor(instances)

@@ -1,6 +1,6 @@
 from .style_stats import calculate_proportion, get_dominating_styles
 from .code_transformers import (
-    CodeTransformer,
+    RopGenCodeTransformer,
     VarNameStyleTransformer,
     LoopTransformer,
     IncrementTransformer,
@@ -25,5 +25,5 @@ TRANFORM_ID_TO_TRANSFORMER = {
 }
 
 
-def get_transformer(transform_type: int) -> CodeTransformer:
+def get_transformer(transform_type: int) -> RopGenCodeTransformer:
     return TRANFORM_ID_TO_TRANSFORMER[transform_type]

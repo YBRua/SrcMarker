@@ -21,9 +21,6 @@ class CommaExpression(Expression):
         if not is_expression(self.right):
             throw_invalid_type(self.right.node_type, self, attr='right')
 
-    def to_string(self) -> str:
-        return f'{self.left.to_string()}, {self.right.to_string()}'
-
     def get_children(self) -> List[Node]:
         return [self.left, self.right]
 

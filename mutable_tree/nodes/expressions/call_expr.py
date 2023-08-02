@@ -8,10 +8,15 @@ from typing import List
 
 class CallExpression(Expression):
 
-    def __init__(self, node_type: NodeType, callee: Expression, args: ExpressionList):
+    def __init__(self,
+                 node_type: NodeType,
+                 callee: Expression,
+                 args: ExpressionList,
+                 optional: bool = False):
         super().__init__(node_type)
         self.callee = callee
         self.args = args
+        self.optional = optional
 
     def _check_types(self):
         if self.node_type != NodeType.CALL_EXPR:
@@ -20,10 +25,6 @@ class CallExpression(Expression):
             throw_invalid_type(self.callee.node_type, self, 'callee')
         if self.args.node_type != NodeType.EXPRESSION_LIST:
             throw_invalid_type(self.args.node_type, self, 'args')
-
-    def to_string(self) -> str:
-        arg_list = ", ".join(arg.to_string() for arg in self.args.get_children())
-        return f'{self.callee.to_string()}({arg_list})'
 
     def get_children(self) -> List[Node]:
         return [self.callee, self.args]

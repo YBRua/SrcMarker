@@ -1,11 +1,11 @@
 from .visitor import TransformingVisitor
-from mutable_tree.nodes import Node, node_factory, LocalVariableDeclaration, StatementList, Identifier
+from mutable_tree.nodes import (Node, node_factory, LocalVariableDeclaration,
+                                StatementList, Identifier, Declarator, VariableDeclarator)
 from typing import Optional, List
 from .var_same_type import split_DeclaratorList_by_Initializing
 
 
 class MoveVarDeclToHeadVisitor(TransformingVisitor):
-
     def visit_StatementList(self,
                             node: StatementList,
                             parent: Optional[Node] = None,
@@ -21,10 +21,12 @@ class MoveVarDeclToHeadVisitor(TransformingVisitor):
                 with_init_declarator_list, without_init_declarator_list = \
                     split_DeclaratorList_by_Initializing(child.declarators)
                 if with_init_declarator_list is not None:
-                    new_child = node_factory.create_local_variable_declaration(child.type, with_init_declarator_list)
+                    new_child = node_factory.create_local_variable_declaration(
+                        child.type, with_init_declarator_list)
                     new_children_list.append(new_child)
                 if without_init_declarator_list is not None:
-                    new_child = node_factory.create_local_variable_declaration(child.type, without_init_declarator_list)
+                    new_child = node_factory.create_local_variable_declaration(
+                        child.type, without_init_declarator_list)
                     decl_list.append(new_child)
             else:
                 new_children_list.append(child)
@@ -34,8 +36,14 @@ class MoveVarDeclToHeadVisitor(TransformingVisitor):
         return False, []
 
 
-class MoveVarDeclToBeforeUsedVisitor(TransformingVisitor):
+def get_identifier_from_declarator(node: Declarator) -> Identifier:
+    if isinstance(node, VariableDeclarator):
+        return node.decl_id
+    else:
+        return get_identifier_from_declarator(node.declarator)
 
+
+class MoveVarDeclToBeforeUsedVisitor(TransformingVisitor):
     def visit_StatementList(self,
                             node: StatementList,
                             parent: Optional[Node] = None,
@@ -50,21 +58,23 @@ class MoveVarDeclToBeforeUsedVisitor(TransformingVisitor):
                 with_init_declarator_list, without_init_declarator_list = \
                     split_DeclaratorList_by_Initializing(child.declarators)
                 if with_init_declarator_list is not None:
-                    new_child = node_factory.create_local_variable_declaration(child.type, with_init_declarator_list)
+                    new_child = node_factory.create_local_variable_declaration(
+                        child.type, with_init_declarator_list)
                     new_children_list.append(new_child)
                 if without_init_declarator_list is not None:
                     for declarator in without_init_declarator_list.node_list:
-                        declarator_list = node_factory.create_declarator_list([declarator])
-                        new_child = node_factory.create_local_variable_declaration(child.type, declarator_list)
-                        identifier = declarator.to_string()
+                        declarator_list = node_factory.create_declarator_list(
+                            [declarator])
+                        new_child = node_factory.create_local_variable_declaration(
+                            child.type, declarator_list)
+                        identifier = get_identifier_from_declarator(declarator).name
                         decl_map[identifier] = new_child
             else:
                 new_children_list.append(child)
 
         node.node_list = []
         for child in new_children_list:
-            identifiers = []
-            get_all_identifiers(child, identifiers)
+            identifiers = get_all_identifiers(child)
             for identifier in identifiers:
                 decl_node = decl_map.get(identifier, None)
                 if decl_node is not None:
@@ -80,14 +90,18 @@ class MoveVarDeclToBeforeUsedVisitor(TransformingVisitor):
         return False, []
 
 
-def get_all_identifiers(node: Node, identifiers: List[str]):
-    child_attrs = node.get_children_names()
-    if len(child_attrs) == 0:
+def get_all_identifiers(node: Node):
+    identifiers = []
+
+    def _get_identifiers(node: Node):
         if isinstance(node, Identifier):
-            identifiers.append(node.to_string())
-    else:
-        for attr in child_attrs:
-            child = node.get_child_at(attr)
-            if child is None:
-                continue
-            get_all_identifiers(child, identifiers)
+            identifiers.append(node.name)
+        else:
+            for attr in node.get_children_names():
+                child = node.get_child_at(attr)
+                if child is None:
+                    continue
+                _get_identifiers(child)
+
+    _get_identifiers(node)
+    return identifiers

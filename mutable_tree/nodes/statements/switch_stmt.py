@@ -26,14 +26,6 @@ class SwitchCase(Node):
         if self.stmts.node_type != NodeType.STATEMENT_LIST:
             throw_invalid_type(self.stmts.node_type, self, attr='stmts')
 
-    def to_string(self) -> str:
-        if self.case is not None:
-            case_str = f'case {self.case.to_string()}:'
-        else:
-            case_str = 'default:'
-        stmts_str = '\n'.join([stmt.to_string() for stmt in self.stmts.get_children()])
-        return f'{case_str}\n{stmts_str}'
-
     def get_children(self) -> List[Node]:
         if self.case is not None:
             return [self.case, self.stmts]
@@ -73,11 +65,6 @@ class SwitchStatement(Statement):
             throw_invalid_type(self.condition.node_type, self, attr='condition')
         if self.cases.node_type != NodeType.SWITCH_CASE_LIST:
             throw_invalid_type(self.cases.node_type, self, attr='cases')
-
-    def to_string(self) -> str:
-        cond_str = self.condition.to_string()
-        body_str = '\n'.join([case.to_string() for case in self.cases.get_children()])
-        return f'switch ({cond_str}) {{\n{body_str}\n}}'
 
     def get_children(self) -> List[Node]:
         return [self.condition, self.cases]

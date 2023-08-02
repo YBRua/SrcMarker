@@ -16,7 +16,7 @@ from ...nodes import (AssertStatement, BlockStatement, BreakStatement, ContinueS
                       TryWithResourcesStatement, SynchronizedStatement)
 from ...nodes import (Declarator, VariableDeclarator, ArrayDeclarator,
                       InitializingDeclarator, DeclaratorType, LocalVariableDeclaration)
-from ...nodes import (FormalParameter, InferredParameter, TypedFormalParameter,
+from ...nodes import (FormalParameter, UntypedParameter, TypedFormalParameter,
                       SpreadParameter, FormalParameterList, FunctionHeader,
                       FunctionDeclaration)
 from ...nodes import (Modifier, ModifierList)
@@ -305,7 +305,7 @@ def convert_lambda_expr(node: tree_sitter.Node) -> LambdaExpression:
     if param_node.type == 'identifier':
         param = convert_identifier(param_node)
         param = node_factory.create_variable_declarator(param)
-        param = node_factory.create_inferred_parameter(param)
+        param = node_factory.create_untyped_param(param)
         params = node_factory.create_formal_parameter_list([param])
     elif param_node.type == 'formal_parameters':
         parenthesized = True
@@ -318,7 +318,7 @@ def convert_lambda_expr(node: tree_sitter.Node) -> LambdaExpression:
                 continue
             param = convert_identifier(ch)
             param = node_factory.create_variable_declarator(param)
-            params.append(node_factory.create_inferred_parameter(param))
+            params.append(node_factory.create_untyped_param(param))
         params = node_factory.create_formal_parameter_list(params)
 
     # body
@@ -640,7 +640,7 @@ def convert_catch_handler(node: tree_sitter.Node) -> CatchClause:
     # NOTE: should be variable declarator according to grammar specification
     decl = convert_identifier(decl_node)
 
-    return node_factory.create_catch_clause(param_types, decl, body, modifiers)
+    return node_factory.create_catch_clause(body, param_types, decl, modifiers)
 
 
 def convert_try_finalizer(node: tree_sitter.Node) -> FinallyClause:
@@ -787,7 +787,7 @@ def convert_formal_param(node: tree_sitter.Node) -> TypedFormalParameter:
     decl_type = node_factory.create_declarator_type(type_id, modifiers)
     decl = convert_variable_declarator_id(node)
 
-    return node_factory.create_formal_param(decl_type, decl)
+    return node_factory.create_typed_formal_param(decl_type, decl)
 
 
 def convert_spread_param(node: tree_sitter.Node) -> SpreadParameter:
@@ -904,7 +904,7 @@ def convert_function_header(node: tree_sitter.Node) -> FunctionHeader:
     name = node_factory.create_variable_declarator(name)
     func_decl = node_factory.create_func_declarator(name, params)
 
-    return node_factory.create_func_header(return_type, func_decl, dim, throws, modifiers,
+    return node_factory.create_func_header(func_decl, return_type, dim, throws, modifiers,
                                            type_params)
 
 

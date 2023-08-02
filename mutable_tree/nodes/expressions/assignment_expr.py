@@ -19,6 +19,10 @@ class AssignmentOps(Enum):
     LSHIFT_EQUAL = '<<='
     ARSHIFT_EQUAL = '>>='
     LRSHIFT_EQUAL = '>>>='
+    LOGICAL_OR_EQUAL = '||='
+    LOGICAL_AND_EQUAL = '&&='
+    NULL_COALESCING_EQUAL = '??='
+    EXPONENT_EQUAL = '**='
 
 
 _assignment_op_map = {
@@ -33,7 +37,11 @@ _assignment_op_map = {
     '%=': AssignmentOps.MOD_EQUAL,
     '<<=': AssignmentOps.LSHIFT_EQUAL,
     '>>=': AssignmentOps.ARSHIFT_EQUAL,
-    '>>>=': AssignmentOps.LRSHIFT_EQUAL
+    '>>>=': AssignmentOps.LRSHIFT_EQUAL,
+    '||=': AssignmentOps.LOGICAL_OR_EQUAL,
+    '&&=': AssignmentOps.LOGICAL_AND_EQUAL,
+    '??=': AssignmentOps.NULL_COALESCING_EQUAL,
+    '**=': AssignmentOps.EXPONENT_EQUAL,
 }
 
 
@@ -42,7 +50,6 @@ def get_assignment_op(op: str) -> AssignmentOps:
 
 
 class AssignmentExpression(Expression):
-
     def __init__(self, node_type: NodeType, left: Node, right: Expression,
                  op: AssignmentOps):
         super().__init__(node_type)
@@ -64,11 +71,9 @@ class AssignmentExpression(Expression):
                 NodeType.PARENTHESIZED_EXPR,
         }:
             raise TypeError(f'Invalid type: {lt} for Assignment LHS')
-        if not is_expression(self.right):
+        if (not is_expression(self.right)
+                and self.right.node_type != NodeType.FUNCTION_DEFINITION):
             raise TypeError(f'Invalid type: {self.right.node_type} for Assignment RHS')
-
-    def to_string(self) -> str:
-        return f'{self.left.to_string()} {self.op.value} {self.right.to_string()}'
 
     def get_children(self) -> List[Node]:
         return [self.left, self.right]

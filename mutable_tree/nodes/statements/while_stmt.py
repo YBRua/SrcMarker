@@ -23,12 +23,6 @@ class WhileStatement(Statement):
         if not is_statement(self.body):
             throw_invalid_type(self.body.node_type, self, attr='body')
 
-    def to_string(self) -> str:
-        cond_str = self.condition.to_string()
-        body_str = self.body.to_string()
-
-        return f'while ({cond_str}) {body_str}'
-
     def get_children(self) -> List[Node]:
         return [self.condition, self.body]
 

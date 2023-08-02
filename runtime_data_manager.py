@@ -68,7 +68,27 @@ class InMemoryJitRuntimeDataManager:
     def get_original_instances(self, instance_ids: List[str]) -> List[DataInstance]:
         return [self.get_original_instance(instance_id) for instance_id in instance_ids]
 
-    def _jit_transform(self, instance_id: str, key_id: int):
+    def _jit_transform(self, instance: DataInstance, key_id: int):
+        keys = self.all_transform_keys[key_id]
+
+        code = instance.source
+        try:
+            transformed_code = self.transform_computer.code_transform(code, keys)
+        except Exception as e:
+            print(f'JIT Code Transformation Failed')
+            print(f'Error: {e}')
+            print(f'Code: {code}')
+            print(f'Keys: {keys}')
+            transformed_code = code
+        code_tokens, word_tokens = self.code_tokenizer.get_tokens(transformed_code)
+        return DataInstance(id=instance.id,
+                            source=transformed_code,
+                            source_tokens=code_tokens,
+                            tokens=word_tokens,
+                            transform_keys=keys,
+                            task_label=instance.task_label)
+
+    def _jit_transform_by_instance_id(self, instance_id: str, key_id: int):
         keys = self.all_transform_keys[key_id]
         original_instance = self.get_original_instance(instance_id)
         assert original_instance.id == instance_id
@@ -80,7 +100,8 @@ class InMemoryJitRuntimeDataManager:
                             source=transformed_code,
                             source_tokens=code_tokens,
                             tokens=word_tokens,
-                            transform_keys=keys)
+                            transform_keys=keys,
+                            task_label=original_instance.task_label)
 
     def register_transformed_codes(self, instances: List[DataInstance]):
         for instance in instances:
@@ -103,6 +124,54 @@ class InMemoryJitRuntimeDataManager:
         instances = self.transformed_instances[instance_id]
         return instances[selected_transform]
 
+    def transform_code_by_pred(self, instances: List[DataInstance],
+                               selected_transforms: List[int]) -> List[DataInstance]:
+        # jit code transform
+        new_instances = []
+        for instance, tid in zip(instances, selected_transforms):
+            keys = self.all_transform_keys[tid]
+            code = instance.source
+            transformed_code = self.transform_computer.code_transform(code, keys)
+            code_tokens, word_tokens = self.code_tokenizer.get_tokens(transformed_code)
+            new_instances.append(
+                DataInstance(id=instance.id,
+                             source=transformed_code,
+                             source_tokens=code_tokens,
+                             tokens=word_tokens,
+                             transform_keys=keys,
+                             task_label=instance.task_label))
+        return new_instances
+
+    def transform_on_instances(self,
+                               instances: List[DataInstance],
+                               selected_transforms: List[int],
+                               allow_cache: bool = False) -> List[DataInstance]:
+
+        if allow_cache:
+            instance_ids = [instance.id for instance in instances]
+            instances_to_jit = []
+            for instance, tid in zip(instances, selected_transforms):
+                if (instance.id not in self.transformed_instances
+                        or tid not in self.transformed_instances[instance.id]):
+                    instances_to_jit.append((instance, tid))
+
+            transformed_instances = []
+            for instance, tid in instances_to_jit:
+                transformed_instances.append(self._jit_transform(instance, tid))
+            self.register_transformed_codes(transformed_instances)
+
+            # collect results
+            instances = []
+            for iid, tid in zip(instance_ids, selected_transforms):
+                instances.append(self._get_cached_transformed_instances(iid, tid))
+
+            return instances
+        else:
+            transformed_instances = []
+            for instance, tid in zip(instances, selected_transforms):
+                transformed_instances.append(self._jit_transform(instance, tid))
+            return transformed_instances
+
     def get_transformed_codes_by_pred(
             self, instance_ids: List[str],
             selected_transforms: List[int]) -> List[DataInstance]:
@@ -116,7 +185,7 @@ class InMemoryJitRuntimeDataManager:
 
         transformed_instances = []
         for iid, tid in instances_to_jit:
-            transformed_instances.append(self._jit_transform(iid, tid))
+            transformed_instances.append(self._jit_transform_by_instance_id(iid, tid))
         self.register_transformed_codes(transformed_instances)
 
         # collect results
@@ -129,24 +198,42 @@ class InMemoryJitRuntimeDataManager:
     def _jit_varname_substitution(self,
                                   instance: DataInstance,
                                   new_token: str,
-                                  old_token: Optional[str] = None):
+                                  old_token: Optional[str] = None,
+                                  mode: str = 'replace'):
         new_instance = deepcopy(instance)
-        varnames = self.varnames_per_file[instance.id]
+        varnames = list(self.varnames_per_file[instance.id].items())
 
         if len(varnames) == 0:
             return new_instance, ('no feasible substitution', '')
 
-        src_var = random.choice(varnames) if old_token is None else old_token
+        # src_var = random.choice(varnames) if old_token is None else old_token
+        if old_token is None:
+            # src_var = list(sorted(varnames, key=lambda x: x[1]))[0][0]
+            src_var = random.choice(varnames)[0]
+        else:
+            src_var = old_token
 
-        new_code = self.transform_computer.variable_substitution(
-            new_instance.source, src_var, new_token)
+        if mode == 'replace':
+            new_code = self.transform_computer.variable_substitution(
+                new_instance.source, src_var, new_token)
+        elif mode == 'append':
+            new_code = self.transform_computer.variable_append(new_instance.source,
+                                                               src_var, new_token)
+            # appending update
+            if len(new_token) == 1:
+                new_token = src_var + new_token[0].upper()
+            else:
+                new_token = src_var + new_token[0].upper() + new_token[1:]
+        else:
+            raise ValueError(f'Unknown mode {mode}')
 
         source_tokens, tokens = self.code_tokenizer.get_tokens(new_code)
         new_instance = DataInstance(id=new_instance.id,
                                     source=new_code,
                                     source_tokens=source_tokens,
                                     tokens=tokens,
-                                    transform_keys=new_instance.transform_keys)
+                                    transform_keys=new_instance.transform_keys,
+                                    task_label=new_instance.task_label)
 
         return new_instance, (src_var, new_token)
 
@@ -166,15 +253,17 @@ class InMemoryJitRuntimeDataManager:
         return new_instances, updates
 
     def varname_transform_on_instances(
-            self, instances: List[DataInstance],
-            word_preds: List[int]) -> Tuple[List[DataInstance], List[Tuple[str, str]]]:
+            self, instances: List[DataInstance], word_preds: List[int],
+            mode: str) -> Tuple[List[DataInstance], List[Tuple[str, str]]]:
         assert self.vocab is not None
 
         new_instances = []
         updates = []
         for instance, word_pred in zip(instances, word_preds):
             new_word = self.vocab.get_token_by_id(word_pred)
-            new_instance, update = self._jit_varname_substitution(instance, new_word)
+            new_instance, update = self._jit_varname_substitution(instance,
+                                                                  new_word,
+                                                                  mode=mode)
             new_instances.append(new_instance)
             updates.append(update)
 
@@ -209,15 +298,18 @@ class InMemoryJitRuntimeDataManager:
 
         return masks
 
-    def _conditional_jit_varname_substitution(self, instance: DataInstance,
-                                              new_token: str, update: Tuple[str, str]):
+    def _rewatermark_varname_substitution(self,
+                                          instance: DataInstance,
+                                          new_token: str,
+                                          update: Tuple[str, str],
+                                          mode: str = 'replace'):
         new_instance = deepcopy(instance)
-        varnames = self.varnames_per_file[instance.id]
+        varnames = list(self.varnames_per_file[instance.id].items())
 
         if len(varnames) == 0:
             return new_instance, ('no feasible substitution', '')
 
-        src_var = random.choice(varnames)
+        src_var = random.choice(varnames)[0]
         src_var_str = normalize_name(src_var).lower()
 
         prev_src_str = normalize_name(update[0]).lower()
@@ -229,30 +321,39 @@ class InMemoryJitRuntimeDataManager:
         else:
             actual_src = src_var_str
 
-        new_code = self.transform_computer.variable_substitution(
-            new_instance.source, actual_src, new_token)
+        if mode == 'replace':
+            new_code = self.transform_computer.variable_substitution(
+                new_instance.source, actual_src, new_token)
+        elif mode == 'append':
+            new_code = self.transform_computer.variable_append(new_instance.source,
+                                                               actual_src, new_token)
+        else:
+            raise ValueError(f'Unknown mode {mode}')
 
         source_tokens, tokens = self.code_tokenizer.get_tokens(new_code)
         new_instance = DataInstance(id=new_instance.id,
                                     source=new_code,
                                     source_tokens=source_tokens,
                                     tokens=tokens,
-                                    transform_keys=new_instance.transform_keys)
+                                    transform_keys=new_instance.transform_keys,
+                                    task_label=new_instance.task_label)
 
         return new_instance, (src_var, new_token)
 
     def rewatermark_varname_transform(
-        self, instances: List[DataInstance], word_preds: List[int],
-        prev_updates: List[Tuple[str]]
-    ) -> Tuple[List[DataInstance], List[Tuple[str, str]]]:
+            self,
+            instances: List[DataInstance],
+            word_preds: List[int],
+            prev_updates: List[Tuple[str]],
+            mode: str = 'replace') -> Tuple[List[DataInstance], List[Tuple[str, str]]]:
         assert self.vocab is not None
 
         new_instances = []
         updates = []
         for instance, word_pred, prev_update in zip(instances, word_preds, prev_updates):
             new_word = self.vocab.get_token_by_id(word_pred)
-            new_instance, update = self._conditional_jit_varname_substitution(
-                instance, new_word, prev_update)
+            new_instance, update = self._rewatermark_varname_substitution(
+                instance, new_word, prev_update, mode)
             new_instances.append(new_instance)
             updates.append(update)
 

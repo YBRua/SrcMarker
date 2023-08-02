@@ -28,9 +28,14 @@ class CompoundIfVisitor(TransformingVisitor):
         body = node.consequence
         if isinstance(body, BlockStatement):
             stmts = body.stmts.get_children()
+            # single child
             if len(stmts) != 1:
                 return None
+            # single child is if
             if not isinstance(stmts[0], IfStatement):
+                return None
+            # single if-node has no else
+            if stmts[0].alternate is not None:
                 return None
             nested_if = stmts[0]
         elif not isinstance(body, IfStatement):

@@ -1,3 +1,4 @@
+from .classes import *
 from .expressions import *
 from .statements import *
 from .types import *

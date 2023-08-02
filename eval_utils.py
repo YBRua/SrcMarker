@@ -24,7 +24,6 @@ def compute_msg_acc(inputs: torch.Tensor,
 
 
 class JitAdversarialTransformProvider:
-
     def __init__(self,
                  transform_computer: CodeTransformProvider,
                  transforms_per_file: str = './datasets/transforms_per_file.json',
@@ -128,7 +127,8 @@ class JitAdversarialTransformProvider:
     def _jit_varname_substitution(self,
                                   instance: DataInstance,
                                   new_token: str,
-                                  old_token: Optional[str] = None):
+                                  old_token: Optional[str] = None,
+                                  mode: str = 'replace'):
         new_instance = copy.deepcopy(instance)
         varnames = self.varnames_per_file[instance.id]
 
@@ -137,8 +137,14 @@ class JitAdversarialTransformProvider:
 
         src_var = random.choice(varnames) if old_token is None else old_token
 
-        new_code = self.transform_computer.variable_substitution(
-            new_instance.source, src_var, new_token)
+        if mode == 'replace':
+            new_code = self.transform_computer.variable_substitution(
+                new_instance.source, src_var, new_token)
+        elif mode == 'append':
+            new_code = self.transform_computer.variable_append(new_instance.source,
+                                                               src_var, new_token)
+        else:
+            raise ValueError(f'Unknown mode {mode}')
 
         source_tokens, tokens = self.tokenizer.get_tokens(new_code)
         new_instance = DataInstance(id=new_instance.id,
@@ -157,6 +163,31 @@ class JitAdversarialTransformProvider:
                                                              update[0])
             new_instances.append(new_instance)
         return new_instances
+
+    def adv_varname_transform_for_rulebased(
+        self,
+        instance: DataInstance,
+        variables: List[str],
+        budget: Optional[int] = None,
+        proportion: Optional[float] = None,
+    ) -> DataInstance:
+        if budget is None and proportion is None:
+            raise ValueError('either budget or proportion must be specified')
+
+        if len(variables) == 0:
+            return instance, []
+
+        if budget is None:
+            # guaranteed to have at least one variable name changed
+            budget = max(int(len(variables) * proportion), 1)
+
+        src_vars = random.sample(variables, budget)
+        vadv_updates = []
+        for src_var in src_vars:
+            dst_var = random.choice(self.all_varnames)
+            instance, u = self._jit_varname_substitution(instance, dst_var, src_var)
+            vadv_updates.append(u)
+        return instance, vadv_updates
 
     def adv_varname_transform(
             self,

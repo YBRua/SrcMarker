@@ -5,10 +5,6 @@
 
 ## Getting Started
 
-### Getting the Code
-
-It seems this anonymous repository does not support downloading all files simultaneously. Therefore we have packed all source code in this repository into `SrcMarker.zip`. The zip file contains exactly the same files as in this repository, so it would be a bit more convenient if you want to download all source code.
-
 ### Setting up the Environment
 
 #### Installing Python Packages and Dependencies
@@ -19,21 +15,17 @@ You will (of course) need Python to execute the code
 
 The following packages are **required** to run the main training and evaluation scripts
 
-- [PyTorch](https://pytorch.org/get-started/locally/) (We have used PyTorch 1.12 in our experiments)
+- [PyTorch](https://pytorch.org/get-started/locally/) (PyTorch 1.12)
 - [tree-sitter](https://tree-sitter.github.io/)
 - [Huggingface Transformers](https://huggingface.co/)
 - tqdm
 - inflection
 - sctokenizer
 
-Use pip or conda to install all the packages above.
-
-The followings are optional, only required by certain experiment scripts
+The following packages are optional, only required by certain experiment scripts
 
 - [SrcML](https://www.srcml.org/)
   - only required if running the transform pipeline provided by RopGen
-
-Note that SrcML is NOT a Python package, it is instead a commandline interface and should be directly installed on your machine.
 
 #### Building tree-sitter Parsers
 
@@ -62,24 +54,56 @@ python build_treesitter_langs.py ./tree-sitter
 
 #### GitHub-C and GitHub-Java
 
-The processed datasets for GitHub-C and GitHub-Java (originally available [here](https://github.com/RoPGen/RoPGen)) are included in this repository, which can be found in `./datasets/github_c_funcs` and `./datasets/github_java_funcs`.
+The pre-processed datasets for GitHub-C and GitHub-Java (originally available [here](https://github.com/RoPGen/RoPGen)) are included in this repository, which can be found in `./datasets/github_c_funcs` and `./datasets/github_java_funcs`.
+
+#### MBXP
+
+The MBXP datasets are originally available at [amazon-science/mxeval](https://github.com/amazon-science/mxeval). We also include the filtered version along with this submission.
 
 #### CodeSearchNet
 
-The CSN-Java dataset is available on the project site of [CodeSearchNet](https://github.com/github/CodeSearchNet). Follow the steps below to further process the dataset after downloading it.
+The CSN datasets are available on the project site of [CodeSearchNet](https://github.com/github/CodeSearchNet). Follow the steps below to further process the dataset after downloading it.
 
 1. Follow the instructions on [CodeXGLUE (code summarization task)](https://github.com/microsoft/CodeXGLUE/tree/main/Code-Text/code-to-text) to filter the dataset.
 2. Run `dataset_filter.py` to filter out samples with grammar errors or unsupported features.
 
 ```sh
-python dataset_filter.py java <path_to_your_csn_java_jsonl>
+python dataset_filter.py java <path_to_your_csn_jsonl>
 ```
 
-The results will be stored as `filename_filtered.jsonl`, rename it into `train.jsonl` or `valid.jsonl` or `test.jsonl` depending on the split and put the three files under `./datasets/csn_java`.
+The results will be stored as `filename_filtered.jsonl`, rename it into `train.jsonl` or `valid.jsonl` or `test.jsonl` depending on the split and put the three files under `./datasets/csn_java` or `./datasets/csn_js`.
 
-### Running the scripts
+#### Wrapping Up
 
-#### Preprocessing
+After all datasets are processed, the final directory should look like this
+
+```txt
+- datasets
+    - github_c_funcs
+        - train.jsonl
+        - valid.jsonl
+        - test.jsonl
+    - github_java_funcs
+        - train.jsonl
+        - valid.jsonl
+        - test.jsonl
+    - csn_java
+        - train.jsonl
+        - valid.jsonl
+        - test.jsonl
+    - csn_js
+        - train.jsonl
+        - valid.jsonl
+        - test.jsonl
+    - mbcpp
+        - test.jsonl
+    - mbjp
+        - test.jsonl
+    - mbjsp
+        - test.jsonl
+```
+
+### Preprocessing
 
 Several preprocessing steps are required before running training or evaluation scripts. These preprocessing steps provide metadata for the subsequent training/evaluation scripts.
 
@@ -87,21 +111,31 @@ Several preprocessing steps are required before running training or evaluation s
 
 ```sh
 # python collect_variable_names_jsonl.py <dataset>
+python collect_variable_names_jsonl.py csn_js
 python collect_variable_names_jsonl.py csn_java
 python collect_variable_names_jsonl.py github_c_funcs
 python collect_variable_names_jsonl.py github_java_funcs
+python collect_variable_names_jsonl.py mbcpp
+python collect_variable_names_jsonl.py mbjp
+python collect_variable_names_jsonl.py mbjsp
 ```
 
 2. Collect all feasible transforms. The script will enumerate all feasible transformation combinations for each function in the dataset. Results will be stored in `./datasets/feasible_transforms_<dataset>.json` and `tarnsforms_per_file_<dataset>.json`. Note that this process could take a while, especially for CSN-Java.
 
 ```sh
 # python collect_feasible_transforms_jsonl.py <dataset>
+python collect_feasible_transforms_jsonl.py csn_js
 python collect_feasible_transforms_jsonl.py csn_java
 python collect_feasible_transforms_jsonl.py github_c_funcs
 python collect_feasible_transforms_jsonl.py github_java_funcs
+python collect_feasible_transforms_jsonl.py mbcpp
+python collect_feasible_transforms_jsonl.py mbjp
+python collect_feasible_transforms_jsonl.py mbjsp
 ```
 
-#### Training
+## Running the scripts
+
+### Training
 
 `train_main.py` is responsible for all training tasks. Refer to the `parse_args()` function in `train_main.py` for more details on the arguments.
 
@@ -114,25 +148,27 @@ python train_main.py \
     --dataset=csn_java \
     --dataset_dir=./datasets/csn_java \
     --n_bits=4 \
-    --epochs=50 \
-    --log_prefix=4bit_gru \
+    --epochs=25 \
+    --log_prefix=4bit_gru_srcmarker \
     --batch_size 64 \
     --model_arch=gru \
     --shared_encoder \
-    --seed 42
+    --varmask_prob 0.5 \
+    --seed 1337
 
-# training a 4-bit Transformer model on CSN-Java
+# training a 4-bit Transformer model on CSN-JavaScript
 python train_main.py \
-    --lang=java \
-    --dataset=csn_java \
-    --dataset_dir=./datasets/csn_java \
+    --lang=javascript \
+    --dataset=csn_js \
+    --dataset_dir=./datasets/csn_js \
     --n_bits=4 \
-    --epochs=50 \
-    --log_prefix=4bit_transformer \
+    --epochs=25 \
+    --log_prefix=4bit_transformer_srcmarker \
     --batch_size 64 \
     --model_arch=transformer \
     --shared_encoder \
-    --seed 42 \
+    --varmask_prob 0.5 \
+    --seed 1337 \
     --scheduler
 ```
 
@@ -147,9 +183,9 @@ source ultimate_rush_with_cuda.sh csn_java
 
 Checkpoints will be saved in `./ckpts`.
 
-#### Evaluation
+### Evaluation
 
-##### Main Evaluation Script
+#### Main Evaluation Script
 
 `eval_main.py` is reponsible for most of the evaluation tasks.
 
@@ -164,6 +200,8 @@ python eval_main.py \
     --model_arch=gru \
     --shared_encoder \
     --write_output
+# controls whether to write results to ./results directory
+# the results could be used in null-hypothesis test
 
 # run random variable substitution attack with 25% proportion
 python eval_main.py \
@@ -198,27 +236,24 @@ Alternatively, you can also refer to `ultimate_eval_with_cuda.sh` for more evalu
 source ultimate_eval_with_cuda.sh 0 csn_java
 ```
 
-##### NatGen and ONION
+#### Evaluate on MBXP
 
-Evaluation with NatGen and ONION are available in `eval_natgen.py` and `eval_onion.py`. The two scripts can be executed in a similar way.
+Use `eval_mbxp.py` to run evaluations on MBXP. This will not only evaluate watermark accuracy, but also run execution-based tests provided by MBXP.
+
+Note that to run MBCPP, you will need a G++ compiler available on your machine (we use gcc version 9.4.0 in our paper); to run MBJP, you will need a JDK (we use OpenJDK 8); to run MBJSP, you will need a Node runtime (we use Node v17.3.0).
 
 ```sh
-python eval_natgen.py or eval_onion.py \
-    --checkpoint_path <path_to_model_checkpoint> \
+python eval_mbxp.py \
+    --checkpoint_path ./ckpts/path_to_model/models_best.pt \
     --lang java \
-    --dataset csn_java \
-    --dataset_dir ./datasets/csn_java \
+    --dataset mbjp \
+    --dataset_dir ./datasets/mbjp \
     --n_bits 4 \
-    --model_arch=gru \
-    --shared_encoder \
-    --write_output
+    --model_arch=transformer \
+    --shared_encoder
 ```
 
-You can also use `ultimate_natgen_with_cuda.sh` or `ultimate_onion_with_cuda.sh` for one-step evaluation. However, you may also have to manually modify some of the parameters in it.
-
-Also note that NatGen and ONION both requires huggingface `transformers` to run, and they can be extremely slow (~2-5 hrs for CSN-Java)
-
-##### Rewatermarking
+#### Re-watermarking
 
 Evaluation for re-watermarking attack is available in `eval_rewater.py`.
 
@@ -232,3 +267,105 @@ python eval_rewater.py \
     --n_bits 4 \
     --shared_encoder
 ```
+
+#### De-watermarking
+
+The de-watermarking process is a bit tricky as it composes of multiple steps.
+
+##### Step 1. Collecting data to train a de-watermarking model
+
+Use `dewatermark_collect_data.py` to collect paired training data for the de-watermarker. This file essentially loads a trained watermarking model, and use the model to watermark the entire training/validation/test sets to acquire paired (i.e., code before and after watermarking) data to train the de-watermarker.
+
+```sh
+python dewatermark_collect_data.py \
+    --dataset csn_java \
+    --lang java \
+    --dataset_dir ./datasets/csn_java \
+    --checkpoint_path ./ckpts/path_to_shadow_model.pt \
+    --model_arch transformer
+```
+
+Note that for black-box attacks, the argument `checkpoint_path` should be the path to a shadow model ($SrcMarker_{adv}$) instead of the original watermarking model, or otherwise you would be launching a white-box attack.
+
+##### Step 2. Training the de-watermarking model
+
+The collected data would be put in `./datasets/dewatermark/<dataset_name>/<model_checkpoint>`. We can then use the collected data to train the de-watermarking model.
+
+```sh
+# NOTE: You may want a smaller batch size because this seq2seq GRU takes up plenty of GPU memory.
+CUDA_VISIBLE_DEVICES=$1 python dewatermark_gru.py \
+    --epochs 25 \
+    --seed 42 \
+    --dataset csn_java \
+    --dataset_dir ./datasets/dewatermark/csn_java/shadow_model_checkpoint_name \
+    --lang java \
+    --log_prefix dewatermarker \
+    --batch_size 12 \
+    --do_train
+```
+
+The training could be rather slow due to the sequence-to-sequence modeling nature of the de-watermarker. It takes around 3 hours to train one epoch on CSN-Java on our 3090 GPU. Fortunately, the model usually converges within 3 epochs so you can early-stop it.
+
+##### Step 3. Launching attack with the de-watermarker
+
+After the de-watermarker is trained, you can then use it to launch an attack.
+
+Before launching attack, first collect data from your **victim model** using `dewatermark_collect_data.py`. This will collect the watermarked code of the victim model.
+
+```sh
+python dewatermark_collect_data.py \
+    --dataset csn_java \
+    --lang java \
+    --dataset_dir ./datasets/csn_java \
+    --checkpoint_path ./ckpts/path_to_victim_model.pt \
+    --model_arch transformer
+```
+
+Then use `dewatermark_gru.py` to de-watermark the outputs of the victim.
+
+```sh
+# this is used for launching attacks with the de-watermarking model
+CUDA_VISIBLE_DEVICES=$1 python dewatermark_gru.py \
+    --seed 42 \
+    --dataset csn_java \
+    --lang java \
+    --log_prefix dewatermarker-attack \
+    --batch_size 1 \
+    --do_attack \
+    --attack_dataset_dir ./datasets/dewatermark/csn_java/path_to_victim_model \
+    --attack_checkpoint ./ckpts/path_to_dewatermarking_model/best_model.pt
+```
+
+This will create a de-watermarked output (`.json` file) under `./ckpts/path_to_dewatermarking_model`.
+
+##### Step 4. Evaluate on the de-watermarked output
+
+The attack produces de-watermarked output of the watermarked code. We then evaluate the watermark extraction on the de-watermarked outputs. This is done with `dewatermark_attack.py`
+
+```sh
+python dewatermark_attack.py \
+    --dataset csn_java \
+    --lang java \
+    --dataset_dir ./datasets/csn_java \
+    --original_test_outputs ./datasets/dewatermark/csn_java/path_to_vicitim_model/test.jsonl \
+    --attack_results ./ckpts/path_to_dewatermarking_model/path_to_victim_model.json \
+    --model_arch transformer \
+    --checkpoint_path ./ckpts/path_to_victim_model/models_best.pt
+```
+
+where
+
+- `dataset_dir` is the path to the original dataset directory
+- `original_test_outputs` is the path to the watermarked output (jsonl file produced by dewatermark_collect_data.py using the victim model)
+- `attack_results` is the path to the output of the de-watermarking model (json file produced in Step 3)
+- `model_arch` and `checkpoint_path` should be the architecture and path to the victim model
+
+### Benchmarking on MBXP
+
+`benchmark_mbxp.py`, `benchmark_mbxp_natgen.py` and `benchmark_mbxp_ropgen.py` are used for benchmarking mutableast, NatGen and RopGen respectively. Simply use them as
+
+```sh
+python benchmark_mbxp.py java|javascript|cpp
+```
+
+Note that you will need the corresponding compiler and/or runtime environment to run the benchmark. Further, for RopGen, you will also need to install SrcML.

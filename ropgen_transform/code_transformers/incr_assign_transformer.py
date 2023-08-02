@@ -1,8 +1,8 @@
-from .transformer import CodeTransformer
+from .transformer import RopGenCodeTransformer
 from ropgen_transform.py import assign_combine, assign_value
 
 
-class IncrAssignTransformer(CodeTransformer):
+class IncrAssignTransformer(RopGenCodeTransformer):
     def __init__(self) -> None:
         super().__init__()
 

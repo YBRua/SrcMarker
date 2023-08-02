@@ -79,7 +79,7 @@ class NormalBlockSwapper(BlockSwapper):
             return expr.operand
 
         else:
-            raise RuntimeError(f'cannot transform expression {expr.to_string()}')
+            raise RuntimeError(f'cannot transform expression {expr}')
 
 
 class NegatedBlockSwapper(BlockSwapper):

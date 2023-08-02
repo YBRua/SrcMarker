@@ -1,12 +1,12 @@
 import copy
 import os
 import re
-from typing import Union, Tuple
+from typing import List, Union, Tuple
 
 import numpy as np
 
-from .language_processors import JavaAndCPPProcessor
-from .transformation_base import TransformationBase
+from .language_processors import JavaAndCPPProcessor, JavascriptProcessor
+from .transformation_base import NatGenBaseTransformer
 
 processor_function = {
     "java":
@@ -15,10 +15,12 @@ processor_function = {
     [JavaAndCPPProcessor.for_to_while_random, JavaAndCPPProcessor.while_to_for_random],
     "cpp":
     [JavaAndCPPProcessor.for_to_while_random, JavaAndCPPProcessor.while_to_for_random],
+    "javascript":
+    [JavascriptProcessor.for_to_while_random, JavascriptProcessor.while_to_for_random],
 }
 
 
-class ForWhileTransformer(TransformationBase):
+class ForWhileTransformer(NatGenBaseTransformer):
     """
     Change the `for` loops with `while` loops and vice versa.
     """
@@ -31,6 +33,7 @@ class ForWhileTransformer(TransformationBase):
             "java": self.get_tokens_with_node_type,
             "c": self.get_tokens_with_node_type,
             "cpp": self.get_tokens_with_node_type,
+            "javascript": JavascriptProcessor.get_tokens,
         }
         self.final_processor = processor_map[self.language]
 
@@ -61,6 +64,22 @@ class ForWhileTransformer(TransformationBase):
         function = self.transformations[0]  # for-to-while
         modified_root, modified_code, success = function(code, self)
         return modified_code
+
+    def transform_while_to_for(self, code: Union[str, bytes]) -> str:
+        function = self.transformations[1]  # while-to-for
+        _, modified_code, _ = function(code, self)
+        return modified_code
+
+    def get_available_transforms(self) -> List[str]:
+        return ['for_to_while', 'while_to_for']
+
+    def transform(self, code: str, transform: str):
+        if transform == 'for_to_while':
+            return self.transform_for_to_while(code)
+        elif transform == 'while_to_for':
+            return self.transform_while_to_for(code)
+        else:
+            raise ValueError(f'Unknown transform {transform}')
 
 
 if __name__ == '__main__':

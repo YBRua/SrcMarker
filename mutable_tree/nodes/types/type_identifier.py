@@ -17,12 +17,6 @@ class TypeIdentifier(Node):
         if self.node_type != NodeType.TYPE_IDENTIFIER:
             raise TypeError(f'Invalid type: {self.node_type} for TypeIdentifier.')
 
-    def to_string(self) -> str:
-        if self.dimension is not None:
-            return f'{self.type_identifier}{self.dimension.to_string()}'
-        else:
-            return self.type_identifier
-
     def get_children(self) -> List[Node]:
         if self.dimension is not None:
             return [self.dimension]

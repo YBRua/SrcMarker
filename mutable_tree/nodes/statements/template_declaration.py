@@ -36,9 +36,6 @@ class TypeParameterDeclaration(Node):
         if self.type_id.node_type != NodeType.TYPE_IDENTIFIER:
             throw_invalid_type(self.type_id.node_type, self, attr='type_id')
 
-    def to_string(self) -> str:
-        return f'{self.typename_opt.value} {self.type_id.to_string()}'
-
 
 TemplateParameter = Union[TypeParameterDeclaration, FormalParameter]
 
@@ -58,10 +55,6 @@ class TemplateParameterList(NodeList):
             if (not is_formal_parameter(param)
                     and param.node_type != NodeType.TYPE_PARAMETER_DECLARATION):
                 throw_invalid_type(param.node_type, self, attr=f'param#{i}')
-
-    def to_string(self) -> str:
-        param_str = ', '.join([param.to_string() for param in self.node_list])
-        return f'<{param_str}>'
 
 
 class TemplateDeclaration(Statement):
@@ -86,6 +79,3 @@ class TemplateDeclaration(Statement):
 
     def get_children_names(self) -> List[str]:
         return ['params', 'func_decl']
-
-    def to_string(self) -> str:
-        return f'template {self.params.to_string()}\n {self.func_decl.to_string()}'

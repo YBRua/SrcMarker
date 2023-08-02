@@ -37,18 +37,6 @@ class DeclaratorType(Node):
                                self,
                                attr='postfix_modifiers')
 
-    def to_string(self) -> str:
-        if self.prefix_modifiers is not None:
-            prefix = self.prefix_modifiers.to_string() + ' '
-        else:
-            prefix = ''
-        if self.postfix_modifiers is not None:
-            postfix = ' ' + self.postfix_modifiers.to_string()
-        else:
-            postfix = ''
-
-        return f'{prefix}{self.type_id.to_string()}{postfix}'
-
     def get_children(self) -> List[Node]:
         children = [self.prefix_modifiers, self.type_id, self.postfix_modifiers]
         children = [child for child in children if child is not None]
@@ -90,12 +78,6 @@ class LocalVariableDeclaration(Statement):
             throw_invalid_type(self.type.node_type, self, attr='type')
         if self.declarators.node_type != NodeType.DECLARATOR_LIST:
             throw_invalid_type(self.declarators.node_type, self, attr='declarators')
-
-    def to_string(self) -> str:
-        decl_strs = ', '.join(decl.to_string()
-                              for decl in self.declarators.get_children())
-        res = f'{self.type.to_string()} {decl_strs};'
-        return res
 
     def get_children(self) -> List[Node]:
         return [self.type, self.declarators]

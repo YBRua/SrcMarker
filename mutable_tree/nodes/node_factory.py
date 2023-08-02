@@ -10,23 +10,30 @@ from .expressions import (ArrayAccess, ArrayExpression, ArrayCreationExpression,
                           UnaryExpression, UpdateExpression, PrimaryExpression,
                           ParenthesizedExpression, ExpressionList, CommaExpression,
                           SizeofExpression, PointerExpression, DeleteExpression,
-                          ScopeResolution, QualifiedIdentifier, CompoundLiteralExpression)
+                          ScopeResolution, QualifiedIdentifier, CompoundLiteralExpression,
+                          SpreadElement, AwaitExpression)
 from .statements import Statement
-from .statements import (
-    AssertStatement, BlockStatement, BreakStatement, ContinueStatement, DoStatement,
-    EmptyStatement, ExpressionStatement, ForInStatement, ForStatement, IfStatement,
-    LabeledStatement, ReturnStatement, SwitchCase, SwitchCaseList, SwitchStatement,
-    ThrowStatement, TryStatement, TryHandlers, CatchClause, FinallyClause, WhileStatement,
-    YieldStatement, StatementList, TryResource, TryResourceList,
-    TryWithResourcesStatement, SynchronizedStatement, LambdaExpression, GotoStatement)
+from .statements import (AssertStatement, BlockStatement, BreakStatement,
+                         ContinueStatement, DoStatement, EmptyStatement,
+                         ExpressionStatement, ForInStatement, ForStatement, IfStatement,
+                         LabeledStatement, ReturnStatement, SwitchCase, SwitchCaseList,
+                         SwitchStatement, ThrowStatement, TryStatement, TryHandlers,
+                         CatchClause, FinallyClause, WhileStatement, YieldStatement,
+                         StatementList, TryResource, TryResourceList,
+                         TryWithResourcesStatement, SynchronizedStatement,
+                         LambdaExpression, GotoStatement, WithStatement)
+from .statements import ForInType
 from .statements import (Declarator, VariableDeclarator, ArrayDeclarator,
                          PointerDeclarator, ReferenceDeclarator, InitializingDeclarator,
-                         DeclaratorList, DeclaratorType, LocalVariableDeclaration)
-from .statements import (FormalParameter, InferredParameter, TypedFormalParameter,
+                         AnonymousDeclarator, DeclaratorList, DeclaratorType,
+                         LocalVariableDeclaration, DestructuringDeclarator)
+from .statements import (FormalParameter, UntypedParameter, TypedFormalParameter,
                          SpreadParameter, VariadicParameter, FormalParameterList,
                          FunctionDeclarator, FunctionHeader, FunctionDeclaration)
 from .statements import (TemplateDeclaration, TemplateParameter, TemplateParameterList,
                          TypeParameterDeclaration, TypenameOpts)
+from .classes import (KeyValuePair, ObjectMembers, ObjectMember, Object,
+                      ComputedPropertyName)
 from .miscs import Modifier, ModifierList
 from .statements.for_stmt import ForInit
 from .types import (TypeIdentifier, TypeIdentifierList, DimensionSpecifier, Dimensions,
@@ -106,16 +113,20 @@ def create_update_expr(expr: Union[Identifier, FieldAccess], op: UpdateOps,
     return UpdateExpression(NodeType.UPDATE_EXPR, expr, op, prefix)
 
 
-def create_array_access(array: PrimaryExpression, index: Expression) -> ArrayAccess:
-    return ArrayAccess(NodeType.ARRAY_ACCESS, array, index)
+def create_array_access(array: PrimaryExpression,
+                        index: Expression,
+                        optional: bool = False) -> ArrayAccess:
+    return ArrayAccess(NodeType.ARRAY_ACCESS, array, index, optional)
 
 
 def create_array_expr(elements: ExpressionList) -> ArrayExpression:
     return ArrayExpression(NodeType.ARRAY_EXPR, elements)
 
 
-def create_call_expr(callee: PrimaryExpression, args: ExpressionList) -> CallExpression:
-    return CallExpression(NodeType.CALL_EXPR, callee, args)
+def create_call_expr(callee: PrimaryExpression,
+                     args: ExpressionList,
+                     optional: bool = False) -> CallExpression:
+    return CallExpression(NodeType.CALL_EXPR, callee, args, optional)
 
 
 def create_cast_expr(type_name: TypeIdentifier, expr: Expression) -> CastExpression:
@@ -124,8 +135,9 @@ def create_cast_expr(type_name: TypeIdentifier, expr: Expression) -> CastExpress
 
 def create_field_access(obj: PrimaryExpression,
                         field: Identifier,
-                        op: FieldAccessOps = FieldAccessOps.DOT) -> FieldAccess:
-    return FieldAccess(NodeType.FIELD_ACCESS, obj, field, op)
+                        op: FieldAccessOps = FieldAccessOps.DOT,
+                        optional: bool = False) -> FieldAccess:
+    return FieldAccess(NodeType.FIELD_ACCESS, obj, field, op, optional)
 
 
 def create_instanceof_expr(expr: Expression,
@@ -159,12 +171,11 @@ def create_parenthesized_expr(expr: Expression) -> Expression:
     return ParenthesizedExpression(NodeType.PARENTHESIZED_EXPR, expr)
 
 
-def create_lambda_expr(
-    params: FormalParameterList,
-    body: Union[Expression, BlockStatement],
-    parenthesized: bool = False,
-) -> LambdaExpression:
-    return LambdaExpression(NodeType.LAMBDA_EXPR, params, body, parenthesized)
+def create_lambda_expr(params: FormalParameterList,
+                       body: Union[Expression, BlockStatement],
+                       parenthesized: bool = False,
+                       modifiers: Optional[ModifierList] = None) -> LambdaExpression:
+    return LambdaExpression(NodeType.LAMBDA_EXPR, params, body, parenthesized, modifiers)
 
 
 def create_comma_expr(left: Expression, right: Expression) -> CommaExpression:
@@ -240,6 +251,14 @@ def create_local_variable_declaration(
                                     declarators)
 
 
+def create_anonymous_declarator() -> AnonymousDeclarator:
+    return AnonymousDeclarator(NodeType.ANONYMOUS_DECLARATOR)
+
+
+def create_destructuring_declarator(pattern: Expression) -> DestructuringDeclarator:
+    return DestructuringDeclarator(NodeType.DESTRUCTURING_DECLARATOR, pattern)
+
+
 # STATEMENTS
 
 
@@ -287,11 +306,14 @@ def create_do_stmt(condition: Expression, body: Statement) -> DoStatement:
 
 def create_for_in_stmt(
     decl_type: DeclaratorType,
-    decl: Declarator,
+    decl: Union[Declarator, Expression],
     iterable: Expression,
     body: Statement,
+    forin_type: ForInType = ForInType.COLON,
+    is_async: bool = False,
 ) -> ForInStatement:
-    return ForInStatement(NodeType.FOR_IN_STMT, decl_type, decl, iterable, body)
+    return ForInStatement(NodeType.FOR_IN_STMT, decl_type, decl, iterable, body,
+                          forin_type, is_async)
 
 
 def create_if_stmt(
@@ -332,14 +354,16 @@ def create_throw_stmt(expr: Expression) -> ThrowStatement:
     return ThrowStatement(NodeType.THROW_STMT, expr)
 
 
-def create_yield_stmt(expr: Expression) -> YieldStatement:
-    return YieldStatement(NodeType.YIELD_STMT, expr)
+def create_yield_stmt(expr: Optional[Expression] = None,
+                      is_delegate: bool = False) -> YieldStatement:
+    return YieldStatement(NodeType.YIELD_STMT, expr, is_delegate)
 
 
-def create_catch_clause(exception_types: TypeIdentifierList, exception: Identifier,
-                        body: BlockStatement,
-                        modifiers: Optional[ModifierList]) -> CatchClause:
-    return CatchClause(NodeType.CATCH_CLAUSE, exception_types, exception, body, modifiers)
+def create_catch_clause(body: BlockStatement,
+                        exception_types: Optional[TypeIdentifierList] = None,
+                        exception: Optional[Identifier] = None,
+                        modifiers: Optional[ModifierList] = None) -> CatchClause:
+    return CatchClause(NodeType.CATCH_CLAUSE, body, exception_types, exception, modifiers)
 
 
 def create_finally_clause(body: BlockStatement) -> FinallyClause:
@@ -352,7 +376,7 @@ def create_try_handlers(catch_clauses: List[CatchClause]) -> TryHandlers:
 
 def create_try_stmt(
     try_block: BlockStatement,
-    handlers: TryHandlers,
+    handlers: Optional[TryHandlers] = None,
     finally_clause: Optional[FinallyClause] = None,
 ) -> TryStatement:
     return TryStatement(NodeType.TRY_STMT, try_block, handlers, finally_clause)
@@ -392,15 +416,19 @@ def create_goto_stmt(label: Identifier) -> GotoStatement:
     return GotoStatement(NodeType.GOTO_STMT, label)
 
 
+def create_with_stmt(object: Expression, body: Statement) -> WithStatement:
+    return WithStatement(NodeType.WITH_STMT, object, body)
+
+
 # DECLARATIONS & DEFINITIONS
 
 
-def create_inferred_parameter(decl: Declarator) -> InferredParameter:
-    return InferredParameter(NodeType.INFERRED_PARAMETER, decl)
+def create_untyped_param(decl: Declarator) -> UntypedParameter:
+    return UntypedParameter(NodeType.UNTYPED_PARAMETER, decl)
 
 
-def create_formal_param(decl_type: DeclaratorType,
-                        decl: Optional[Declarator] = None) -> TypedFormalParameter:
+def create_typed_formal_param(decl_type: DeclaratorType,
+                              decl: Optional[Declarator] = None) -> TypedFormalParameter:
     return TypedFormalParameter(NodeType.FORMAL_PARAMETER, decl_type, decl)
 
 
@@ -422,14 +450,14 @@ def create_func_declarator(decl: Declarator,
 
 
 def create_func_header(
-    return_type: DeclaratorType,
     func_decl: FunctionDeclarator,
+    return_type: Optional[DeclaratorType] = None,
     dimensions: Optional[Dimensions] = None,
     throws: Optional[TypeIdentifierList] = None,
     modifiers: Optional[ModifierList] = None,
     type_params: Optional[TypeParameterList] = None,
 ) -> FunctionHeader:
-    return FunctionHeader(NodeType.FUNCTION_HEADER, return_type, func_decl, dimensions,
+    return FunctionHeader(NodeType.FUNCTION_HEADER, func_decl, return_type, dimensions,
                           throws, modifiers, type_params)
 
 
@@ -458,6 +486,25 @@ def create_template_declaration(params: TemplateParameterList,
     return TemplateDeclaration(NodeType.TEMPLATE_DECLARATION, params, func)
 
 
+# OBJECTS & CLASSES
+
+
+def create_computed_property_name(expr: Expression) -> ComputedPropertyName:
+    return ComputedPropertyName(NodeType.COMPUTED_PROPERTY_NAME, expr)
+
+
+def create_key_value_pair(key: Identifier, value: Expression) -> KeyValuePair:
+    return KeyValuePair(NodeType.KEYVALUE_PAIR, key, value)
+
+
+def create_object_members(members: List[ObjectMember]) -> ObjectMembers:
+    return ObjectMembers(NodeType.OBJECT_MEMBERS, members)
+
+
+def create_object(members: ObjectMembers) -> Object:
+    return Object(NodeType.OBJECT, members)
+
+
 # MISCS
 
 
@@ -483,3 +530,11 @@ def create_modifier(name: str) -> Modifier:
 
 def create_modifier_list(modifiers: List[Modifier]) -> ModifierList:
     return ModifierList(NodeType.MODIFIER_LIST, modifiers)
+
+
+def create_spread_element(expr: Expression) -> SpreadElement:
+    return SpreadElement(NodeType.SPREAD_ELEMENT, expr)
+
+
+def create_await_expr(expr: Expression) -> AwaitExpression:
+    return AwaitExpression(NodeType.AWAIT_EXPR, expr)

@@ -16,11 +16,9 @@ class ExpressionStatement(Statement):
     def _check_types(self):
         if self.node_type != NodeType.EXPRESSION_STMT:
             throw_invalid_type(self.node_type, self)
-        if not is_expression(self.expr):
+        if not is_expression(self.expr) and self.expr.node_type != NodeType.YIELD_STMT:
+            # NOTE: javascript yield is an expression...
             throw_invalid_type(self.expr.node_type, self, attr='expr')
-
-    def to_string(self) -> str:
-        return f'{self.expr.to_string()};'
 
     def get_children(self) -> List[Node]:
         return [self.expr]

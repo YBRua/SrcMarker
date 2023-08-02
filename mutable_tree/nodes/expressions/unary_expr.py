@@ -11,13 +11,19 @@ class UnaryOps(Enum):
     NEG = '-'
     NOT = '!'
     BITWISE_NOT = '~'
+    VOID = 'void'
+    TYPEOF = 'typeof'
+    DELETE = 'delete'  # js
 
 
 _unary_op_map = {
     '+': UnaryOps.PLUS,
     '-': UnaryOps.NEG,
     '!': UnaryOps.NOT,
-    '~': UnaryOps.BITWISE_NOT
+    '~': UnaryOps.BITWISE_NOT,
+    'void': UnaryOps.VOID,
+    'typeof': UnaryOps.TYPEOF,
+    'delete': UnaryOps.DELETE
 }
 
 
@@ -38,9 +44,6 @@ class UnaryExpression(Expression):
             raise TypeError(f'Invalid type: {self.node_type} for UnaryExpression')
         if not is_expression(self.operand):
             raise TypeError(f'Invalid type: {self.operand.node_type} for unary operand')
-
-    def to_string(self) -> str:
-        return f'{self.op.value}{self.operand.to_string()}'
 
     def get_children(self) -> List[Node]:
         return [self.operand]

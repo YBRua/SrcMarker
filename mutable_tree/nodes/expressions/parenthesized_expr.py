@@ -19,9 +19,6 @@ class ParenthesizedExpression(Expression):
             raise TypeError(
                 f'Invalid type: {self.expr.node_type} for parenthesized expr')
 
-    def to_string(self) -> str:
-        return f'({self.expr.to_string()})'
-
     def get_children(self) -> List[Node]:
         return [self.expr]
 

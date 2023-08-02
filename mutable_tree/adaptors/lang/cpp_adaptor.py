@@ -13,7 +13,7 @@ from ...nodes import (BlockStatement, BreakStatement, ContinueStatement, DoState
                       EmptyStatement, ExpressionStatement, ForInStatement, ForStatement,
                       IfStatement, LabeledStatement, ReturnStatement, SwitchStatement,
                       SwitchCase, SwitchCaseList, TryStatement, CatchClause, TryHandlers,
-                      WhileStatement, GotoStatement)
+                      WhileStatement, GotoStatement, ThrowStatement)
 from ...nodes import (VariableDeclarator, ArrayDeclarator, PointerDeclarator,
                       ReferenceDeclarator, InitializingDeclarator,
                       LocalVariableDeclaration)
@@ -99,6 +99,7 @@ def convert_statement(node: tree_sitter.Node) -> Statement:
         'function_definition': convert_function_definition,
         'template_declaration': convert_template_declaration,
         'goto_statement': convert_goto_stmt,
+        'throw_statement': convert_throw_stmt,
     }
 
     return stmt_convertors[node.type](node)
@@ -260,7 +261,8 @@ def convert_field_access(node: tree_sitter.Node) -> FieldAccess:
 
 
 def convert_parenthesized_expr(node: tree_sitter.Node) -> ParenthesizedExpression:
-    assert node.child_count == 3, 'parenthesized expr with != 3 children'
+    if node.child_count != 3:
+        raise RuntimeError(f'parenthesized expr with {node.child_count} != 3 children')
     expr = convert_expression(node.children[1])
     return node_factory.create_parenthesized_expr(expr)
 
@@ -487,7 +489,7 @@ def convert_formal_param(node: tree_sitter.Node) -> TypedFormalParameter:
     else:
         decl = None
 
-    return node_factory.create_formal_param(decl_type, decl)
+    return node_factory.create_typed_formal_param(decl_type, decl)
 
 
 def convert_variadic_parameter(node: tree_sitter.Node) -> VariadicParameter:
@@ -717,12 +719,17 @@ def convert_try_stmt(node: tree_sitter.Node) -> TryStatement:
     return node_factory.create_try_stmt(body, handlers)
 
 
+def convert_throw_stmt(node: tree_sitter.Node) -> ThrowStatement:
+    assert node.child_count == 3
+    return node_factory.create_throw_stmt(convert_expression(node.children[1]))
+
+
 def convert_function_definition(node: tree_sitter.Node) -> FunctionDeclaration:
     decl_type = _convert_declaration_specifiers(node, start_idx=0)
     decl = convert_declarator(node.child_by_field_name('declarator'))
     body = convert_block_stmt(node.child_by_field_name('body'))
 
-    header = node_factory.create_func_header(decl_type, decl)
+    header = node_factory.create_func_header(decl, decl_type)
     return node_factory.create_func_declaration(header, body)
 
 

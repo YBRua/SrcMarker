@@ -24,13 +24,6 @@ class NewExpression(Expression):
         if self.args is not None and self.args.node_type != NodeType.EXPRESSION_LIST:
             throw_invalid_type(self.args.node_type, self, 'args')
 
-    def to_string(self) -> str:
-        if self.args is not None:
-            arg_list = ", ".join(arg.to_string() for arg in self.args.get_children())
-            return f'new {self.type.to_string()}({arg_list})'
-        else:
-            return f'new {self.type.to_string()}'
-
     def get_children(self) -> List[Node]:
         if self.args is None:
             return [self.type, self.args]

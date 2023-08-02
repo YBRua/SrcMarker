@@ -1,3 +1,4 @@
+from mutable_tree.nodes.node import NodeType
 from ..node import Node, NodeType, NodeList
 from ..miscs import ModifierList
 from ..types import Dimensions, TypeIdentifierList, TypeParameterList
@@ -28,11 +29,8 @@ class VariadicParameter(FormalParameter):
         if self.node_type != NodeType.VARIADIC_PARAMETER:
             throw_invalid_type(self.node_type, self)
 
-    def to_string(self) -> str:
-        return '...'
 
-
-class InferredParameter(FormalParameter):
+class UntypedParameter(FormalParameter):
 
     def __init__(self, node_type: NodeType, decl: Declarator):
         super().__init__(node_type)
@@ -40,7 +38,7 @@ class InferredParameter(FormalParameter):
         self._check_types()
 
     def _check_types(self):
-        if self.node_type != NodeType.INFERRED_PARAMETER:
+        if self.node_type != NodeType.UNTYPED_PARAMETER:
             throw_invalid_type(self.node_type, self)
         if not is_declarator(self.declarator):
             throw_invalid_type(self.declarator.node_type, self, attr='declarator')
@@ -50,9 +48,6 @@ class InferredParameter(FormalParameter):
 
     def get_children_names(self) -> List[str]:
         return ['declarator']
-
-    def to_string(self) -> str:
-        return self.declarator.to_string()
 
 
 class TypedFormalParameter(FormalParameter):
@@ -83,12 +78,6 @@ class TypedFormalParameter(FormalParameter):
     def get_children_names(self) -> List[str]:
         return ['decl_type', 'declarator']
 
-    def to_string(self) -> str:
-        if self.declarator is not None:
-            return f'{self.decl_type.to_string()} {self.declarator.to_string()}'
-        else:
-            return self.decl_type.to_string()
-
 
 class SpreadParameter(FormalParameter):
 
@@ -111,9 +100,6 @@ class SpreadParameter(FormalParameter):
 
     def get_children_names(self) -> List[str]:
         return ['decl_type', 'declarator']
-
-    def to_string(self) -> str:
-        return f'{self.decl_type.to_string()} ...{self.declarator.to_string()}'
 
 
 class FormalParameterList(NodeList):
@@ -149,10 +135,6 @@ class FunctionDeclarator(Declarator):
         if self.parameters.node_type != NodeType.FORMAL_PARAMETER_LIST:
             throw_invalid_type(self.parameters.node_type, self, attr='parameters')
 
-    def to_string(self) -> str:
-        params_str = ', '.join([p.to_string() for p in self.parameters.node_list])
-        return f'{self.declarator.to_string()}({params_str})'
-
     def get_children(self) -> List[Node]:
         return [self.declarator, self.parameters]
 
@@ -164,8 +146,8 @@ class FunctionHeader(Node):
 
     def __init__(self,
                  node_type: NodeType,
-                 return_type: DeclaratorType,
                  func_decl: FunctionDeclarator,
+                 return_type: Optional[DeclaratorType] = None,
                  dimensions: Optional[Dimensions] = None,
                  throws: Optional[TypeIdentifierList] = None,
                  modifiers: Optional[ModifierList] = None,
@@ -185,7 +167,8 @@ class FunctionHeader(Node):
     def _check_types(self):
         if self.node_type != NodeType.FUNCTION_HEADER:
             throw_invalid_type(self.node_type, self)
-        if self.return_type.node_type != NodeType.DECLARATOR_TYPE:
+        if (self.return_type is not None
+                and self.return_type.node_type != NodeType.DECLARATOR_TYPE):
             throw_invalid_type(self.return_type.node_type, self, attr='return_type')
         if not is_declarator(self.func_decl):
             throw_invalid_type(self.func_decl.node_type, self, attr='name')
@@ -201,27 +184,6 @@ class FunctionHeader(Node):
         if (self.type_params is not None
                 and self.type_params.node_type != NodeType.TYPE_PARAMETER_LIST):
             throw_invalid_type(self.type_params.node_type, self, attr='type_params')
-
-    def to_string(self) -> str:
-        ret_type_str = self.return_type.to_string()
-        decl_str = self.func_decl.to_string()
-        res = f'{ret_type_str} {decl_str}'
-
-        if self.type_params is not None:
-            type_param_str = self.type_params.to_string()
-            res = f'{type_param_str} {res}'
-
-        if self.modifiers is not None:
-            modifiers_str = ' '.join(modifier.to_string()
-                                     for modifier in self.modifiers.get_children())
-            res = f'{modifiers_str} {res}'
-
-        if self.throws is not None:
-            throws_str = ', '.join(throw.to_string()
-                                   for throw in self.throws.get_children())
-            res = f'{res} throws {throws_str}'
-
-        return res
 
     def get_children(self) -> List[Node]:
         children = []
@@ -261,9 +223,6 @@ class FunctionDeclaration(Statement):
         if (self.body.node_type != NodeType.BLOCK_STMT
                 and self.body.node_type != NodeType.EMPTY_STMT):
             throw_invalid_type(self.body.node_type, self, attr='body')
-
-    def to_string(self) -> str:
-        return f'{self.header.to_string()} {self.body.to_string()}'
 
     def get_children(self) -> List[Node]:
         return [self.header, self.body]

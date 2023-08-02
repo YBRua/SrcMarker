@@ -1,8 +1,8 @@
-from .transformer import CodeTransformer
+from .transformer import RopGenCodeTransformer
 from ropgen_transform.py import init_declaration, var_init_split
 
 
-class MultiDefinitionTransformer(CodeTransformer):
+class MultiDefinitionTransformer(RopGenCodeTransformer):
     def __init__(self) -> None:
         super().__init__()
 

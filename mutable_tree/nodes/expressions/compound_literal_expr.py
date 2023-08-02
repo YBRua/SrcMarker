@@ -22,9 +22,6 @@ class CompoundLiteralExpression(Expression):
         if self.value.node_type != NodeType.ARRAY_EXPR:
             throw_invalid_type(self.value.node_type, self, 'value')
 
-    def to_string(self) -> str:
-        return f'{self.type_id.to_string()}{self.value.to_string()}'
-
     def get_children(self) -> List[Node]:
         return [self.type_id, self.value]
 

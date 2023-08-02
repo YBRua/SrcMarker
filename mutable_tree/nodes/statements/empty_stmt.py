@@ -14,9 +14,6 @@ class EmptyStatement(Statement):
         if self.node_type != NodeType.EMPTY_STMT:
             throw_invalid_type(self.node_type, self)
 
-    def to_string(self) -> str:
-        return ';'
-
     def get_children(self) -> List[Node]:
         return []
 

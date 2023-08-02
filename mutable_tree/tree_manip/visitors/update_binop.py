@@ -1,5 +1,5 @@
 from .visitor import TransformingVisitor
-from mutable_tree.nodes import Node
+from mutable_tree.nodes import Node, NodeType, is_primary_expression
 from mutable_tree.nodes import Literal, BinaryExpression
 from mutable_tree.nodes import AssignmentOps, BinaryOps, UpdateOps
 from mutable_tree.nodes import node_factory
@@ -24,9 +24,15 @@ class BinopUpdateVisitor(TransformingVisitor):
         return node_factory.create_assignment_expr(expr, binop_expr, AssignmentOps.EQUAL)
 
     def visit_ParenthesizedExpression(self,
-                               expr: UpdateExpression,
-                               parent: Optional[Node] = None,
-                               parent_attr: Optional[str] = None):
+                                      expr: UpdateExpression,
+                                      parent: Optional[Node] = None,
+                                      parent_attr: Optional[str] = None):
+        return (False, None)
+
+    def visit_BinaryExpression(self, expr, parent, parent_attr):
+        return (False, None)
+
+    def visit_CallExpression(self, expr, parent, parent_attr):
         return (False, None)
 
     def visit_UpdateExpression(self,
@@ -34,6 +40,10 @@ class BinopUpdateVisitor(TransformingVisitor):
                                parent: Optional[Node] = None,
                                parent_attr: Optional[str] = None):
         self.generic_visit(expr, parent, parent_attr)
+
+        if not is_primary_expression(expr.operand):
+            return (False, None)
+
         new_node = self._create_new_node(expr.operand, self.update_op_to_bin_op[expr.op])
         return (True, [new_node])
 

@@ -18,7 +18,3 @@ class TypeParameterList(NodeList):
         for i, type_id in enumerate(self.node_list):
             if type_id.node_type != NodeType.TYPE_PARAMETER:
                 throw_invalid_type(type_id.node_type, self, f'type_param#{i}')
-
-    def to_string(self) -> str:
-        body_str = ', '.join(type_param.to_string() for type_param in self.node_list)
-        return f'<{body_str}>'

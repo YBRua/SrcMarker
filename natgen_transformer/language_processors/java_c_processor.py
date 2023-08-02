@@ -694,7 +694,7 @@ class JavaAndCPPProcessor:
                 continue
             current_code_lines.append(line)
         code = "\n".join(current_code_lines) if len(current_code_lines) else ""
-        return code.encode()
+        return code
 
     @classmethod
     def extract_expression(self, root, code):

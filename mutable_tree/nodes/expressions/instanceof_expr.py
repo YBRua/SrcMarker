@@ -22,9 +22,6 @@ class InstanceofExpression(Expression):
         if self.right.node_type != NodeType.TYPE_IDENTIFIER:
             raise TypeError(f'Invalid type: {self.right.node_type} for instanceof RHS')
 
-    def to_string(self) -> str:
-        return f'{self.left.to_string()} instanceof {self.right.to_string()}'
-
     def get_children(self) -> List[Node]:
         return [self.left, self.right]
 

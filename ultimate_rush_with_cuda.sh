@@ -3,7 +3,9 @@ if [[ $# -lt 1 ]]; then
     return 1
 fi
 
+conda activate torch112
 GPU_ID=$(python find_gpu.py)
+# GPU_ID=6
 
 echo "Using GPU $GPU_ID"
 echo "Using dataset $1"
@@ -15,13 +17,16 @@ elif [[ $1 == "github_java_funcs" ]]; then
     LANG="java"
 elif [[ $1 == "csn_java" ]]; then
     LANG="java"
+elif [[ $1 == "csn_js" ]]; then
+    LANG="javascript"
 else
     echo "Unknown dataset $1"
     return 1
 fi
 
 NBITS=4  # Number of bits
-MODEL=gru  # Model architecture
+MODEL=transformer  # Model architecture
+VARMASK_PROB=0.5  # Probability of random variable mask
 # NOTE: also remember to change the log_prefix parameter
 
 CUDA_VISIBLE_DEVICES=$GPU_ID python train_main.py \
@@ -30,12 +35,13 @@ CUDA_VISIBLE_DEVICES=$GPU_ID python train_main.py \
     --dataset_dir=./datasets/$1 \
     --n_bits=$NBITS \
     --epochs=50 \
-    --log_prefix="$NBITS"bit_"$MODEL"_prerelease \
+    --log_prefix="$NBITS"bit_"$MODEL"_seed \
     --batch_size 64 \
     --model_arch=$MODEL \
     --shared_encoder \
-    --seed 42
-    # --scheduler
+    --varmask_prob $VARMASK_PROB \
+    --seed 1337 \
+    --scheduler
 
 # CUDA_VISIBLE_DEVICES=$GPU_ID python codebert_train.py \
 #     --lang=$LANG \

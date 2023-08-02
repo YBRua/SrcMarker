@@ -4,6 +4,7 @@ from mutable_tree.nodes import Literal, BinaryExpression
 from mutable_tree.nodes import AssignmentOps, BinaryOps, UpdateOps
 from mutable_tree.nodes import node_factory
 from mutable_tree.nodes import UpdateExpression, AssignmentExpression
+from mutable_tree.stringifiers import BaseStringifier
 from typing import Optional
 
 
@@ -48,12 +49,13 @@ class PrefixUpdateVisitor(TransformingVisitor):
         if (expr.op == AssignmentOps.EQUAL and isinstance(expr.right, BinaryExpression)):
             # i = i + 1
             # NOTE: this visitor do not convert i = 1 + i
-            lhs_str = expr.left.to_string()
+            stringifier = BaseStringifier()
+            lhs_str = stringifier.stringify(expr.left)
 
             bin_expr = expr.right
             binop = bin_expr.op
             bin_lhs = bin_expr.left
-            bin_lhs_str = bin_lhs.to_string()
+            bin_lhs_str = stringifier.stringify(bin_lhs)
             bin_rhs = bin_expr.right
             if binop == BinaryOps.PLUS or binop == BinaryOps.MINUS:
                 if ((lhs_str == bin_lhs_str)

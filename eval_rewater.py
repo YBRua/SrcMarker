@@ -1,5 +1,8 @@
+import os
+import json
 import torch
 import random
+import pickle
 import tree_sitter
 from tqdm import tqdm
 from collections import defaultdict
@@ -18,10 +21,10 @@ from models import (
 
 from metrics import calc_code_bleu
 from code_tokenizer import tokens_to_strings
-from eval_utils import JitAdversarialTransformProvider, compute_msg_acc
+from eval_utils import compute_msg_acc
 from code_transform_provider import CodeTransformProvider
 from runtime_data_manager import InMemoryJitRuntimeDataManager
-from data_processing import JsonlDatasetProcessor, DynamicWMCollator
+from data_processing import JsonlWMDatasetProcessor, DynamicWMCollator
 from logger_setup import setup_evaluation_logger
 import mutable_tree.transformers as ast_transformers
 
@@ -29,9 +32,12 @@ import mutable_tree.transformers as ast_transformers
 def parse_args_for_evaluation():
     parser = ArgumentParser()
     parser.add_argument('--dataset',
-                        choices=['github_c_funcs', 'github_java_funcs', 'csn_java'],
+                        choices=[
+                            'github_c_funcs', 'github_java_funcs', 'csn_java', 'csn_js',
+                            'mbjp', 'mbjsp', 'mbcpp'
+                        ],
                         default='github_c_funcs')
-    parser.add_argument('--lang', choices=['cpp', 'java'], default='c')
+    parser.add_argument('--lang', choices=['cpp', 'java', 'javascript'], default='c')
     parser.add_argument('--dataset_dir', type=str, default='./datasets/github_c_funcs')
     parser.add_argument('--n_bits', type=int, default=4)
     parser.add_argument('--checkpoint_path', type=str, default='./ckpts/something.pt')
@@ -40,6 +46,10 @@ def parse_args_for_evaluation():
 
     parser.add_argument('--model_arch', choices=['gru', 'transformer'], default='gru')
     parser.add_argument('--shared_encoder', action='store_true')
+
+    parser.add_argument('--var_transform_mode',
+                        choices=['replace', 'append'],
+                        default='replace')
 
     parser.add_argument('--write_output', action='store_true')
 
@@ -59,6 +69,7 @@ def main(args):
     DEVICE = torch.device('cuda')
     MODEL_ARCH = args.model_arch
     SHARED_ENCODER = args.shared_encoder
+    VAR_TRANSFORM_MODE = args.var_transform_mode
 
     # seed
     SEED = args.seed
@@ -73,6 +84,7 @@ def main(args):
         ast_transformers.CompoundIfTransformer(),
         ast_transformers.ConditionTransformer(),
         ast_transformers.LoopTransformer(),
+        ast_transformers.InfiniteLoopTransformer(),
         ast_transformers.UpdateTransformer(),
         ast_transformers.SameTypeDeclarationTransformer(),
         ast_transformers.VarDeclLocationTransformer(),
@@ -81,20 +93,21 @@ def main(args):
     ]
 
     transform_computer = CodeTransformProvider(LANG, ts_parser, code_transformers)
-    adv = JitAdversarialTransformProvider(
-        transform_computer,
-        transforms_per_file=f'./datasets/transforms_per_file_{DATASET}.json',
-        varname_path=f'./datasets/variable_names_{DATASET}.json',
-        lang=LANG)
 
-    dataset_processor = JsonlDatasetProcessor(LANG)
+    dataset_processor = JsonlWMDatasetProcessor(LANG)
 
     checkpoint_dict = torch.load(CKPT_PATH, map_location='cpu')
     vocab = checkpoint_dict['vocab']
     test_instances = dataset_processor.load_jsonl(DATASET_DIR, split='test')
+    raw_test_objs = dataset_processor.load_raw_jsonl(DATASET_DIR, split='test')
     test_dataset = dataset_processor.build_dataset(test_instances, vocab)
     print(f'Vocab size: {len(vocab)}')
     print(f'Test size: {len(test_dataset)}')
+
+    if VAR_TRANSFORM_MODE == 'replace':
+        vmask = vocab.get_valid_identifier_mask()
+    else:
+        vmask = vocab.get_valid_highfreq_mask(2**N_BITS * 32)
 
     transform_manager = InMemoryJitRuntimeDataManager(transform_computer, test_instances,
                                                       LANG)
@@ -144,11 +157,11 @@ def main(args):
     selector = TransformSelector(vocab_size=len(vocab),
                                  transform_capacity=transform_capacity,
                                  input_dim=FEATURE_DIM,
-                                 vocab_mask=vocab.get_valid_identifier_mask())
+                                 vocab_mask=vmask)
     rw_selector = TransformSelector(vocab_size=len(vocab),
                                     transform_capacity=transform_capacity,
                                     input_dim=FEATURE_DIM,
-                                    vocab_mask=vocab.get_valid_identifier_mask())
+                                    vocab_mask=vmask)
     approximator = ConcatApproximator(vocab_size=len(vocab),
                                       transform_capacity=transform_capacity,
                                       input_dim=FEATURE_DIM,
@@ -206,11 +219,18 @@ def main(args):
 
     adv_codebleu_res = defaultdict(int)
 
+    repo_wise = DATASET in {'csn_java', 'csn_js'}  # only for csn datasets
+    repowise_long_msg = defaultdict(list)
+    repowise_long_msg_adv = defaultdict(list)
+
     print('beginning evaluation')
     # eval starts from here
+    rewatermarked_objs = []
     with torch.no_grad():
         prog = tqdm(test_loader)
         for bid, batch in enumerate(prog):
+            test_obj = raw_test_objs[bid]
+            repo = test_obj['repo'] if 'repo' in test_obj else None
 
             (x, lengths, src_mask, instance_ids, wms, wmids) = batch
             wms = wms.float()
@@ -257,10 +277,10 @@ def main(args):
             ss_ids = torch.argmax(ss_output, dim=1).tolist()
 
             # transform code
-            ss_instances = transform_manager.get_transformed_codes_by_pred(
-                instance_ids, ss_ids)
+            ori_instances = transform_manager.get_original_instances(instance_ids)
             t_instances, updates = transform_manager.varname_transform_on_instances(
-                ss_instances, vs_ids)
+                ori_instances, vs_ids, mode=VAR_TRANSFORM_MODE)
+            t_instances = transform_manager.transform_on_instances(t_instances, ss_ids)
 
             # simulated decoding process
             dec_x, dec_l, dec_m = transform_manager.load_to_tensor(t_instances)
@@ -292,12 +312,10 @@ def main(args):
             rw_ss_ids = torch.argmax(rw_ss_output, dim=1)
 
             # transform code, again
-            rw_ss_instances = transform_manager.get_transformed_codes_by_pred(
-                instance_ids, rw_ss_ids.tolist())
-            # redo previous variable substitution
-            rw_ss_instances = adv.redo_varname_transform(rw_ss_instances, updates)
+            rw_instances = transform_manager.transform_on_instances(
+                t_instances, rw_ss_ids.tolist())
             rw_instances, rw_updates = transform_manager.rewatermark_varname_transform(
-                rw_ss_instances, rw_vs_ids.tolist(), updates)
+                rw_instances, rw_vs_ids.tolist(), updates, mode=VAR_TRANSFORM_MODE)
 
             # simulated decoding on re-watermarked code
             rw_x, rw_l, rw_m = transform_manager.load_to_tensor(rw_instances)
@@ -321,6 +339,18 @@ def main(args):
             # log results
             ori_instances = transform_manager.get_original_instances(instance_ids)
             for i in range(B):
+                if repo_wise:
+                    repowise_long_msg[repo].extend(wms[i].tolist())
+                    repowise_long_msg_adv[repo].extend(rw_preds[i].tolist())
+
+                adv_obj = {
+                    'watermark': wms[i].tolist(),
+                    'adv_watermark': rw_wms[i].tolist(),
+                    'after_watermark': rw_instances[i].source,
+                    'original_string': ori_instances[i].source,
+                }
+                rewatermarked_objs.append(adv_obj)
+
                 logger.info(f'Sample No.{n_samples + 1}')
                 logger.info(f'Watermark: {wms[i].tolist()}')
                 logger.info(f'Predicted: {preds[i].tolist()}')
@@ -367,6 +397,13 @@ def main(args):
             logger.info('Transformed vs ReWatermarking')
             logger.info(f'{key}: {adv_codebleu_res[key] / n_samples:.4f}')
             logger.info('-' * 80)
+
+        ckpt_name = os.path.basename(os.path.dirname(args.checkpoint_path))
+        if repo_wise:
+            pickle.dump([repowise_long_msg, repowise_long_msg_adv],
+                        open(f'./results/{ckpt_name}_rewater_long_{DATASET}.pkl', 'wb'))
+        with open(f'./results/{ckpt_name}_rewater_{DATASET}.json', 'w') as f:
+            json.dump(rewatermarked_objs, f, indent=4)
 
 
 if __name__ == '__main__':

@@ -22,9 +22,6 @@ class LabeledStatement(Statement):
         if not is_statement(self.stmt):
             throw_invalid_type(self.stmt.node_type, self, attr='stmt')
 
-    def to_string(self) -> str:
-        return f'{self.label.to_string()} : {self.stmt.to_string()}'
-
     def get_children(self) -> List[Node]:
         return [self.label, self.stmt]
 

@@ -19,12 +19,6 @@ class DeleteExpression(Expression):
         if not is_expression(self.operand):
             throw_invalid_type(self.operand.node_type, self, attr='operand')
 
-    def to_string(self) -> str:
-        if self.is_array:
-            return f'delete[] {self.operand.to_string()}'
-        else:
-            return f'delete {self.operand.to_string()}'
-
     def get_children(self) -> List[Node]:
         return [self.operand]
 

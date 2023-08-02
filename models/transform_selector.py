@@ -23,6 +23,7 @@ class Selector(nn.Module):
     def forward(self, code_feature: torch.Tensor, wm_feature: torch.Tensor):
         assert code_feature.shape[1] == wm_feature.shape[1]
         x = torch.cat([code_feature, wm_feature], dim=1)
+        # x = code_feature + wm_feature
         x = self.fc(x)
         x = self.bn(x)
         x = self.dropout(self.act(x))

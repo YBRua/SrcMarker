@@ -1,3 +1,4 @@
+import sys
 import torch
 import pickle
 from scipy.stats import binomtest
@@ -8,9 +9,7 @@ SEP_2 = 8 * 4
 SEP_3 = 33 * 4
 
 
-def null_hypothesis_test(fail_chance: float):
-    PICKLE_PATH = './results/4bit_gru_prerelease_42_csn_java_long_nowm.pkl'
-
+def null_hypothesis_test(fail_chance: float, pickle_path: str):
     repowise_long_gt: Dict[str, List[int]]
     repowise_long_msg: Dict[str, List[int]]
     pvalues_1 = dict()
@@ -18,7 +17,7 @@ def null_hypothesis_test(fail_chance: float):
     pvalues_3 = dict()
     pvalues_4 = dict()
 
-    repowise_long_msg, repowise_long_gt = pickle.load(open(PICKLE_PATH, 'rb'))
+    repowise_long_msg, repowise_long_gt = pickle.load(open(pickle_path, 'rb'))
 
     n_funcs = []
     total_matched_bits = 0
@@ -84,5 +83,8 @@ def null_hypothesis_test(fail_chance: float):
 if __name__ == '__main__':
     torch.manual_seed(42)
 
-    for fail_chance in [0., 0.1, 0.2, 0.3, 0.4]:
-        null_hypothesis_test(fail_chance)
+    if len(sys.argv) != 2:
+        print(f'Usage: {sys.argv[0]} <pickle_path>')
+        exit(0)
+
+    null_hypothesis_test(fail_chance=0, pickle_path=sys.argv[1])

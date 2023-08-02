@@ -23,17 +23,18 @@ from code_tokenizer import tokens_to_strings
 from eval_utils import compute_msg_acc
 from code_transform_provider import CodeTransformProvider
 from runtime_data_manager import InMemoryJitRuntimeDataManager
-from data_processing import JsonlDatasetProcessor, DynamicWMCollator
+from data_processing import JsonlWMDatasetProcessor, DynamicWMCollator
 from logger_setup import setup_evaluation_logger
 import mutable_tree.transformers as ast_transformers
 
 
 def parse_args_for_evaluation():
     parser = ArgumentParser()
-    parser.add_argument('--dataset',
-                        choices=['github_c_funcs', 'github_java_funcs', 'csn_java'],
-                        default='github_c_funcs')
-    parser.add_argument('--lang', choices=['cpp', 'java'], default='c')
+    parser.add_argument(
+        '--dataset',
+        choices=['github_c_funcs', 'github_java_funcs', 'csn_java', 'csn_js'],
+        default='github_c_funcs')
+    parser.add_argument('--lang', choices=['cpp', 'java', 'javascript'], default='c')
     parser.add_argument('--dataset_dir', type=str, default='./datasets/github_c_funcs')
     parser.add_argument('--n_bits', type=int, default=4)
     parser.add_argument('--checkpoint_path', type=str, default='./ckpts/something.pt')
@@ -72,6 +73,7 @@ def main(args):
         ast_transformers.CompoundIfTransformer(),
         ast_transformers.ConditionTransformer(),
         ast_transformers.LoopTransformer(),
+        ast_transformers.InfiniteLoopTransformer(),
         ast_transformers.UpdateTransformer(),
         ast_transformers.SameTypeDeclarationTransformer(),
         ast_transformers.VarDeclLocationTransformer(),
@@ -81,7 +83,7 @@ def main(args):
 
     transform_computer = CodeTransformProvider(LANG, ts_parser, code_transformers)
 
-    dataset_processor = JsonlDatasetProcessor(LANG)
+    dataset_processor = JsonlWMDatasetProcessor(LANG)
 
     checkpoint_dict = torch.load(CKPT_PATH, map_location='cpu')
     vocab = checkpoint_dict['vocab']

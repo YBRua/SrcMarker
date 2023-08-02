@@ -21,14 +21,6 @@ class TypeParameter(Node):
                 and self.extends.node_type != NodeType.TYPE_IDENTIFIER_LIST):
             throw_invalid_type(self.extends.node_type, self, attr='extends')
 
-    def to_string(self) -> str:
-        if self.extends is not None:
-            bounds_str = ' & '.join(type_id.to_string()
-                                    for type_id in self.extends.get_children())
-            return f'{self.type_identifier} extends {bounds_str}'
-        else:
-            return self.type_identifier
-
     def get_children(self) -> List[Node]:
         if self.extends is not None:
             return [self.extends]

@@ -14,9 +14,6 @@ class Identifier(Expression):
         if self.node_type != NodeType.IDENTIFIER:
             raise TypeError(f'Invalid type: {self.node_type} for Identifier')
 
-    def to_string(self) -> str:
-        return str(self.name)
-
     def get_children(self) -> List[Node]:
         return []
 

@@ -23,9 +23,6 @@ class CastExpression(Expression):
         if self.type.node_type != NodeType.TYPE_IDENTIFIER:
             raise TypeError(f'Invalid type: {self.type.node_type} for Cast type')
 
-    def to_string(self) -> str:
-        return f'({self.type.to_string()}) {self.value.to_string()}'
-
     def get_children(self) -> List[Node]:
         return [self.type, self.value]
 

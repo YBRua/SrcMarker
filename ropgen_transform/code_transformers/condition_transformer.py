@@ -1,9 +1,9 @@
-from .transformer import CodeTransformer
+from .transformer import RopGenCodeTransformer
 from ..xml_utils import load_doc, init_parser
 from ropgen_transform.py import switch_if, ternary
 
 
-class ConditionTransformer(CodeTransformer):
+class ConditionTransformer(RopGenCodeTransformer):
     def __init__(self) -> None:
         super().__init__()
 

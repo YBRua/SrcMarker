@@ -22,9 +22,6 @@ class DoStatement(Statement):
         if not is_expression(self.condition):
             raise TypeError(f'Invalid type {self.condition.node_type} for do condition')
 
-    def to_string(self) -> str:
-        return f'do\n {self.body.to_string()} \nwhile ({self.condition.to_string()});'
-
     def get_children(self) -> List[Node]:
         return [self.body, self.condition]
 

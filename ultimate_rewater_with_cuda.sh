@@ -13,15 +13,21 @@ elif [[ $2 == "github_java_funcs" ]]; then
     LANG="java"
 elif [[ $2 == "csn_java" ]]; then
     LANG="java"
+elif [[ $2 == "csn_js" ]]; then
+    LANG="javascript"
+elif [[ $2 == "mbjp" ]]; then
+    LANG="java"
+elif [[ $2 == "mbjsp" ]]; then
+    LANG="javascript"
 else
     echo "Unknown dataset $2"
     return 1
 fi
 
 FILE=eval_rewater.py
-CHECKPOINT_PATH="./ckpts/4bit_gru_tau_42_csn_java/models_best.pt"
-ADV_PATH="./ckpts/4bit_gru_seed_1337_csn_java/models_best.pt"
-
+CHECKPOINT_PATH="./ckpts/4bit_transformer_seed_1337_csn_js/models_best.pt"
+ADV_PATH="./ckpts/4bit_transformer_seed_1337_csn_js/models_best.pt"
+conda activate torch112
 CUDA_VISIBLE_DEVICES=$1 python $FILE \
     --checkpoint_path $CHECKPOINT_PATH \
     --adv_path $ADV_PATH \
@@ -29,4 +35,5 @@ CUDA_VISIBLE_DEVICES=$1 python $FILE \
     --dataset $2 \
     --dataset_dir ./datasets/$2 \
     --n_bits 4 \
+    --model_arch transformer \
     --shared_encoder

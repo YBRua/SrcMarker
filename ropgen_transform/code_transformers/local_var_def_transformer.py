@@ -1,8 +1,8 @@
-from .transformer import CodeTransformer
+from .transformer import RopGenCodeTransformer
 from ropgen_transform.py import re_temp, temporary_var
 
 
-class LocalVarDefTransformer(CodeTransformer):
+class LocalVarDefTransformer(RopGenCodeTransformer):
     def __init__(self) -> None:
         super().__init__()
 

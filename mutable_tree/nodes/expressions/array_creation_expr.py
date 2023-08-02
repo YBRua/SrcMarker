@@ -29,15 +29,6 @@ class ArrayCreationExpression(Expression):
         if (self.value is not None and self.value.node_type != NodeType.ARRAY_EXPR):
             throw_invalid_type(self.value.node_type, self, 'value')
 
-    def to_string(self) -> str:
-        type_str = self.type_id.to_string()
-        dims_str = self.dimensions.to_string()
-        if self.value is not None:
-            value_str = self.value.to_string()
-            return f'new {type_str}{dims_str} {value_str}'
-        else:
-            return f'new {type_str}{dims_str}'
-
     def get_children(self) -> List[Node]:
         res = [self.type_id, self.dimensions]
         if self.value is not None:

@@ -34,12 +34,6 @@ class UpdateExpression(Expression):
         if not is_expression(self.operand):
             raise TypeError(f'Invalid type: {self.operand.node_type} for update operand')
 
-    def to_string(self) -> str:
-        if self.prefix:
-            return f'{self.op.value}{self.operand.to_string()}'
-        else:
-            return f'{self.operand.to_string()}{self.op.value}'
-
     def get_children(self) -> List[Node]:
         return [self.operand]
 

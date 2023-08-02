@@ -25,3 +25,6 @@ from .pointer_expr import PointerExpression, PointerOps, get_pointer_op
 from .delete_expr import DeleteExpression
 from .qualified_identifier import ScopeResolution, QualifiedIdentifier
 from .compound_literal_expr import CompoundLiteralExpression
+
+from .spread_element import SpreadElement
+from .await_expr import AwaitExpression

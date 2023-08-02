@@ -23,11 +23,6 @@ class SynchronizedStatement(Statement):
         if self.body.node_type != NodeType.BLOCK_STMT:
             throw_invalid_type(self.body.node_type, self, attr='body')
 
-    def to_string(self) -> str:
-        expr_str = self.expr.to_string()
-        body_str = self.body.to_string()
-        return f'synchronized {expr_str} {body_str}'
-
     def get_children(self) -> List[Node]:
         return [self.expr, self.body]
 

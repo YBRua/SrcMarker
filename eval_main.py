@@ -21,23 +21,25 @@ from models import (
     MLP2,
 )
 
+from data_processing import CodeVocab
 from metrics import calc_code_bleu
 from metrics.syntax_match import check_tree_validity
 from code_tokenizer import tokens_to_strings
 from eval_utils import JitAdversarialTransformProvider, compute_msg_acc
 from code_transform_provider import CodeTransformProvider
 from runtime_data_manager import InMemoryJitRuntimeDataManager
-from data_processing import JsonlDatasetProcessor, DynamicWMCollator
+from data_processing import JsonlWMDatasetProcessor, DynamicWMCollator
 from logger_setup import setup_evaluation_logger
 import mutable_tree.transformers as ast_transformers
 
 
 def parse_args_for_evaluation():
     parser = ArgumentParser()
-    parser.add_argument('--dataset',
-                        choices=['github_c_funcs', 'github_java_funcs', 'csn_java'],
-                        default='github_c_funcs')
-    parser.add_argument('--lang', choices=['cpp', 'java'], default='c')
+    parser.add_argument(
+        '--dataset',
+        choices=['github_c_funcs', 'github_java_funcs', 'csn_java', 'csn_js'],
+        default='github_c_funcs')
+    parser.add_argument('--lang', choices=['cpp', 'java', 'javascript'], default='c')
     parser.add_argument('--dataset_dir', type=str, default='./datasets/github_c_funcs')
     parser.add_argument('--n_bits', type=int, default=4)
     parser.add_argument('--checkpoint_path', type=str, default='./ckpts/something.pt')
@@ -48,13 +50,19 @@ def parse_args_for_evaluation():
 
     parser.add_argument('--var_adv', action='store_true')
     parser.add_argument('--var_nomask', action='store_true')
+    parser.add_argument('--varmask_prob', type=float, default=0.5)
     parser.add_argument('--var_adv_proportion', type=float, default=None)
     parser.add_argument('--var_adv_budget', type=int, default=None)
+
+    parser.add_argument('--all_adv', action='store_true')
 
     parser.add_argument('--model_arch', choices=['gru', 'transformer'], default='gru')
     parser.add_argument('--shared_encoder', action='store_true')
 
-    parser.add_argument('--all_adv', action='store_true')
+    parser.add_argument('--var_transform_mode',
+                        choices=['replace', 'append'],
+                        default='replace')
+
     parser.add_argument('--write_output', action='store_true')
 
     return parser.parse_args()
@@ -73,6 +81,8 @@ def main(args):
     MODEL_ARCH = args.model_arch
     SHARED_ENCODER = args.shared_encoder
     RANDOM_MASK = not args.var_nomask
+    VAR_MASK_PROB = args.varmask_prob
+    VAR_TRANSFORM_MODE = args.var_transform_mode
 
     # seed
     SEED = args.seed
@@ -87,6 +97,7 @@ def main(args):
         ast_transformers.CompoundIfTransformer(),
         ast_transformers.ConditionTransformer(),
         ast_transformers.LoopTransformer(),
+        ast_transformers.InfiniteLoopTransformer(),
         ast_transformers.UpdateTransformer(),
         ast_transformers.SameTypeDeclarationTransformer(),
         ast_transformers.VarDeclLocationTransformer(),
@@ -101,10 +112,10 @@ def main(args):
         varname_path=f'./datasets/variable_names_{DATASET}.json',
         lang=LANG)
 
-    dataset_processor = JsonlDatasetProcessor(LANG)
+    dataset_processor = JsonlWMDatasetProcessor(LANG)
 
     checkpoint_dict = torch.load(CKPT_PATH, map_location='cpu')
-    vocab = checkpoint_dict['vocab']
+    vocab: CodeVocab = checkpoint_dict['vocab']
     test_instances = dataset_processor.load_jsonl(DATASET_DIR, split='test')
     raw_test_objs = dataset_processor.load_raw_jsonl(DATASET_DIR, split='test')
     test_dataset = dataset_processor.build_dataset(test_instances, vocab)
@@ -115,9 +126,13 @@ def main(args):
     print(f'Test size: {len(test_dataset)}')
     print(f'  Original test size: {len(test_instances)}')
 
-    valid_mask = vocab.get_valid_identifier_mask()
-    print(f'  invalid mask size: {sum(valid_mask)}')
-    print(f'  valid size: {len(valid_mask) - sum(valid_mask)}')
+    if VAR_TRANSFORM_MODE == 'replace':
+        vmask = vocab.get_valid_identifier_mask()
+    else:
+        vmask = vocab.get_valid_highfreq_mask(2**N_BITS * 32)
+
+    print(f'  invalid mask size: {sum(vmask)}')
+    print(f'  valid size: {len(vmask) - sum(vmask)}')
 
     transform_manager = InMemoryJitRuntimeDataManager(transform_computer, test_instances,
                                                       LANG)
@@ -140,35 +155,24 @@ def main(args):
         encoder = GRUEncoder(vocab_size=len(vocab),
                              hidden_size=FEATURE_DIM,
                              embedding_size=FEATURE_DIM)
-        if SHARED_ENCODER:
-            extract_encoder = None
-        else:
-            extract_encoder = ExtractGRUEncoder(vocab_size=len(vocab),
-                                                hidden_size=FEATURE_DIM,
-                                                embedding_size=FEATURE_DIM)
     elif MODEL_ARCH == 'transformer':
         FEATURE_DIM = 768
         encoder = TransformerEncoderExtractor(vocab_size=len(vocab),
                                               embedding_size=FEATURE_DIM,
                                               hidden_size=FEATURE_DIM)
-        if SHARED_ENCODER:
-            extract_encoder = None
-        else:
-            extract_encoder = TransformerEncoderExtractor(vocab_size=len(vocab),
-                                                          embedding_size=FEATURE_DIM,
-                                                          hidden_size=FEATURE_DIM)
 
     selector = TransformSelector(vocab_size=len(vocab),
                                  transform_capacity=transform_capacity,
                                  input_dim=FEATURE_DIM,
-                                 vocab_mask=vocab.get_valid_identifier_mask(),
-                                 random_mask_prob=0.75)
+                                 vocab_mask=vmask,
+                                 random_mask_prob=VAR_MASK_PROB)
     approximator = ConcatApproximator(vocab_size=len(vocab),
                                       transform_capacity=transform_capacity,
                                       input_dim=FEATURE_DIM,
                                       output_dim=FEATURE_DIM)
     wm_encoder = WMLinearEncoder(N_BITS, embedding_dim=FEATURE_DIM)
     wm_decoder = MLP2(output_dim=N_BITS, bn=False, input_dim=FEATURE_DIM)
+    extract_encoder = None
 
     print(f'loading checkpoint from {CKPT_PATH}')
     ckpt_save = torch.load(CKPT_PATH, map_location='cpu')
@@ -179,6 +183,9 @@ def main(args):
     wm_decoder.load_state_dict(ckpt_save['wm_decoder'])
     selector.load_state_dict(ckpt_save['selector'])
     approximator.load_state_dict(ckpt_save['approximator'])
+
+    tot_params = (sum([p.numel() for p in encoder.parameters()]))
+    print(f'Total parameters: {tot_params:,}')
 
     encoder.to(DEVICE)
     if extract_encoder is not None:
@@ -212,8 +219,10 @@ def main(args):
 
     codebleu_res = defaultdict(int)
     adv_codebleu_res = defaultdict(int)
+    repo_wise = DATASET in {'csn_java', 'csn_js'}  # only for csn datasets
     repowise_long_msg = defaultdict(list)
     repowise_long_gt = defaultdict(list)
+    repowise_long_msg_adv = defaultdict(list)
 
     valid_t = 0
     valid_all = len(test_dataset)
@@ -224,7 +233,7 @@ def main(args):
         prog = tqdm(test_loader)
         for bid, batch in enumerate(prog):
             test_obj = copy.deepcopy(raw_test_objs[bid])
-            repo = test_obj['repo']
+            repo = test_obj['repo'] if 'repo' in test_obj else None
 
             adv_obj = copy.deepcopy(raw_test_objs[bid])
 
@@ -263,10 +272,11 @@ def main(args):
             ss_ids = torch.argmax(ss_output, dim=1).tolist()
 
             # transform code
-            ss_instances = transform_manager.get_transformed_codes_by_pred(
-                instance_ids, ss_ids)
+            ori_instances = transform_manager.get_original_instances(instance_ids)
             t_instances, updates = transform_manager.varname_transform_on_instances(
-                ss_instances, vs_ids)
+                ori_instances, vs_ids, mode=VAR_TRANSFORM_MODE)
+            t_instances = transform_manager.transform_on_instances(t_instances, ss_ids)
+
             embed_time = time.time() - embed_start
 
             # simulated decoding process
@@ -290,8 +300,9 @@ def main(args):
             tot_acc += torch.sum(torch.mean((preds == wms).float(), dim=1)).item()
             tot_msg_acc += compute_msg_acc(preds, wms, n_bits=args.n_bits)
 
-            repowise_long_msg[repo].extend(preds[0].tolist())
-            repowise_long_gt[repo].extend(wms[0].long().tolist())
+            if repo_wise:
+                repowise_long_msg[repo].extend(preds[0].tolist())
+                repowise_long_gt[repo].extend(wms[0].long().tolist())
 
             # update instance
             test_obj['watermark'] = wms[0].long().tolist()
@@ -304,10 +315,8 @@ def main(args):
             if args.trans_adv:
                 # sadv_ids = torch.randint(0, transform_capacity, (B, ), device=DEVICE)
                 sadv_ids = adv.get_adv_style_transforms(t_instances, args.n_trans_adv)
-                sadv_instances = transform_manager.get_transformed_codes_by_pred(
-                    instance_ids, sadv_ids)
-                # recover substituted variable names
-                sadv_instances = adv.redo_varname_transform(sadv_instances, updates)
+                sadv_instances = transform_manager.transform_on_instances(
+                    t_instances, sadv_ids)
                 sadv_x, sadv_l, sadv_m = transform_manager.load_to_tensor(sadv_instances)
                 sadv_x = sadv_x.to(DEVICE)
                 sadv_m = sadv_m.to(DEVICE)
@@ -330,11 +339,15 @@ def main(args):
                 adv_obj['after_watermark'] = tokens_to_strings(
                     sadv_instances[0].source_tokens)
                 adv_test_objs.append(adv_obj)
+                if repo_wise:
+                    repowise_long_msg_adv[repo].extend(sadv_preds[0].tolist())
 
             # variable substitution attack
             if args.var_adv:
                 vadv_instances, vadv_updates = adv.adv_varname_transform(
                     t_instances, proportion=args.var_adv_proportion, var_updates=updates)
+                vadv_instances = transform_manager.transform_on_instances(
+                    vadv_instances, ss_ids, allow_cache=False)  # recover style
                 vadv_x, vadv_l, vadv_m = transform_manager.load_to_tensor(vadv_instances)
                 vadv_x = vadv_x.to(DEVICE)
                 vadv_m = vadv_m.to(DEVICE)
@@ -357,6 +370,8 @@ def main(args):
                 adv_obj['after_watermark'] = tokens_to_strings(
                     vadv_instances[0].source_tokens)
                 adv_test_objs.append(adv_obj)
+                if repo_wise:
+                    repowise_long_msg_adv[repo].extend(vadv_preds[0].tolist())
 
             if args.all_adv:
                 # dual-channel adversary
@@ -392,6 +407,8 @@ def main(args):
                 adv_obj['after_watermark'] = tokens_to_strings(
                     dcadv_instances[0].source_tokens)
                 adv_test_objs.append(adv_obj)
+                if repo_wise:
+                    repowise_long_msg_adv[repo].extend(dcadv_preds[0].tolist())
 
             # log results
             ori_instances = transform_manager.get_original_instances(instance_ids)
@@ -543,9 +560,24 @@ def main(args):
                 fo.write(json.dumps(instance, ensure_ascii=False) + '\n')
         print(f'Wrote adversarial examples to {fo_name}')
 
-    if args.write_output:
-        pickle.dump([repowise_long_msg, repowise_long_gt],
-                    open(f'./results/{ckpt_name}_long.pkl', 'wb'))
+    if repo_wise:
+        if args.write_output:
+            pickle.dump([repowise_long_msg, repowise_long_gt],
+                        open(f'./results/{ckpt_name}_long.pkl', 'wb'))
+        if args.var_adv:
+            label = (int(args.var_adv_proportion * 100)
+                     if args.var_adv_proportion is not None else args.var_adv_budget)
+            adv_res_save = f'./results/{ckpt_name}_vadv{label}_long.pkl'
+            pickle.dump([repowise_long_msg_adv, repowise_long_gt],
+                        open(adv_res_save, 'wb'))
+        if args.trans_adv:
+            adv_res_save = f'./results/{ckpt_name}_tadv_{args.n_trans_adv}_long.pkl'
+            pickle.dump([repowise_long_msg_adv, repowise_long_gt],
+                        open(adv_res_save, 'wb'))
+        if args.all_adv:
+            adv_res_save = f'./results/{ckpt_name}_dcadv_long.pkl'
+            pickle.dump([repowise_long_msg_adv, repowise_long_gt],
+                        open(adv_res_save, 'wb'))
 
 
 if __name__ == '__main__':

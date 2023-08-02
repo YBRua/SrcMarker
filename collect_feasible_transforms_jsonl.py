@@ -4,12 +4,12 @@ import json
 import tree_sitter
 from tqdm import tqdm
 from collections import defaultdict
-from itertools import product
 from multiprocessing import Pool
 
-from data_processing import JsonlDatasetProcessor
+from data_processing import JsonlWMDatasetProcessor
 from code_transform_provider import CodeTransformProvider
 import mutable_tree.transformers as ast_transformers
+from mutable_tree.stringifiers import JavaScriptStringifier
 
 from typing import List
 
@@ -28,17 +28,46 @@ def collect_tokens(root: tree_sitter.Node) -> List[str]:
     return tokens
 
 
-def mp_transform_worker_impl(instance_id: str, code: str, key: str):
+def mp_transform_worker_impl(lang: str, instance_id: str, code: str, key: str):
+    code_transformers: List[ast_transformers.CodeTransformer] = [
+        ast_transformers.IfBlockSwapTransformer(),
+        ast_transformers.CompoundIfTransformer(),
+        ast_transformers.ConditionTransformer(),
+        ast_transformers.LoopTransformer(),
+        ast_transformers.InfiniteLoopTransformer(),
+        ast_transformers.UpdateTransformer(),
+        ast_transformers.SameTypeDeclarationTransformer(),
+        ast_transformers.VarDeclLocationTransformer(),
+        ast_transformers.VarInitTransformer(),
+        ast_transformers.VarNameStyleTransformer()
+    ]
+
+    parser = tree_sitter.Parser()
+    parser_lang = tree_sitter.Language('./parser/languages.so', lang)
+    parser.set_language(parser_lang)
+    transform_computer = CodeTransformProvider(lang, parser, code_transformers)
+
     feasible = False
     transform_name = key.split('.')[0]
-    new_code = transform_computer.code_transform(code, [key])
+    try:
+        new_code = transform_computer.code_transform(code, [key])
+    except Exception as e:
+        print(f'failed to transform {instance_id} {transform_name} {key}')
+        print(f'message: {e}')
+        new_code = code
+        feasible = False
 
-    if LANG == 'java':
+    if lang == 'java':
         code_wrapped = f'public class Test {{\n{code}\n}}'
         new_code_wrapped = f'public class Test {{\n{new_code}\n}}'
-    else:
+    elif lang == 'cpp' or lang == 'javascript':
         code_wrapped = code
         new_code_wrapped = new_code
+
+    if lang == 'javascript':
+        normalized_code = transform_computer.to_mutable_tree(code_wrapped)
+        normalized_code = JavaScriptStringifier().stringify(normalized_code)
+        code_wrapped = normalized_code
 
     code_tree = parser.parse(bytes(code_wrapped, 'utf-8'))
     new_code_tree = parser.parse(bytes(new_code_wrapped, 'utf-8'))
@@ -72,11 +101,11 @@ def mp_transform_worker(job_args):
     try:
         return mp_transform_worker_impl(*job_args)
     except Exception as e:
-        # for arg in job_args:
-        #     print(arg)
-        # import traceback
-        # traceback.print_exc()
+        import traceback
+        traceback.print_exc()
         print(type(e).__name__, e)
+        for arg in job_args:
+            print(arg)
 
 
 if __name__ == '__main__':
@@ -85,10 +114,12 @@ if __name__ == '__main__':
         print('usage: python collect_feasible_transforms_jsonl.py <dataset>')
 
     DATASET = args[0]
-    if DATASET in {'csn_java', 'github_java_funcs'}:
+    if DATASET in {'csn_java', 'github_java_funcs', 'mbjp'}:
         LANG = 'java'
-    elif DATASET in {'github_c_funcs'}:
+    elif DATASET in {'github_c_funcs', 'mbcpp'}:
         LANG = 'cpp'
+    elif DATASET in {'csn_js', 'mbjsp'}:
+        LANG = 'javascript'
     else:
         raise ValueError(f'Unknown dataset: {DATASET}')
 
@@ -102,6 +133,7 @@ if __name__ == '__main__':
         ast_transformers.CompoundIfTransformer(),
         ast_transformers.ConditionTransformer(),
         ast_transformers.LoopTransformer(),
+        ast_transformers.InfiniteLoopTransformer(),
         ast_transformers.UpdateTransformer(),
         ast_transformers.SameTypeDeclarationTransformer(),
         ast_transformers.VarDeclLocationTransformer(),
@@ -109,18 +141,16 @@ if __name__ == '__main__':
         ast_transformers.VarNameStyleTransformer()
     ]
 
-    parser = tree_sitter.Parser()
-    parser_lang = tree_sitter.Language('./parser/languages.so', LANG)
-    parser.set_language(parser_lang)
-    transform_computer = CodeTransformProvider(LANG, parser, code_transformers)
+    data_processor = JsonlWMDatasetProcessor(LANG)
+    if DATASET in {'mbjsp', 'mbjp', 'mbcpp'}:
+        all_instances = data_processor._load_jsonl_fast(DATA_DIR, split='test')
+    else:
+        instances = data_processor.load_jsonls_fast(DATA_DIR, show_progress=False)
+        train_instances = instances['train']
+        valid_instances = instances['valid']
+        test_instances = instances['test']
 
-    data_processor = JsonlDatasetProcessor(LANG)
-    instances = data_processor.load_jsonls_fast(DATA_DIR, show_progress=False)
-    train_instances = instances['train']
-    valid_instances = instances['valid']
-    test_instances = instances['test']
-
-    all_instances = train_instances + valid_instances + test_instances
+        all_instances = train_instances + valid_instances + test_instances
 
     transforms_per_file = defaultdict(dict)
     if do_scan:
@@ -129,7 +159,7 @@ if __name__ == '__main__':
             for t in code_transformers:
                 keys = t.get_available_transforms()
                 for key in keys:
-                    jobs.append((instance.id, instance.source, key))
+                    jobs.append((LANG, instance.id, instance.source, key))
 
         with Pool(os.cpu_count() // 2) as p:
             results = p.imap(mp_transform_worker, jobs)
@@ -144,6 +174,7 @@ if __name__ == '__main__':
                 transform_list = instance_dict[t_name]
                 if feasible:
                     transform_list.append(key)
+
         json.dump(transforms_per_file,
                   open(f'./datasets/transforms_per_file_{DATASET}.json', 'w'),
                   indent=2)
@@ -151,43 +182,42 @@ if __name__ == '__main__':
     if do_compute_mask:
         transforms_per_file = json.load(
             open(f'./datasets/transforms_per_file_{DATASET}.json', 'r'))
-        all_keys = []
-        for t in code_transformers:
-            keys = t.get_available_transforms()
-            all_keys.append(keys)
 
         feasible_transforms_per_file = dict()
         for iid, instance_dict in transforms_per_file.items():
-            all_possible_transforms = list(product(*all_keys))
-
-            # find all infeasible transforms
-            not_available = []
+            instance_dict_copy = dict(instance_dict)
             for t in code_transformers:
+                transformer_name = t.name
                 theoreticals = t.get_available_transforms()
 
-                if t.name not in instance_dict:
-                    # all transforms under this category is infeasible
-                    feasible_set = set()
-                else:
-                    feasible_set = set(instance_dict[t.name])
-
-                if len(feasible_set) < len(theoreticals):
+                feasibles = list(instance_dict[transformer_name])
+                if len(feasibles) < len(theoreticals):
                     # at least one transform is infeasible
                     for tt in theoreticals:
-                        if tt not in feasible_set:
+                        if tt not in feasibles:
                             # add first transform as a default value
-                            feasible_set.add(tt)
+                            feasibles.append(tt)
                             break
 
-                not_available.extend([t for t in theoreticals if t not in feasible_set])
+                instance_dict_copy[transformer_name] = feasibles
 
-            # filter file_list with not_available
-            feasibles = []
-            for t_sequence in all_possible_transforms:
-                if not any([t in not_available for t in t_sequence]):
-                    feasibles.append(t_sequence)
+            def dfs_transform_compose(idict):
+                all_feasible_transforms = []
 
-            feasible_transforms_per_file[iid] = feasibles
+                def _dfs_transform_compose(idict, i, cur_transforms):
+                    if i == len(code_transformers):
+                        all_feasible_transforms.append(cur_transforms)
+                        return
+
+                    transformer_name = code_transformers[i].name
+                    for transform in idict[transformer_name]:
+                        _dfs_transform_compose(idict, i + 1, cur_transforms + [transform])
+
+                _dfs_transform_compose(idict, 0, [])
+                return all_feasible_transforms
+
+            all_feasible_transforms = dfs_transform_compose(instance_dict_copy)
+            feasible_transforms_per_file[iid] = all_feasible_transforms
 
         json.dump(feasible_transforms_per_file,
                   open(f'./datasets/feasible_transform_{DATASET}.json', 'w'),
