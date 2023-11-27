@@ -192,7 +192,8 @@ Alternatively, you can also use the `script_train.sh` to conveniently start trai
 ```sh
 # by default, it trains a 4-bit GRU model on a designated dataset,
 # you have to manually change some of the variables in the script to run different tasks
-# so8rce script_train.sh <dataset>
+# such as model architectures and checkpoint names
+# source script_train.sh <dataset>
 source script_train.sh csn_java
 ```
 
@@ -244,12 +245,13 @@ python eval_main.py \
     --n_trans_adv 2
 ```
 
-Alternatively, you can also refer to `ultimate_eval_with_cuda.sh` for more evaluation scripts. However, you may also have to manually modify some of the parameters in it.
+Alternatively, you can also refer to `script_eval_main.sh` for more evaluation scripts. However, you may also have to manually modify some of the parameters in it.
 
 ```sh
 # you have to manually change some of the variables in the script to run different tasks
-# . ultimate_eval_with_cuda.sh <gpu_id> <dataset>
-source ultimate_eval_with_cuda.sh 0 csn_java
+# such as checkpint paths and model architectures
+# source script_eval_main.sh <gpu_id> <dataset>
+source script_eval_main.sh 0 csn_java
 ```
 
 #### Evaluate on MBXP
@@ -313,7 +315,7 @@ The collected data would be put in `./datasets/dewatermark/<dataset_name>/<model
 
 ```sh
 # NOTE: You may want a smaller batch size because this seq2seq GRU takes up plenty of GPU memory.
-CUDA_VISIBLE_DEVICES=$1 python dewatermark_gru.py \
+python dewatermark_gru.py \
     --epochs 25 \
     --seed 42 \
     --dataset csn_java \
@@ -345,7 +347,7 @@ Then use `dewatermark_gru.py` to de-watermark the outputs of the victim.
 
 ```sh
 # this is used for launching attacks with the de-watermarking model
-CUDA_VISIBLE_DEVICES=$1 python dewatermark_gru.py \
+python dewatermark_gru.py \
     --seed 42 \
     --dataset csn_java \
     --lang java \
