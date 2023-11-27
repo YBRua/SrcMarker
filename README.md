@@ -5,6 +5,10 @@
 
 ## Getting Started
 
+- [Setting up the environment](#setting-up-the-environment)
+- [Preparing datasets](#datasets)
+- [Preprocessing](#preprocessing)
+
 ### Setting up the Environment
 
 #### Installing Python Packages and Dependencies
@@ -58,11 +62,11 @@ The pre-processed datasets for GitHub-C and GitHub-Java (originally available [h
 
 #### MBXP
 
-The MBXP datasets are originally available at [amazon-science/mxeval](https://github.com/amazon-science/mxeval). We also include the filtered version along with this submission.
+The MBXP datasets are originally available at [amazon-science/mxeval](https://github.com/amazon-science/mxeval). The filtered MBXP datasets used in our project is also included in this repository.
 
 #### CodeSearchNet
 
-The CSN datasets are available on the project site of [CodeSearchNet](https://github.com/github/CodeSearchNet). Follow the steps below to further process the dataset after downloading it.
+The CSN datasets are available on the project site of [CodeSearchNet](https://github.com/github/CodeSearchNet). Since CSN datasets are relatively large, they are not included here. Follow the steps below to further process the dataset after downloading it.
 
 1. Follow the instructions on [CodeXGLUE (code summarization task)](https://github.com/microsoft/CodeXGLUE/tree/main/Code-Text/code-to-text) to filter the dataset.
 2. Run `dataset_filter.py` to filter out samples with grammar errors or unsupported features.
@@ -103,6 +107,8 @@ After all datasets are processed, the final directory should look like this
         - test.jsonl
 ```
 
+Note that you should ensure the dataset directory is **identical** to the structure listed above, or otherwise the data-loading modules would not be able to correctly locate the datasets.
+
 ### Preprocessing
 
 Several preprocessing steps are required before running training or evaluation scripts. These preprocessing steps provide metadata for the subsequent training/evaluation scripts.
@@ -134,6 +140,15 @@ python collect_feasible_transforms_jsonl.py mbjsp
 ```
 
 ## Running the scripts
+
+- [Training](#training)
+- Evaluations
+  - [Evaluation](#main-evaluation-script)
+  - [MBXP evaluation](#evaluate-on-mbxp)
+  - [Re-watermarking](#re-watermarking)
+  - [De-watermarking](#de-watermarking)
+  - [Project-level watermark verification](#project-level-verification)
+- [MutableAST benchmark](#benchmarking-mutableast-on-mbxp)
 
 ### Training
 
@@ -172,13 +187,13 @@ python train_main.py \
     --scheduler
 ```
 
-Alternatively, you can also use the `ultimate_rush_with_cuda.sh` to conveniently start training. However, you may have to manually modify some of the parameters in it.
+Alternatively, you can also use the `script_train.sh` to conveniently start training. However, you might have to manually modify some of the arguments in it.
 
 ```sh
 # by default, it trains a 4-bit GRU model on a designated dataset,
 # you have to manually change some of the variables in the script to run different tasks
-# . ultimate_rush_with_cuda.sh <dataset>
-source ultimate_rush_with_cuda.sh csn_java
+# so8rce script_train.sh <dataset>
+source script_train.sh csn_java
 ```
 
 Checkpoints will be saved in `./ckpts`.
@@ -200,7 +215,8 @@ python eval_main.py \
     --model_arch=gru \
     --shared_encoder \
     --write_output
-# controls whether to write results to ./results directory
+
+# --write_output controls whether to write results to ./results directory
 # the results could be used in null-hypothesis test
 
 # run random variable substitution attack with 25% proportion
@@ -253,6 +269,8 @@ python eval_mbxp.py \
     --shared_encoder
 ```
 
+You can also refer to the script `script_eval_mbxp.sh` for more examples, or use the script directly for running MBXP evaluations.
+
 #### Re-watermarking
 
 Evaluation for re-watermarking attack is available in `eval_rewater.py`.
@@ -267,6 +285,8 @@ python eval_rewater.py \
     --n_bits 4 \
     --shared_encoder
 ```
+
+You can also refer to the script `script_eval_rewater.sh` for more examples, or use the script directly.
 
 #### De-watermarking
 
@@ -360,7 +380,30 @@ where
 - `attack_results` is the path to the output of the de-watermarking model (json file produced in Step 3)
 - `model_arch` and `checkpoint_path` should be the architecture and path to the victim model
 
-### Benchmarking on MBXP
+#### Project-level Watermark Verification
+
+#### Project-level Watermark Aggregation
+
+To run the project level watermark verification, you will first need to run `eval_main.py` on CSN datasets (`csn_java` or `csn_js`), with the `--write_output` argument. Please refer to the documentations in [Main Evaluation Script](#main-evaluation-script).
+
+The evaluation script will then group the ground truths and extracted watermarks by repository and store them into a pickle file, located in `./results`. The pickle file will be named as `<checkpoint_name>_<dataset>_long.pkl`.
+
+- For example, `./results/4bit_transformer_main_42_csn_js_long.pkl`.
+
+If an attack is performed (e.g., 50% random variable substitution), the script will also store the watermark extracted from the attacked code in *another* pickle file, named as `<checkpint_name>_<dataset>_<attack>_long.pkl`.
+
+- For example, `4bit_transformer_main_42_csn_js_vadv75_long.pkl`.
+
+#### Project-level Verification
+
+One can then verify the project-level watermark with `null_hypothesis_test.py`
+
+```sh
+# python null_hypothesis_test.py <path_to_pickle>
+python null_hypothesis_test.py ./results/4bit_transformer_main_42_csn_js_long.pkl
+```
+
+### Benchmarking MutableAST on MBXP
 
 `benchmark_mbxp.py`, `benchmark_mbxp_natgen.py` and `benchmark_mbxp_ropgen.py` are used for benchmarking mutableast, NatGen and RopGen respectively. Simply use them as
 
