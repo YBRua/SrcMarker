@@ -69,7 +69,13 @@ def split_string_literal(c_token: str) -> List[str]:
     # remove escape sequences
     stripped = re.sub(r'\\.', '', c_token)
 
-    return stripped.strip().split()
+    # remove enclosing quotes
+    if stripped.startswith('"') or stripped.startswith("'"):
+        stripped = stripped[1:]
+    if stripped.endswith('"') or stripped.endswith("'"):
+        stripped = stripped[:-1]
+
+    return ['"', stripped.strip().split(), '"']
 
 
 def split_identifier(c_token: str) -> List[str]:
@@ -151,10 +157,11 @@ class CodeTokenizer:
                 # NOTE: for some reason sctokenizer may create "comments" in the code
                 continue
             if token.token_type == TokenType.STRING:
-                # res.extend(split_string_literal(token.token_value))
-                res.append('__string__')
+                res.extend(split_string_literal(token.token_value))
+                # res.append('__string__')
             elif token.token_type == TokenType.CONSTANT:
-                res.append('__constant__')
+                res.append(token.token_value)
+                # res.append('__constant__')
             elif token.token_type == TokenType.IDENTIFIER:
                 res.extend(split_identifier(token.token_value))
             elif len(token.token_value) > 40:

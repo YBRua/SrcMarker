@@ -34,6 +34,7 @@ ATTACK_CHECKPOINT="dewatermark_gru_4bit_transformer_seed_1337_csn_js"
 
 conda activate torch112
 
+# this is used for training the de-watermarking model
 # CUDA_VISIBLE_DEVICES=$1 python $FILE \
 #     --epochs 50 \
 #     --seed 42 \
@@ -46,6 +47,7 @@ conda activate torch112
 #     --do_train
 
 
+# this is used for launching attacks with the de-watermarking model
 CUDA_VISIBLE_DEVICES=$1 python $FILE \
     --seed 42 \
     --dataset $2 \
