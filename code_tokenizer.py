@@ -1,6 +1,5 @@
 import re
 import sys
-import warnings
 import tree_sitter
 
 from sctokenizer import CppTokenizer, JavaTokenizer
@@ -75,7 +74,7 @@ def split_string_literal(c_token: str) -> List[str]:
     if stripped.endswith('"') or stripped.endswith("'"):
         stripped = stripped[:-1]
 
-    return ['"', stripped.strip().split(), '"']
+    return ['"'] + stripped.strip().split() + ['"']
 
 
 def split_identifier(c_token: str) -> List[str]:
@@ -112,7 +111,7 @@ class JavaScriptTokenizer:
                           node.start_point[1]))
             elif node.type in {
                     'identifier', 'shorthand_property_identifier',
-                    'shorthan_property_identifier_pattern'
+                    'shorthand_property_identifier_pattern'
             }:
                 tokens.append(
                     Token(node.text.decode(), TokenType.IDENTIFIER, node.start_point[0],
