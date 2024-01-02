@@ -35,6 +35,8 @@ The following packages are optional, only required by certain experiment scripts
 
 We use `tree-sitter` for MutableAST construction, syntax checking and codebleu computation. Follow the steps below to build a parser for `tree-sitter`.
 
+Notice that our current implementation of MutableAST is based on specific versions of tree-sitter parsers. The latest tree-sitter parsers might have updated their grammar, which could be incompatible with MutableAST. Therefore please checkout to the commits as is specified in the shell script below, or otherwise MutableAST might break.
+
 ```sh
 # create a directory to store sources
 mkdir tree-sitter
@@ -42,8 +44,19 @@ cd tree-sitter
 
 # clone parser repositories
 git clone https://github.com/tree-sitter/tree-sitter-java.git
+cd tree-sitter-java
+git checkout 6c8329e2da78fae78e87c3c6f5788a2b005a4afc
+cd ..
+
 git clone https://github.com/tree-sitter/tree-sitter-cpp.git
-git clone https://github.com/tree-sitter/tree-sitter-c.git
+cd tree-sitter-cpp
+git checkout 0e7b7a02b6074859b51c1973eb6a8275b3315b1d
+cd ..
+
+git clone https://github.com/tree-sitter/tree-sitter-javascript.git
+cd tree-sitter-javascript
+git checkout f772967f7b7bc7c28f845be2420a38472b16a8ee
+cd ..
 
 # go back to parent dir
 cd ..
