@@ -4,36 +4,92 @@ from lxml import etree
 from ropgen_transform.xml_utils import load_doc, init_parser, XML_NS
 
 KEYWORDS = {
-    "auto", "abstract", "assert", "bool", "boolean", "break", "byte", "case", "catch",
-    "char", "class", "const", "continue", "default", "do", "double", "else", "enum",
-    "extern", "extends", "final", "finally", "float", "for", "goto", "if", "elif",
-    "implements", "import", "instanceof", "int", "interface", "long", "native", "new",
-    "package", "private", "protected", "public", "return", "short", "static", "strictfp",
-    "super", "switch", "synchronized", "this", "throw", "throws", "transient", "try",
-    "void", "volatile", "while", "ifndef", "ifdef", "endif", "define", "undef", "include",
-    "pragma", "typedef", "unsigned", "using"
+    "auto",
+    "abstract",
+    "assert",
+    "bool",
+    "boolean",
+    "break",
+    "byte",
+    "case",
+    "catch",
+    "char",
+    "class",
+    "const",
+    "continue",
+    "default",
+    "do",
+    "double",
+    "else",
+    "enum",
+    "extern",
+    "extends",
+    "final",
+    "finally",
+    "float",
+    "for",
+    "goto",
+    "if",
+    "elif",
+    "implements",
+    "import",
+    "instanceof",
+    "int",
+    "interface",
+    "long",
+    "native",
+    "new",
+    "package",
+    "private",
+    "protected",
+    "public",
+    "return",
+    "short",
+    "static",
+    "strictfp",
+    "super",
+    "switch",
+    "synchronized",
+    "this",
+    "throw",
+    "throws",
+    "transient",
+    "try",
+    "void",
+    "volatile",
+    "while",
+    "ifndef",
+    "ifdef",
+    "endif",
+    "define",
+    "undef",
+    "include",
+    "pragma",
+    "typedef",
+    "unsigned",
+    "using",
 }
 
 
 def get_decl_stmts(e):
-    return e('//src:decl_stmt')
+    return e("//src:decl_stmt")
 
 
 def get_names(e):
-    return e('//src:name')
+    return e("//src:name")
 
 
 def get_decl(elem):
-    return elem.xpath('src:decl', namespaces=XML_NS)
+    return elem.xpath("src:decl", namespaces=XML_NS)
 
 
 def get_declname(elem):
-    return elem.xpath('src:name', namespaces=XML_NS)
+    return elem.xpath("src:name", namespaces=XML_NS)
 
 
 def save_tree_to_file(tree, file):
-    with open(file, 'w') as f:
-        f.write(etree.tostring(tree).decode('utf8'))
+    with open(file, "w") as f:
+        f.write(etree.tostring(tree).decode("utf8"))
 
 
 def is_all_lowercase(name):
@@ -61,24 +117,24 @@ def is_initcap(name):
 
 
 def is_underscore(name):
-    return '_' in name.strip('_')
+    return "_" in name.strip("_")
 
 
 def is_init_underscore(name):
-    return name[0] == '_' and name[1:].strip('_') != ''
+    return name[0] == "_" and name[1:].strip("_") != ""
 
 
 def is_init_dollar(name):
-    return name[0] == '$' and name[1:].strip('$') != ''
+    return name[0] == "$" and name[1:].strip("$") != ""
 
 
 def underscore_to_initcap(name):
     if not is_underscore(name):
         return name
-    new_name = ''.join(name[0].upper())
+    new_name = "".join(name[0].upper())
     is_prev_underscore = False
     for ch in name[1:]:
-        if ch == '_':
+        if ch == "_":
             is_prev_underscore = True
         else:
             if is_prev_underscore:
@@ -92,10 +148,10 @@ def underscore_to_initcap(name):
 def underscore_to_camel(name):
     if not is_underscore(name):
         return name
-    new_name = ''
+    new_name = ""
     is_prev_underscore = False
     for ch in name:
-        if ch == '_':
+        if ch == "_":
             is_prev_underscore = True
         else:
             if is_prev_underscore:
@@ -128,10 +184,10 @@ def init_symbol_to_underscore(name):
 def camel_to_underscore(name):
     if not is_camel_case(name):
         return name
-    new_name = ''
+    new_name = ""
     for ch in name:
         if ch.isupper():
-            new_name += '_' + ch.lower()
+            new_name += "_" + ch.lower()
         else:
             new_name += ch
     return new_name
@@ -140,10 +196,10 @@ def camel_to_underscore(name):
 def initcap_to_underscore(name):
     if not is_initcap(name):
         return name
-    new_name = ''.join(name[0].lower())
+    new_name = "".join(name[0].lower())
     for ch in name[1:]:
         if ch.isupper():
-            new_name += '_' + ch.lower()
+            new_name += "_" + ch.lower()
         else:
             new_name += ch
     return new_name
@@ -178,7 +234,7 @@ def normalize_name(name: str, allow_raising: bool = False):
         return name
     else:
         if allow_raising:
-            raise RuntimeError(f'cannot convert variable {name} to snake_case')
+            raise RuntimeError(f"cannot convert variable {name} to snake_case")
         else:
             return name
 
@@ -191,7 +247,7 @@ def normalized_to_init_cap(name: str):
     elif is_underscore(name):
         return underscore_to_initcap(name)
     else:
-        raise RuntimeError(f'{name} is not a normalized name')
+        raise RuntimeError(f"{name} is not a normalized name")
 
 
 def normalized_to_init_symbol(name: str, symbol: str):
@@ -202,12 +258,12 @@ def normalized_to_init_symbol(name: str, symbol: str):
     elif is_underscore(name):
         return underscore_to_init_symbol(name, symbol)
     else:
-        raise RuntimeError(f'{name} is not a normalized name')
+        raise RuntimeError(f"{name} is not a normalized name")
 
 
 def transform_all(evaluator, dst_style):
     decls = [get_decls(evaluator)]
-    tree_root = evaluator('/*')[0].getroottree()
+    tree_root = evaluator("/*")[0].getroottree()
 
     for item in decls:
         for decl in item:
@@ -221,21 +277,21 @@ def transform_all(evaluator, dst_style):
 
             normalized_name_text = normalize_name(name_text, allow_raising=True)
             new_name = normalized_name_text
-            if dst_style == '1.1':
+            if dst_style == "1.1":
                 new_name = underscore_to_camel(normalized_name_text)
-            elif dst_style == '1.2':
+            elif dst_style == "1.2":
                 new_name = normalized_to_init_cap(normalized_name_text)
-            elif dst_style == '1.3':
+            elif dst_style == "1.3":
                 new_name = normalized_name_text
-            elif dst_style == '1.4':
-                new_name = normalized_to_init_symbol(normalized_name_text, '_')
-            elif dst_style == '1.5':
-                new_name = normalized_to_init_symbol(normalized_name_text, '$')
+            elif dst_style == "1.4":
+                new_name = normalized_to_init_symbol(normalized_name_text, "_")
+            elif dst_style == "1.5":
+                new_name = normalized_to_init_symbol(normalized_name_text, "$")
 
             if new_name in KEYWORDS:
-                new_name = new_name + '_'
+                new_name = new_name + "_"
 
-            whitelist = ['main', 'size', 'operator', 'case']
+            whitelist = ["main", "size", "operator", "case"]
             names = get_names(evaluator)
             name_list = [name.text for name in names]
             if new_name in whitelist or new_name in name_list:
@@ -256,7 +312,7 @@ def transform_all(evaluator, dst_style):
 # 'dst_style' the style of target author
 def transform(evaluator, src_style, dst_style):
     decls = [get_decls(evaluator)]
-    tree_root = evaluator('/*')[0].getroottree()
+    tree_root = evaluator("/*")[0].getroottree()
 
     for item in decls:
         for decl in item:
@@ -269,52 +325,60 @@ def transform(evaluator, src_style, dst_style):
                 name_text = name_node.text
 
             src_dst_tuple = (src_style, dst_style)
-            if src_dst_tuple == ('1.1', '1.2'):
+            if src_dst_tuple == ("1.1", "1.2"):
                 new_name = underscore_to_initcap(camel_to_underscore(name_text))
-            elif src_dst_tuple == ('1.1', '1.3'):
+            elif src_dst_tuple == ("1.1", "1.3"):
                 new_name = camel_to_underscore(name_text)
-            elif src_dst_tuple == ('1.1', '1.4'):
-                new_name = underscore_to_init_symbol(camel_to_underscore(name_text), '_')
-            elif src_dst_tuple == ('1.1', '1.5'):
-                new_name = underscore_to_init_symbol(camel_to_underscore(name_text), '$')
-            elif src_dst_tuple == ('1.2', '1.1'):
+            elif src_dst_tuple == ("1.1", "1.4"):
+                new_name = underscore_to_init_symbol(
+                    camel_to_underscore(name_text), "_"
+                )
+            elif src_dst_tuple == ("1.1", "1.5"):
+                new_name = underscore_to_init_symbol(
+                    camel_to_underscore(name_text), "$"
+                )
+            elif src_dst_tuple == ("1.2", "1.1"):
                 new_name = underscore_to_camel(initcap_to_underscore(name_text))
-            elif src_dst_tuple == ('1.2', '1.3'):
+            elif src_dst_tuple == ("1.2", "1.3"):
                 new_name = initcap_to_underscore(name_text)
-            elif src_dst_tuple == ('1.2', '1.4'):
-                new_name = underscore_to_init_symbol(initcap_to_underscore(name_text),
-                                                     '_')
-            elif src_dst_tuple == ('1.2', '1.5'):
-                new_name = underscore_to_init_symbol(initcap_to_underscore(name_text),
-                                                     '$')
-            elif src_dst_tuple == ('1.3', '1.1'):
+            elif src_dst_tuple == ("1.2", "1.4"):
+                new_name = underscore_to_init_symbol(
+                    initcap_to_underscore(name_text), "_"
+                )
+            elif src_dst_tuple == ("1.2", "1.5"):
+                new_name = underscore_to_init_symbol(
+                    initcap_to_underscore(name_text), "$"
+                )
+            elif src_dst_tuple == ("1.3", "1.1"):
                 new_name = underscore_to_camel(name_text)
-            elif src_dst_tuple == ('1.3', '1.2'):
+            elif src_dst_tuple == ("1.3", "1.2"):
                 new_name = underscore_to_initcap(name_text)
-            elif src_dst_tuple == ('1.3', '1.4'):
-                new_name = underscore_to_init_symbol(name_text, '_')
-            elif src_dst_tuple == ('1.3', '1.4'):
-                new_name = underscore_to_init_symbol(name_text, '$')
-            elif src_dst_tuple == ('1.4', '1.1'):
+            elif src_dst_tuple == ("1.3", "1.4"):
+                new_name = underscore_to_init_symbol(name_text, "_")
+            elif src_dst_tuple == ("1.3", "1.4"):
+                new_name = underscore_to_init_symbol(name_text, "$")
+            elif src_dst_tuple == ("1.4", "1.1"):
                 new_name = underscore_to_camel(init_symbol_to_underscore(name_text))
-            elif src_dst_tuple == ('1.4', '1.2'):
+            elif src_dst_tuple == ("1.4", "1.2"):
                 new_name = underscore_to_initcap(init_symbol_to_underscore(name_text))
-            elif src_dst_tuple == ('1.4', '1.3'):
+            elif src_dst_tuple == ("1.4", "1.3"):
                 new_name = init_symbol_to_underscore(name_text)
-            elif src_dst_tuple == ('1.4', '1.5'):
-                new_name = underscore_to_init_symbol(init_symbol_to_underscore(name_text),
-                                                     '$')
-            elif src_dst_tuple == ('1.5', '1.1'):
+            elif src_dst_tuple == ("1.4", "1.5"):
+                new_name = underscore_to_init_symbol(
+                    init_symbol_to_underscore(name_text), "$"
+                )
+            elif src_dst_tuple == ("1.5", "1.1"):
                 new_name = underscore_to_camel(init_symbol_to_underscore(name_text))
-            elif src_dst_tuple == ('1.5', '1.2'):
+            elif src_dst_tuple == ("1.5", "1.2"):
                 new_name = underscore_to_initcap(init_symbol_to_underscore(name_text))
-            elif src_dst_tuple == ('1.5', '1.3'):
+            elif src_dst_tuple == ("1.5", "1.3"):
                 new_name = init_symbol_to_underscore(name_text)
-            elif src_dst_tuple == ('1.5', '1.4'):
-                new_name = underscore_to_init_symbol(init_symbol_to_underscore(name_text),
-                                                     '_')
+            elif src_dst_tuple == ("1.5", "1.4"):
+                new_name = underscore_to_init_symbol(
+                    init_symbol_to_underscore(name_text), "_"
+                )
 
-            whitelist = ['main', 'size', 'operator', 'case']
+            whitelist = ["main", "size", "operator", "case"]
             names = get_names(evaluator)
             name_list = [name.text for name in names]
             if new_name in whitelist or new_name in name_list:
@@ -338,19 +402,21 @@ def transform_standalone_stmts(e):
         print(initcap_to_underscore(name_text))
 
 
-def program_transform(program_path: str,
-                      src_style: str,
-                      dst_style: str,
-                      out_fname: str = './style/style.xml'):
+def program_transform(
+    program_path: str,
+    src_style: str,
+    dst_style: str,
+    out_fname: str = "./style/style.xml",
+):
     doc = load_doc(program_path)
     evaluator = init_parser(doc)
     transform(evaluator, src_style, dst_style)
     save_tree_to_file(doc, out_fname)
 
 
-def program_transform_all(program_path: str,
-                          dst_style: str,
-                          out_fname: str = './style/style.xml'):
+def program_transform_all(
+    program_path: str, dst_style: str, out_fname: str = "./style/style.xml"
+):
     doc = load_doc(program_path)
     evaluator = init_parser(doc)
     transform_all(evaluator, dst_style)
@@ -362,8 +428,8 @@ def etree_transform(evaluator, dst_style: str):
     return evaluator
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     doc = load_doc(sys.argv[1])
     e = init_parser(doc)
-    transform(e, '1.3', '1.1')
-    save_tree_to_file(doc, './var_name_style.xml')
+    transform(e, "1.3", "1.1")
+    save_tree_to_file(doc, "./var_name_style.xml")

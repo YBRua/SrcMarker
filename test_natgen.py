@@ -2,16 +2,16 @@ import torch
 from transformers import T5ForConditionalGeneration, RobertaTokenizer
 
 
-TOKENIZER_NAME = 'roberta-base'
-MODEL_TYPE = 'codet5'
-STATE_DICT_PATH = './ckpts/checkpoint-25000/'
-DEVICE = torch.device('cuda')
+TOKENIZER_NAME = "roberta-base"
+MODEL_TYPE = "codet5"
+STATE_DICT_PATH = "./ckpts/checkpoint-25000/"
+DEVICE = torch.device("cuda")
 
 tokenizer = RobertaTokenizer.from_pretrained(STATE_DICT_PATH)
 model = T5ForConditionalGeneration.from_pretrained(STATE_DICT_PATH)
 
 tot_params = sum(p.numel() for p in model.parameters())
-print(f'Total number of parameters: {tot_params:,}')
+print(f"Total number of parameters: {tot_params:,}")
 
 model.to(DEVICE)
 model.eval()
@@ -31,7 +31,7 @@ int b_search(int* arr, int target, int low, int high) {
     return -1;
 }"""
 
-input_ids = tokenizer.encode(input_str, return_tensors='pt')
+input_ids = tokenizer.encode(input_str, return_tensors="pt")
 input_ids = input_ids.to(DEVICE)
 
 res = model.generate(input_ids, max_length=512, num_beams=10, early_stopping=True)

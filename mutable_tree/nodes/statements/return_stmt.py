@@ -14,9 +14,12 @@ class ReturnStatement(Statement):
     def _check_types(self):
         if self.node_type != NodeType.RETURN_STMT:
             throw_invalid_type(self.node_type, self)
-        if (self.expr is not None and not is_expression(self.expr)
-                and self.expr.node_type != NodeType.FUNCTION_DEFINITION):
-            throw_invalid_type(self.expr.node_type, self, attr='expr')
+        if (
+            self.expr is not None
+            and not is_expression(self.expr)
+            and self.expr.node_type != NodeType.FUNCTION_DEFINITION
+        ):
+            throw_invalid_type(self.expr.node_type, self, attr="expr")
 
     def get_children(self) -> List[Node]:
         if self.expr is not None:
@@ -25,4 +28,4 @@ class ReturnStatement(Statement):
             return []
 
     def get_children_names(self) -> List[str]:
-        return ['expr']
+        return ["expr"]

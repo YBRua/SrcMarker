@@ -4,9 +4,9 @@ from ..tree_manip.visitors import ForToWhileVisitor, WhileToForVisitor
 
 
 class LoopTransformer(CodeTransformer):
-    name = 'LoopTransformer'
-    TRANSFORM_LOOP_FOR = 'LoopTransformer.for_loop'
-    TRANSFORM_LOOP_WHILE = 'LoopTransformer.while_loop'
+    name = "LoopTransformer"
+    TRANSFORM_LOOP_FOR = "LoopTransformer.for_loop"
+    TRANSFORM_LOOP_WHILE = "LoopTransformer.while_loop"
 
     def __init__(self) -> None:
         super().__init__()

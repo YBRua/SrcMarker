@@ -15,19 +15,22 @@ class ComputedPropertyName(Node):
         if self.node_type != NodeType.COMPUTED_PROPERTY_NAME:
             throw_invalid_type(self.node_type, self)
         if not is_expression(self.expr):
-            throw_invalid_type(self.expr.node_type, self, 'expr')
+            throw_invalid_type(self.expr.node_type, self, "expr")
 
     def get_children(self) -> List[Node]:
         return [self.expr]
 
     def get_children_names(self) -> List[str]:
-        return ['expr']
+        return ["expr"]
 
 
 class KeyValuePair(Node):
-    def __init__(self, node_type: NodeType, key: Union[Identifier, Literal,
-                                                       ComputedPropertyName],
-                 value: Expression):
+    def __init__(
+        self,
+        node_type: NodeType,
+        key: Union[Identifier, Literal, ComputedPropertyName],
+        value: Expression,
+    ):
         # NOTE: value should be a pattern
         # but we ignore the differences for the moment
         super().__init__(node_type)
@@ -39,18 +42,22 @@ class KeyValuePair(Node):
         if self.node_type != NodeType.KEYVALUE_PAIR:
             throw_invalid_type(self.node_type, self)
         if self.key.node_type not in {
-                NodeType.IDENTIFIER, NodeType.LITERAL, NodeType.COMPUTED_PROPERTY_NAME
+            NodeType.IDENTIFIER,
+            NodeType.LITERAL,
+            NodeType.COMPUTED_PROPERTY_NAME,
         }:
-            throw_invalid_type(self.key.node_type, self, 'key')
-        if (not is_expression(self.value)
-                and self.value.node_type != NodeType.FUNCTION_DEFINITION):
-            throw_invalid_type(self.value.node_type, self, 'value')
+            throw_invalid_type(self.key.node_type, self, "key")
+        if (
+            not is_expression(self.value)
+            and self.value.node_type != NodeType.FUNCTION_DEFINITION
+        ):
+            throw_invalid_type(self.value.node_type, self, "value")
 
     def get_children(self) -> List[Node]:
         return [self.key, self.value]
 
     def get_children_names(self) -> List[str]:
-        return ['key', 'value']
+        return ["key", "value"]
 
 
 ObjectMember = Union[KeyValuePair, SpreadElement, FunctionDeclaration]
@@ -68,10 +75,12 @@ class ObjectMembers(NodeList):
 
         for i, member in enumerate(self.node_list):
             if member.node_type not in {
-                    NodeType.KEYVALUE_PAIR, NodeType.SPREAD_ELEMENT,
-                    NodeType.FUNCTION_DEFINITION, NodeType.IDENTIFIER
+                NodeType.KEYVALUE_PAIR,
+                NodeType.SPREAD_ELEMENT,
+                NodeType.FUNCTION_DEFINITION,
+                NodeType.IDENTIFIER,
             }:
-                throw_invalid_type(member.node_type, self, f'member#{i}')
+                throw_invalid_type(member.node_type, self, f"member#{i}")
 
 
 class Object(Expression):
@@ -84,10 +93,10 @@ class Object(Expression):
         if self.node_type != NodeType.OBJECT:
             throw_invalid_type(self.node_type, self)
         if self.members.node_type != NodeType.OBJECT_MEMBERS:
-            throw_invalid_type(self.members.node_type, self, 'members')
+            throw_invalid_type(self.members.node_type, self, "members")
 
     def get_children(self) -> List[Node]:
         return [self.members]
 
     def get_children_names(self) -> List[str]:
-        return ['members']
+        return ["members"]

@@ -11,8 +11,9 @@ class CodeBertEncoder(nn.Module):
         self.linear = nn.Linear(768, hidden_size)
         self.act1 = nn.ReLU()
 
-    def forward(self, x: torch.Tensor, lengths: torch.Tensor,
-                src_key_padding_mask: torch.Tensor):
+    def forward(
+        self, x: torch.Tensor, lengths: torch.Tensor, src_key_padding_mask: torch.Tensor
+    ):
         # attention_mask: 1 if not mask; 0 if mask
         # last_hidden_state: B, L, H
         feature = self.codebert(input_ids=x, attention_mask=src_key_padding_mask)[0]

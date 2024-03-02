@@ -20,9 +20,11 @@ class BlockSwapTransformer(NatGenBaseTransformer):
     """
     Swapping if_else block
     """
+
     def __init__(self, parser_path, language):
-        super(BlockSwapTransformer, self).__init__(parser_path=parser_path,
-                                                   language=language)
+        super(BlockSwapTransformer, self).__init__(
+            parser_path=parser_path, language=language
+        )
         self.language = language
         self.transformations = processor_function[language]
         processor_map = {
@@ -51,10 +53,10 @@ class BlockSwapTransformer(NatGenBaseTransformer):
             tokens, types = return_values
         else:
             tokens, types = return_values, None
-        return (re.sub("[ \t\n]+", " ", " ".join(tokens)), {
-            "types": types,
-            "success": success
-        })
+        return (
+            re.sub("[ \t\n]+", " ", " ".join(tokens)),
+            {"types": types, "success": success},
+        )
 
     def transform_block_swap(self, code: Union[str, bytes]) -> str:
         function = self.transformations[0]
@@ -62,16 +64,16 @@ class BlockSwapTransformer(NatGenBaseTransformer):
         return modified_code
 
     def get_available_transforms(self) -> List[str]:
-        return ['block_swap']
+        return ["block_swap"]
 
     def transform(self, code: str, transform: str):
-        if transform == 'block_swap':
+        if transform == "block_swap":
             return self.transform_block_swap(code)
         else:
-            raise ValueError(f'Unknown transform: {transform}')
+            raise ValueError(f"Unknown transform: {transform}")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     java_code = """
     void foo(){
         int time = 20;
@@ -177,12 +179,14 @@ if __name__ == '__main__':
         "go": ("go", go_code),
     }
     code_directory = os.path.realpath(
-        os.path.join(os.path.realpath(__file__), '../../../../'))
+        os.path.join(os.path.realpath(__file__), "../../../../")
+    )
     parser_path = os.path.join(code_directory, "parser/languages.so")
     for lang in ["java", "python", "js", "c", "cpp", "php", "go", "ruby", "cs"]:
         lang, code = input_map[lang]
         no_transform = BlockSwapTransformer(
-            "/home/saikatc/HDD_4TB/NatGen/parser/languages.so", lang)
+            "/home/saikatc/HDD_4TB/NatGen/parser/languages.so", lang
+        )
         print(lang)
         code, meta = no_transform.transform_code(code)
         code = re.sub("[ \t\n]+", " ", code)

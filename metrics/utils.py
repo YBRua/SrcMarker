@@ -9,12 +9,12 @@ from itertools import chain
 
 
 def pad_sequence(
-        sequence,
-        n,
-        pad_left=False,
-        pad_right=False,
-        left_pad_symbol=None,
-        right_pad_symbol=None,
+    sequence,
+    n,
+    pad_left=False,
+    pad_right=False,
+    left_pad_symbol=None,
+    right_pad_symbol=None,
 ):
     """
     Returns a padded sequence of items before ngram extraction.
@@ -51,12 +51,12 @@ def pad_sequence(
 
 
 def ngrams(
-        sequence,
-        n,
-        pad_left=False,
-        pad_right=False,
-        left_pad_symbol=None,
-        right_pad_symbol=None,
+    sequence,
+    n,
+    pad_left=False,
+    pad_right=False,
+    left_pad_symbol=None,
+    right_pad_symbol=None,
 ):
     """
     Return the ngrams generated from a sequence of items, as an iterator.

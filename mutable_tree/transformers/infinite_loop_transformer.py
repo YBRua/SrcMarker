@@ -4,9 +4,9 @@ from ..tree_manip.visitors import LoopLiteralOneVisitor, LoopLiteralTrueVisitor
 
 
 class InfiniteLoopTransformer(CodeTransformer):
-    name = 'InfiniteLoopTransformer'
-    TRANSFORM_INFLOOP_TRUE = 'InfiniteLoopTransformer.literal_true'
-    TRANSFORM_INFLOOP_ONE = 'InfiniteLoopTransformer.literal_1'
+    name = "InfiniteLoopTransformer"
+    TRANSFORM_INFLOOP_TRUE = "InfiniteLoopTransformer.literal_true"
+    TRANSFORM_INFLOOP_ONE = "InfiniteLoopTransformer.literal_1"
 
     def __init__(self) -> None:
         super().__init__()

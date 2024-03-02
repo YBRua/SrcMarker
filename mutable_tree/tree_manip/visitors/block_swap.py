@@ -1,24 +1,30 @@
 from .visitor import TransformingVisitor
 from mutable_tree.nodes import Node, NodeType, node_factory
 from mutable_tree.nodes import IfStatement
-from mutable_tree.nodes import (Expression, UnaryExpression, BinaryExpression,
-                                ParenthesizedExpression, AssignmentExpression)
+from mutable_tree.nodes import (
+    Expression,
+    UnaryExpression,
+    BinaryExpression,
+    ParenthesizedExpression,
+    AssignmentExpression,
+)
 from mutable_tree.nodes import BinaryOps, UnaryOps
 from typing import Optional
 
 
 class BlockSwapper(TransformingVisitor):
-
     def _can_swap_condition(self, expr: Expression):
         raise NotImplementedError()
 
     def _condition_transform(self, expr: Expression):
         raise NotImplementedError()
 
-    def visit_IfStatement(self,
-                          node: IfStatement,
-                          parent: Optional[Node] = None,
-                          parent_attr: Optional[str] = None):
+    def visit_IfStatement(
+        self,
+        node: IfStatement,
+        parent: Optional[Node] = None,
+        parent_attr: Optional[str] = None,
+    ):
         self.generic_visit(node, parent, parent_attr)
 
         condition = node.condition
@@ -79,7 +85,7 @@ class NormalBlockSwapper(BlockSwapper):
             return expr.operand
 
         else:
-            raise RuntimeError(f'cannot transform expression {expr}')
+            raise RuntimeError(f"cannot transform expression {expr}")
 
 
 class NegatedBlockSwapper(BlockSwapper):
@@ -100,7 +106,7 @@ class NegatedBlockSwapper(BlockSwapper):
             if op == UnaryOps.NOT:
                 # dont negate twice
                 return False
-        
+
         elif isinstance(expr, AssignmentExpression):
             return False
 
@@ -120,9 +126,11 @@ class NegatedBlockSwapper(BlockSwapper):
             return node_factory.create_binary_expr(expr.left, expr.right, new_op)
 
         else:
-            if (expr.node_type not in {
-                    NodeType.CALL_EXPR, NodeType.IDENTIFIER, NodeType.LITERAL,
-                    NodeType.UNARY_EXPR
-            }):
+            if expr.node_type not in {
+                NodeType.CALL_EXPR,
+                NodeType.IDENTIFIER,
+                NodeType.LITERAL,
+                NodeType.UNARY_EXPR,
+            }:
                 expr = node_factory.create_parenthesized_expr(expr)
             return node_factory.create_unary_expr(expr, UnaryOps.NOT)

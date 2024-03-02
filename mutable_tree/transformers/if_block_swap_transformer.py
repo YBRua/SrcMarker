@@ -4,9 +4,9 @@ from ..tree_manip.visitors import NormalBlockSwapper, NegatedBlockSwapper
 
 
 class IfBlockSwapTransformer(CodeTransformer):
-    name = 'IfBlockSwapTransformer'
-    TRANSFORM_IF_BLOCK_NORMAL = 'IfBlockSwapTransformer.normal'
-    TRANSFORM_IF_BLOCK_NEGATED = 'IfBlockSwapTransformer.negated'
+    name = "IfBlockSwapTransformer"
+    TRANSFORM_IF_BLOCK_NORMAL = "IfBlockSwapTransformer.normal"
+    TRANSFORM_IF_BLOCK_NEGATED = "IfBlockSwapTransformer.negated"
 
     def __init__(self) -> None:
         super().__init__()

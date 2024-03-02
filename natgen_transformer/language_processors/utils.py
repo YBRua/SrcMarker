@@ -9,10 +9,10 @@ def get_tokens(code_str, root):
     if root.type == "comment":
         return tokens
     if "string" in str(root.type):
-        return [code_str[root.start_byte:root.end_byte].decode()]
+        return [code_str[root.start_byte : root.end_byte].decode()]
     children = root.children
     if len(children) == 0:
-        tokens.append(code_str[root.start_byte:root.end_byte].decode().strip())
+        tokens.append(code_str[root.start_byte : root.end_byte].decode().strip())
     for child in children:
         tokens += get_tokens(code_str, child)
     return tokens
@@ -26,14 +26,16 @@ def get_tokens_insert_before(code_str, root, insertion_code, insert_before_node)
     if root.type == "comment":
         return tokens
     if "string" in str(root.type):
-        return [code_str[root.start_byte:root.end_byte].decode()]
+        return [code_str[root.start_byte : root.end_byte].decode()]
     if root == insert_before_node:
         tokens += insertion_code.split()
     children = root.children
     if len(children) == 0:
-        tokens.append(code_str[root.start_byte:root.end_byte].decode())
+        tokens.append(code_str[root.start_byte : root.end_byte].decode())
     for child in children:
-        tokens += get_tokens_insert_before(code_str, child, insertion_code, insert_before_node)
+        tokens += get_tokens_insert_before(
+            code_str, child, insertion_code, insert_before_node
+        )
     return tokens
 
 
@@ -53,7 +55,9 @@ def count_nodes(root):
     return num_nodes
 
 
-def extract_statement_within_size(root, max_node=10, endswith=None, code_string=None, tokenizer=None):
+def extract_statement_within_size(
+    root, max_node=10, endswith=None, code_string=None, tokenizer=None
+):
     if endswith is None:
         endswith = ["statement"]
     statements = []
@@ -66,10 +70,15 @@ def extract_statement_within_size(root, max_node=10, endswith=None, code_string=
             tokens = tokenizer(code_string, current_node)
             current_code = " ".join(tokens).strip()
         else:
-            current_code = "please provide code string and tokenizer to analyze code length"
-        if any(str(current_node.type).endswith(e) for e in endswith) and\
-                1 < node_count < max_node and len(current_code) > 0:
-                statements.append(current_node)
+            current_code = (
+                "please provide code string and tokenizer to analyze code length"
+            )
+        if (
+            any(str(current_node.type).endswith(e) for e in endswith)
+            and 1 < node_count < max_node
+            and len(current_code) > 0
+        ):
+            statements.append(current_node)
         for child in current_node.children:
             queue.append(child)
     return statements

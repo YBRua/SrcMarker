@@ -7,14 +7,11 @@ from typing import List
 
 
 class PointerOps(Enum):
-    DEREF = '*'
-    ADDRESS = '&'
+    DEREF = "*"
+    ADDRESS = "&"
 
 
-_pointer_op_map = {
-    '*': PointerOps.DEREF,
-    '&': PointerOps.ADDRESS
-}
+_pointer_op_map = {"*": PointerOps.DEREF, "&": PointerOps.ADDRESS}
 
 
 def get_pointer_op(op: str) -> PointerOps:
@@ -22,7 +19,6 @@ def get_pointer_op(op: str) -> PointerOps:
 
 
 class PointerExpression(Expression):
-
     def __init__(self, node_type: NodeType, operand: Expression, op: PointerOps):
         super().__init__(node_type)
         self.operand = operand
@@ -33,10 +29,10 @@ class PointerExpression(Expression):
         if self.node_type != NodeType.POINTER_EXPR:
             throw_invalid_type(self.node_type, self)
         if not is_expression(self.operand):
-            throw_invalid_type(self.operand.node_type, self, attr='operand')
+            throw_invalid_type(self.operand.node_type, self, attr="operand")
 
     def get_children(self) -> List[Node]:
         return [self.operand]
 
     def get_children_names(self) -> List[str]:
-        return ['operand']
+        return ["operand"]

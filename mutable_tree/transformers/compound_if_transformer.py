@@ -4,9 +4,9 @@ from ..tree_manip.visitors import CompoundIfVisitor, NestedIfVisitor
 
 
 class CompoundIfTransformer(CodeTransformer):
-    name = 'CompoundIfTransformer'
-    TRANSFORM_IF_COMPOUND = 'CompoundIfTransformer.if_compound'
-    TRANSFORM_IF_NESTED = 'CompoundIfTransformer.if_nested'
+    name = "CompoundIfTransformer"
+    TRANSFORM_IF_COMPOUND = "CompoundIfTransformer.if_compound"
+    TRANSFORM_IF_NESTED = "CompoundIfTransformer.if_nested"
 
     def __init__(self) -> None:
         super().__init__()

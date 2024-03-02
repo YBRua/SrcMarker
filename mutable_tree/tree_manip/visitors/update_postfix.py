@@ -9,48 +9,51 @@ from typing import Optional
 
 
 class PostfixUpdateVisitor(TransformingVisitor):
-
     assign_op_to_update_op = {
         AssignmentOps.PLUS_EQUAL: UpdateOps.INCREMENT,
-        AssignmentOps.MINUS_EQUAL: UpdateOps.DECREMENT
+        AssignmentOps.MINUS_EQUAL: UpdateOps.DECREMENT,
     }
     binop_to_update_op = {
         BinaryOps.PLUS: UpdateOps.INCREMENT,
-        BinaryOps.MINUS: UpdateOps.DECREMENT
+        BinaryOps.MINUS: UpdateOps.DECREMENT,
     }
 
-    def visit_UpdateExpression(self,
-                               expr: UpdateExpression,
-                               parent: Optional[Node] = None,
-                               parent_attr: Optional[str] = None):
+    def visit_UpdateExpression(
+        self,
+        expr: UpdateExpression,
+        parent: Optional[Node] = None,
+        parent_attr: Optional[str] = None,
+    ):
         self.generic_visit(expr, parent, parent_attr)
 
         if expr.prefix:
-            new_node = node_factory.create_update_expr(expr.operand,
-                                                       expr.op,
-                                                       prefix=False)
+            new_node = node_factory.create_update_expr(
+                expr.operand, expr.op, prefix=False
+            )
             return (True, [new_node])
         else:
             return (False, None)
 
-    def visit_AssignmentExpression(self,
-                                   expr: AssignmentExpression,
-                                   parent: Optional[Node] = None,
-                                   parent_attr: Optional[str] = None):
+    def visit_AssignmentExpression(
+        self,
+        expr: AssignmentExpression,
+        parent: Optional[Node] = None,
+        parent_attr: Optional[str] = None,
+    ):
         self.generic_visit(expr, parent, parent_attr)
 
-        if (expr.op == AssignmentOps.PLUS_EQUAL or expr.op == AssignmentOps.MINUS_EQUAL):
+        if expr.op == AssignmentOps.PLUS_EQUAL or expr.op == AssignmentOps.MINUS_EQUAL:
             # i += 1
             rhs = expr.right
             # FIXME: values for literals are currently always strings
-            if isinstance(rhs, Literal) and rhs.value == '1':
+            if isinstance(rhs, Literal) and rhs.value == "1":
                 update_op = self.assign_op_to_update_op[expr.op]
-                new_node = node_factory.create_update_expr(expr.left,
-                                                           update_op,
-                                                           prefix=False)
+                new_node = node_factory.create_update_expr(
+                    expr.left, update_op, prefix=False
+                )
                 return (True, [new_node])
 
-        if (expr.op == AssignmentOps.EQUAL and isinstance(expr.right, BinaryExpression)):
+        if expr.op == AssignmentOps.EQUAL and isinstance(expr.right, BinaryExpression):
             # i = i + 1
             # NOTE: this visitor do not convert i = 1 + i
             stringifier = BaseStringifier()
@@ -62,12 +65,13 @@ class PostfixUpdateVisitor(TransformingVisitor):
             bin_lhs_str = stringifier.stringify(bin_lhs)
             bin_rhs = bin_expr.right
             if binop == BinaryOps.PLUS or binop == BinaryOps.MINUS:
-                if ((lhs_str == bin_lhs_str)
-                        and (isinstance(bin_rhs, Literal) and bin_rhs.value == '1')):
+                if (lhs_str == bin_lhs_str) and (
+                    isinstance(bin_rhs, Literal) and bin_rhs.value == "1"
+                ):
                     update_op = self.binop_to_update_op[binop]
-                    new_node = node_factory.create_update_expr(expr.left,
-                                                               update_op,
-                                                               prefix=False)
+                    new_node = node_factory.create_update_expr(
+                        expr.left, update_op, prefix=False
+                    )
                     return (True, [new_node])
 
         return (False, None)

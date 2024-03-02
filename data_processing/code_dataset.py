@@ -1,8 +1,11 @@
 from torch.utils.data import Dataset
 
 from .code_vocab import CodeVocab
-from .data_instance import (DataInstance, WMDetectionDataInstance,
-                            DewatermarkingDataInstance)
+from .data_instance import (
+    DataInstance,
+    WMDetectionDataInstance,
+    DewatermarkingDataInstance,
+)
 from transformers import RobertaTokenizer
 from typing import List, Dict
 
@@ -37,20 +40,22 @@ class JsonlDewatermarkingDataset(Dataset):
 
     def __getitem__(self, index: int):
         instance = self.instances[index]
-        src = self.vocab.convert_tokens_to_ids(instance.source_tokens)[:400 - 2]
+        src = self.vocab.convert_tokens_to_ids(instance.source_tokens)[: 400 - 2]
         src = [self.vocab.bos_idx()] + src + [self.vocab.eos_idx()]
-        tgt = self.vocab.convert_tokens_to_ids(instance.target_tokens)[:400 - 2]
+        tgt = self.vocab.convert_tokens_to_ids(instance.target_tokens)[: 400 - 2]
         tgt = [self.vocab.bos_idx()] + tgt + [self.vocab.eos_idx()]
 
         return src, tgt
 
 
 class JsonlTaskedCodeWatermarkDataset(Dataset):
-    def __init__(self,
-                 instances: List[DataInstance],
-                 vocab: CodeVocab,
-                 label_dict: Dict[str, int],
-                 is_validation: bool = False):
+    def __init__(
+        self,
+        instances: List[DataInstance],
+        vocab: CodeVocab,
+        label_dict: Dict[str, int],
+        is_validation: bool = False,
+    ):
         super().__init__()
         self.instances = instances
         self.vocab = vocab
@@ -91,8 +96,9 @@ class JsonlCodeWatermarkDataset(Dataset):
 
 
 class BertCodeWatermarkDataset(Dataset):
-    def __init__(self, instances: List[DataInstance],
-                 tokenizer: RobertaTokenizer) -> None:
+    def __init__(
+        self, instances: List[DataInstance], tokenizer: RobertaTokenizer
+    ) -> None:
         super().__init__()
         self.instances = instances
         self.tokenizer = tokenizer
@@ -102,7 +108,7 @@ class BertCodeWatermarkDataset(Dataset):
 
     def __getitem__(self, index: int):
         instance = self.instances[index]
-        tokens = self.tokenizer.tokenize(' '.join(instance.tokens))[:510]
+        tokens = self.tokenizer.tokenize(" ".join(instance.tokens))[:510]
         token_ids = self.tokenizer.convert_tokens_to_ids(tokens)
         token_ids = self.tokenizer.build_inputs_with_special_tokens(token_ids)
         return (instance.id, token_ids)

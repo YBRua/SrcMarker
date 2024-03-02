@@ -2,13 +2,17 @@ import copy
 from .visitor import TransformingVisitor
 from mutable_tree.nodes import Node, node_factory
 from mutable_tree.nodes import BinaryOps
-from mutable_tree.nodes import (SwitchStatement, SwitchCaseList, SwitchCase,
-                                BlockStatement, BreakStatement)
+from mutable_tree.nodes import (
+    SwitchStatement,
+    SwitchCaseList,
+    SwitchCase,
+    BlockStatement,
+    BreakStatement,
+)
 from typing import Optional
 
 
 class SwitchToIfVisitor(TransformingVisitor):
-
     def _can_transform(self, cases: SwitchCaseList):
         # all cases must end with a break statement
         # except the default case (at the end)
@@ -47,10 +51,12 @@ class SwitchToIfVisitor(TransformingVisitor):
                 if isinstance(stmts[-1], BreakStatement):
                     stmts.pop()
 
-    def visit_SwitchStatement(self,
-                              node: SwitchStatement,
-                              parent: Optional[Node] = None,
-                              parent_attr: Optional[str] = None):
+    def visit_SwitchStatement(
+        self,
+        node: SwitchStatement,
+        parent: Optional[Node] = None,
+        parent_attr: Optional[str] = None,
+    ):
         self.generic_visit(node, parent, parent_attr)
 
         condition = node.condition
@@ -75,8 +81,9 @@ class SwitchToIfVisitor(TransformingVisitor):
             # create if statement
             cond = copy.deepcopy(condition)
             if_cond = node_factory.create_binary_expr(cond, c.case, BinaryOps.EQ)
-            if (len(c.stmts.get_children()) == 1
-                    and isinstance(c.stmts.get_child_at(0), BlockStatement)):
+            if len(c.stmts.get_children()) == 1 and isinstance(
+                c.stmts.get_child_at(0), BlockStatement
+            ):
                 if_body = c.stmts.get_child_at(0)
             else:
                 if_body = node_factory.create_block_stmt(c.stmts)

@@ -5,24 +5,127 @@ from code_tokenizer import sanitize_name
 from typing import List
 
 JAVA_KEYWORDS = [
-    'abstract', 'assert', 'boolean', 'break', 'byte', 'case', 'catch', 'char', 'class',
-    'const', 'continue', 'default', 'do', 'double', 'else', 'enum', 'extends', 'final',
-    'finally', 'float', 'for', 'goto', 'if', 'implements', 'import', 'instanceof', 'int',
-    'interface', 'long', 'native', 'new', 'package', 'private', 'protected', 'public',
-    'return', 'short', 'static', 'strictfp', 'super', 'switch', 'synchronized', 'this',
-    'throw', 'throws', 'transient', 'try', 'void', 'volatile', 'while', 'sealed'
+    "abstract",
+    "assert",
+    "boolean",
+    "break",
+    "byte",
+    "case",
+    "catch",
+    "char",
+    "class",
+    "const",
+    "continue",
+    "default",
+    "do",
+    "double",
+    "else",
+    "enum",
+    "extends",
+    "final",
+    "finally",
+    "float",
+    "for",
+    "goto",
+    "if",
+    "implements",
+    "import",
+    "instanceof",
+    "int",
+    "interface",
+    "long",
+    "native",
+    "new",
+    "package",
+    "private",
+    "protected",
+    "public",
+    "return",
+    "short",
+    "static",
+    "strictfp",
+    "super",
+    "switch",
+    "synchronized",
+    "this",
+    "throw",
+    "throws",
+    "transient",
+    "try",
+    "void",
+    "volatile",
+    "while",
+    "sealed",
 ]
 
 C_KEYWORDS = [
-    'auto', 'break', 'bool', 'case', 'char', 'const', 'continue', 'class', 'default',
-    'do', 'double', 'else', 'enum', 'extern', 'if', 'elif', 'else', 'endif', 'ifdef',
-    'ifndef', 'define', 'undef', 'include', 'line', 'error', 'pragma', 'defined',
-    '__has_c_attribute', 'float', 'for', 'goto', 'if', 'inline', 'int', 'long',
-    'register', 'restrict', 'return', 'short', 'signed', 'sizeof', 'static', 'struct',
-    'switch', 'typedef', 'union', 'unsigned', 'using', 'void', 'volatile', 'while',
-    '_Alignas', '_Alignof', '_Atomic', '_Bool', '_Complex', '_Decimal128', '_Decimal32',
-    '_Decimal64', '_Generic', '_Imaginary', '_Noreturn', '_Static_assert',
-    '_Thread_local', 'and', 'or', 'not'
+    "auto",
+    "break",
+    "bool",
+    "case",
+    "char",
+    "const",
+    "continue",
+    "class",
+    "default",
+    "do",
+    "double",
+    "else",
+    "enum",
+    "extern",
+    "if",
+    "elif",
+    "else",
+    "endif",
+    "ifdef",
+    "ifndef",
+    "define",
+    "undef",
+    "include",
+    "line",
+    "error",
+    "pragma",
+    "defined",
+    "__has_c_attribute",
+    "float",
+    "for",
+    "goto",
+    "if",
+    "inline",
+    "int",
+    "long",
+    "register",
+    "restrict",
+    "return",
+    "short",
+    "signed",
+    "sizeof",
+    "static",
+    "struct",
+    "switch",
+    "typedef",
+    "union",
+    "unsigned",
+    "using",
+    "void",
+    "volatile",
+    "while",
+    "_Alignas",
+    "_Alignof",
+    "_Atomic",
+    "_Bool",
+    "_Complex",
+    "_Decimal128",
+    "_Decimal32",
+    "_Decimal64",
+    "_Generic",
+    "_Imaginary",
+    "_Noreturn",
+    "_Static_assert",
+    "_Thread_local",
+    "and",
+    "or",
+    "not",
 ]
 
 ALL_KEYWORDS_SET = set(JAVA_KEYWORDS + C_KEYWORDS)
@@ -34,23 +137,23 @@ class CodeVocab:
         self.word2idx = {}
         self.idx2word = []
         self.word_freq = defaultdict(int)
-        self.add_word('<pad>')  # 0
-        self.add_word('<mask>')  # 1
-        self.add_word('<unk>')  # 2
-        self.add_word('<s>')  # 3
-        self.add_word('</s>')  # 4
+        self.add_word("<pad>")  # 0
+        self.add_word("<mask>")  # 1
+        self.add_word("<unk>")  # 2
+        self.add_word("<s>")  # 3
+        self.add_word("</s>")  # 4
 
     def pad_idx(self):
-        return self.word2idx['<pad>']
+        return self.word2idx["<pad>"]
 
     def mask_idx(self):
-        return self.word2idx['<mask>']
+        return self.word2idx["<mask>"]
 
     def bos_idx(self):
-        return self.word2idx['<s>']
+        return self.word2idx["<s>"]
 
     def eos_idx(self):
-        return self.word2idx['</s>']
+        return self.word2idx["</s>"]
 
     def __len__(self):
         return len(self.idx2word)
@@ -77,13 +180,14 @@ class CodeVocab:
 
     def get_high_frequency_words(self, top: int = 512):
         most_frequents = list(
-            sorted(self.word_freq.items(), key=lambda x: x[1], reverse=True))
+            sorted(self.word_freq.items(), key=lambda x: x[1], reverse=True)
+        )
         res = [word for word, _ in most_frequents[:top]]
         print(res[-1], self.word_freq[res[-1]])
         return res
 
     def get_id_by_token(self, token: str) -> int:
-        return self.word2idx.get(token, self.word2idx['<unk>'])
+        return self.word2idx.get(token, self.word2idx["<unk>"])
 
     def get_token_by_id(self, id: int) -> str:
         return self.idx2word[id]
@@ -103,7 +207,7 @@ class CodeVocab:
         high_freq_words = self.get_high_frequency_words(top)
         print(high_freq_words)
         for word in self.idx2word:
-            if (sanitize_name(word) == word and word in high_freq_words):
+            if sanitize_name(word) == word and word in high_freq_words:
                 # valid high frequency identifier, should not mask
                 mask.append(0)
             else:
@@ -130,20 +234,20 @@ class CodeVocab:
 
         return idx
 
-    def dump(self, json_path: str = 'code_vocab.json'):
+    def dump(self, json_path: str = "code_vocab.json"):
         serialized = {
-            'idx2word': self.idx2word,
-            'word2idx': self.word2idx,
-            'word_freq': self.word_freq
+            "idx2word": self.idx2word,
+            "word2idx": self.word2idx,
+            "word_freq": self.word_freq,
         }
-        with open(json_path, 'w', encoding='utf-8') as f:
+        with open(json_path, "w", encoding="utf-8") as f:
             json.dump(serialized, f, indent=4, ensure_ascii=False)
 
-    def load(self, json_path: str = 'code_vocab.json'):
-        with open(json_path, 'r', encoding='utf-8') as f:
+    def load(self, json_path: str = "code_vocab.json"):
+        with open(json_path, "r", encoding="utf-8") as f:
             serialized = json.load(f)
-        self.idx2word = serialized['idx2word']
-        self.word2idx = serialized['word2idx']
-        self.word_freq = serialized['word_freq']
+        self.idx2word = serialized["idx2word"]
+        self.word2idx = serialized["word2idx"]
+        self.word_freq = serialized["word_freq"]
 
         return self

@@ -4,7 +4,6 @@ from typing import List
 
 
 class Modifier(Node):
-
     def __init__(self, node_type: NodeType, modifier: str):
         super().__init__(node_type)
         self.modifier = modifier
@@ -34,6 +33,6 @@ class ModifierList(NodeList):
             throw_invalid_type(self.node_type, NodeType.MODIFIER_LIST)
         for i, modifier in enumerate(self.node_list):
             if modifier.node_type != NodeType.MODIFIER:
-                throw_invalid_type(modifier.node_type,
-                                   NodeType.MODIFIER,
-                                   attr=f'modifier#{i}')
+                throw_invalid_type(
+                    modifier.node_type, NodeType.MODIFIER, attr=f"modifier#{i}"
+                )

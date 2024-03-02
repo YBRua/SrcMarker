@@ -17,7 +17,7 @@ def null_hypothesis_test(fail_chance: float, pickle_path: str):
     pvalues_3 = dict()
     pvalues_4 = dict()
 
-    repowise_long_msg, repowise_long_gt = pickle.load(open(pickle_path, 'rb'))
+    repowise_long_msg, repowise_long_gt = pickle.load(open(pickle_path, "rb"))
 
     n_funcs = []
     total_matched_bits = 0
@@ -55,13 +55,12 @@ def null_hypothesis_test(fail_chance: float, pickle_path: str):
     # print(n_funcs)
 
     thresholds = [0.01]
-    print(f'Fail chance: {fail_chance:.2f}')
-    print(f'Bitwise Accuracy: {total_matched_bits/total_bits*100:.2f}%')
+    print(f"Fail chance: {fail_chance:.2f}")
+    print(f"Bitwise Accuracy: {total_matched_bits/total_bits*100:.2f}%")
     for thres in thresholds:
-
         all_passed = 0
         all_total = 0
-        labels = ['1-3', '4-8', '9-33', '34+']
+        labels = ["1-3", "4-8", "9-33", "34+"]
         for i, pvalues in enumerate([pvalues_1, pvalues_2, pvalues_3, pvalues_4]):
             passed = 0
             total = 0
@@ -72,19 +71,23 @@ def null_hypothesis_test(fail_chance: float, pickle_path: str):
                     all_passed += 1
                 total += 1
                 all_total += 1
-            print(f'{label}: Threshold {thres:.3f}: {passed}/{total}'
-                  f' ({passed/total*100:.2f}%)')
+            print(
+                f"{label}: Threshold {thres:.3f}: {passed}/{total}"
+                f" ({passed/total*100:.2f}%)"
+            )
 
-        print(f'Macro: Threshold {thres:.3f}: {all_passed}/{all_total}'
-              f' ({all_passed/all_total*100:.2f}%)')
+        print(
+            f"Macro: Threshold {thres:.3f}: {all_passed}/{all_total}"
+            f" ({all_passed/all_total*100:.2f}%)"
+        )
         print()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     torch.manual_seed(42)
 
     if len(sys.argv) != 2:
-        print(f'Usage: {sys.argv[0]} <pickle_path>')
+        print(f"Usage: {sys.argv[0]} <pickle_path>")
         exit(0)
 
     null_hypothesis_test(fail_chance=0, pickle_path=sys.argv[1])

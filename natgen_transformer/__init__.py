@@ -9,8 +9,9 @@ from .var_renaming_transformation import VarRenamingTransformer
 from typing import List
 
 
-def get_natgen_transformers(parser_path: str,
-                            language: str) -> List[NatGenBaseTransformer]:
+def get_natgen_transformers(
+    parser_path: str, language: str
+) -> List[NatGenBaseTransformer]:
     return [
         ForWhileTransformer(parser_path, language),
         BlockSwapTransformer(parser_path, language),

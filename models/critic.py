@@ -3,13 +3,15 @@ import torch.nn as nn
 
 
 class DecodeLossApproximator(nn.Module):
-    def __init__(self,
-                 vocab_size: int,
-                 transform_capacity: int,
-                 code_feature_dim: int,
-                 embedding_dim: int,
-                 output_dim: int,
-                 dropout: float = 0.2) -> None:
+    def __init__(
+        self,
+        vocab_size: int,
+        transform_capacity: int,
+        code_feature_dim: int,
+        embedding_dim: int,
+        output_dim: int,
+        dropout: float = 0.2,
+    ) -> None:
         super().__init__()
         self.vocab_size = vocab_size
         self.transform_capacity = transform_capacity
@@ -32,15 +34,20 @@ class DecodeLossApproximator(nn.Module):
 
         self.fc3 = nn.Linear(embedding_dim, output_dim)
 
-    def forward(self, code_feature: torch.Tensor, var_embedding: torch.Tensor,
-                transform_embedding: torch.Tensor):
+    def forward(
+        self,
+        code_feature: torch.Tensor,
+        var_embedding: torch.Tensor,
+        transform_embedding: torch.Tensor,
+    ):
         # code_feature: B, H1
         # embedding: B, S, H2
         B, S, _ = var_embedding.shape
 
         # B, 1, H2
         code_feature = self.feature_align_act(
-            self.feature_align(code_feature).unsqueeze(1))
+            self.feature_align(code_feature).unsqueeze(1)
+        )
 
         # B, S, H2
         x = code_feature + var_embedding + transform_embedding

@@ -6,8 +6,8 @@ CODE = """int count_tidy(int _N) {
 
 """
 
-if __name__ == '__main__':
-    LANG = 'c'
+if __name__ == "__main__":
+    LANG = "c"
     tokenizer = CodeTokenizer(LANG)
     tokens = tokenizer.tokenizer.tokenize(CODE)
     print(tokens)

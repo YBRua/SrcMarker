@@ -30,11 +30,13 @@ class MLPForMNIST(nn.Module):
 
 
 class MLP3(nn.Module):
-    def __init__(self,
-                 input_dim: int = 512,
-                 hidden_dim: int = 512,
-                 output_dim: int = 512,
-                 dropout: float = 0.2) -> None:
+    def __init__(
+        self,
+        input_dim: int = 512,
+        hidden_dim: int = 512,
+        output_dim: int = 512,
+        dropout: float = 0.2,
+    ) -> None:
         super().__init__()
         self.fc1 = nn.Linear(input_dim, hidden_dim)
         self.act1 = nn.ReLU()
@@ -55,12 +57,14 @@ class MLP3(nn.Module):
 
 
 class MLP2(nn.Module):
-    def __init__(self,
-                 input_dim: int = 512,
-                 hidden_dim: int = 512,
-                 output_dim: int = 512,
-                 dropout: float = 0.2,
-                 bn: bool = True):
+    def __init__(
+        self,
+        input_dim: int = 512,
+        hidden_dim: int = 512,
+        output_dim: int = 512,
+        dropout: float = 0.2,
+        bn: bool = True,
+    ):
         super().__init__()
         self.fc1 = nn.Linear(input_dim, hidden_dim)
         if bn:

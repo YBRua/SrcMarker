@@ -1,9 +1,9 @@
 from lxml import etree
 
 XML_NS = {
-    'src': 'http://www.srcML.org/srcML/src',
-    'cpp': 'http://www.srcML.org/srcML/cpp',
-    'pos': 'http://www.srcML.org/srcML/position'
+    "src": "http://www.srcML.org/srcML/src",
+    "cpp": "http://www.srcML.org/srcML/cpp",
+    "pos": "http://www.srcML.org/srcML/position",
 }
 
 

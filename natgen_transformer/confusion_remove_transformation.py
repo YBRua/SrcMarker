@@ -8,21 +8,30 @@ from .language_processors import JavaAndCPPProcessor, JavascriptProcessor
 from .transformation_base import NatGenBaseTransformer
 
 processor_function = {
-    "java":
-    [JavaAndCPPProcessor.incre_decre_removal, JavaAndCPPProcessor.ternary_removal],
-    "c":
-    [JavaAndCPPProcessor.incre_decre_removal, JavaAndCPPProcessor.conditional_removal],
-    "cpp":
-    [JavaAndCPPProcessor.incre_decre_removal, JavaAndCPPProcessor.conditional_removal],
-    "c_sharp":
-    [JavaAndCPPProcessor.incre_decre_removal, JavaAndCPPProcessor.conditional_removal]
+    "java": [
+        JavaAndCPPProcessor.incre_decre_removal,
+        JavaAndCPPProcessor.ternary_removal,
+    ],
+    "c": [
+        JavaAndCPPProcessor.incre_decre_removal,
+        JavaAndCPPProcessor.conditional_removal,
+    ],
+    "cpp": [
+        JavaAndCPPProcessor.incre_decre_removal,
+        JavaAndCPPProcessor.conditional_removal,
+    ],
+    "c_sharp": [
+        JavaAndCPPProcessor.incre_decre_removal,
+        JavaAndCPPProcessor.conditional_removal,
+    ],
 }
 
 
 class ConfusionRemoveTransformer(NatGenBaseTransformer):
     def __init__(self, parser_path, language):
-        super(ConfusionRemoveTransformer, self).__init__(parser_path=parser_path,
-                                                         language=language)
+        super(ConfusionRemoveTransformer, self).__init__(
+            parser_path=parser_path, language=language
+        )
         self.language = language
         if language in processor_function:
             self.transformations = processor_function[language]
@@ -80,7 +89,7 @@ class ConfusionRemoveTransformer(NatGenBaseTransformer):
             return self.transform_conditional_removal(code)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     java_code = """
     class A{
         int foo(int[] nums, int lower, upper){
@@ -183,7 +192,8 @@ if __name__ == '__main__':
         "go": ("go", go_code),
     }
     code_directory = os.path.realpath(
-        os.path.join(os.path.realpath(__file__), '../../../../'))
+        os.path.join(os.path.realpath(__file__), "../../../../")
+    )
     parser_path = os.path.join(code_directory, "parser/languages.so")
     for lang in ["c", "cpp", "java", "cs", "python", "php", "go", "ruby"]:
         # lang = "php"

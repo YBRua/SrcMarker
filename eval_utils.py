@@ -11,10 +11,9 @@ from code_transform_provider import CodeTransformProvider
 from typing import Dict, List, Optional, Tuple
 
 
-def compute_msg_acc(inputs: torch.Tensor,
-                    target: torch.Tensor,
-                    n_bits: int,
-                    reduce: bool = False):
+def compute_msg_acc(
+    inputs: torch.Tensor, target: torch.Tensor, n_bits: int, reduce: bool = False
+):
     # inputs: B, n_bits
     per_sample_hits = torch.sum((inputs == target), dim=-1)  # B
     msg_acc = torch.sum(per_sample_hits == n_bits).item()
@@ -24,18 +23,22 @@ def compute_msg_acc(inputs: torch.Tensor,
 
 
 class JitAdversarialTransformProvider:
-    def __init__(self,
-                 transform_computer: CodeTransformProvider,
-                 transforms_per_file: str = './datasets/transforms_per_file.json',
-                 varname_path: str = './datasets/variable_names.json',
-                 lang: str = 'cpp') -> None:
-        self.t_combos = json.load(open(transforms_per_file, 'r', encoding='utf-8'))
-        varname_dict = json.load(open(varname_path, 'r', encoding='utf-8'))
-        self.all_varnames = varname_dict['all_variable_names']
-        self.varnames_per_file = varname_dict['variable_names_per_file']
+    def __init__(
+        self,
+        transform_computer: CodeTransformProvider,
+        transforms_per_file: str = "./datasets/transforms_per_file.json",
+        varname_path: str = "./datasets/variable_names.json",
+        lang: str = "cpp",
+    ) -> None:
+        self.t_combos = json.load(open(transforms_per_file, "r", encoding="utf-8"))
+        varname_dict = json.load(open(varname_path, "r", encoding="utf-8"))
+        self.all_varnames = varname_dict["all_variable_names"]
+        self.varnames_per_file = varname_dict["variable_names_per_file"]
 
         self.all_transform_keys = transform_computer.get_transform_keys()
-        self.transform_key_to_idx = {k: i for i, k in enumerate(self.all_transform_keys)}
+        self.transform_key_to_idx = {
+            k: i for i, k in enumerate(self.all_transform_keys)
+        }
 
         self.pipeline = transform_computer.pipeline
         self.transform_computer = transform_computer
@@ -113,54 +116,63 @@ class JitAdversarialTransformProvider:
             else:
                 selected_keys[shuffled[i]] = current_keys[shuffled[i]]
         if budget > 0:
-            print('Warning: budget not used up')
+            print("Warning: budget not used up")
         return self.transform_key_to_idx[tuple(selected_keys)]
 
-    def get_adv_style_transforms(self, instances: List[DataInstance],
-                                 n_transforms: int) -> List[int]:
+    def get_adv_style_transforms(
+        self, instances: List[DataInstance], n_transforms: int
+    ) -> List[int]:
         selected = []
         for instance in instances:
             selected.append(self.adv_style_transform(instance, n_transforms))
 
         return selected
 
-    def _jit_varname_substitution(self,
-                                  instance: DataInstance,
-                                  new_token: str,
-                                  old_token: Optional[str] = None,
-                                  mode: str = 'replace'):
+    def _jit_varname_substitution(
+        self,
+        instance: DataInstance,
+        new_token: str,
+        old_token: Optional[str] = None,
+        mode: str = "replace",
+    ):
         new_instance = copy.deepcopy(instance)
         varnames = self.varnames_per_file[instance.id]
 
         if len(varnames) == 0:
-            return new_instance, ('no feasible substitution', '')
+            return new_instance, ("no feasible substitution", "")
 
         src_var = random.choice(varnames) if old_token is None else old_token
 
-        if mode == 'replace':
+        if mode == "replace":
             new_code = self.transform_computer.variable_substitution(
-                new_instance.source, src_var, new_token)
-        elif mode == 'append':
-            new_code = self.transform_computer.variable_append(new_instance.source,
-                                                               src_var, new_token)
+                new_instance.source, src_var, new_token
+            )
+        elif mode == "append":
+            new_code = self.transform_computer.variable_append(
+                new_instance.source, src_var, new_token
+            )
         else:
-            raise ValueError(f'Unknown mode {mode}')
+            raise ValueError(f"Unknown mode {mode}")
 
         source_tokens, tokens = self.tokenizer.get_tokens(new_code)
-        new_instance = DataInstance(id=new_instance.id,
-                                    source=new_code,
-                                    source_tokens=source_tokens,
-                                    tokens=tokens,
-                                    transform_keys=new_instance.transform_keys)
+        new_instance = DataInstance(
+            id=new_instance.id,
+            source=new_code,
+            source_tokens=source_tokens,
+            tokens=tokens,
+            transform_keys=new_instance.transform_keys,
+        )
 
         return new_instance, (src_var, new_token)
 
-    def redo_varname_transform(self, instances: List[DataInstance],
-                               updates: List[Tuple[str, str]]) -> List[DataInstance]:
+    def redo_varname_transform(
+        self, instances: List[DataInstance], updates: List[Tuple[str, str]]
+    ) -> List[DataInstance]:
         new_instances = []
         for instance, update in zip(instances, updates):
-            new_instance, _ = self._jit_varname_substitution(instance, update[1],
-                                                             update[0])
+            new_instance, _ = self._jit_varname_substitution(
+                instance, update[1], update[0]
+            )
             new_instances.append(new_instance)
         return new_instances
 
@@ -172,7 +184,7 @@ class JitAdversarialTransformProvider:
         proportion: Optional[float] = None,
     ) -> DataInstance:
         if budget is None and proportion is None:
-            raise ValueError('either budget or proportion must be specified')
+            raise ValueError("either budget or proportion must be specified")
 
         if len(variables) == 0:
             return instance, []
@@ -190,13 +202,14 @@ class JitAdversarialTransformProvider:
         return instance, vadv_updates
 
     def adv_varname_transform(
-            self,
-            instances: List[DataInstance],
-            budget: Optional[int] = None,
-            proportion: Optional[float] = None,
-            var_updates: Optional[List[Tuple[str]]] = None) -> List[DataInstance]:
+        self,
+        instances: List[DataInstance],
+        budget: Optional[int] = None,
+        proportion: Optional[float] = None,
+        var_updates: Optional[List[Tuple[str]]] = None,
+    ) -> List[DataInstance]:
         if budget is None and proportion is None:
-            raise ValueError('either budget or proportion must be specified')
+            raise ValueError("either budget or proportion must be specified")
         new_instances = []
         all_adv_updates = []
         for i, instance in enumerate(instances):
@@ -218,8 +231,10 @@ class JitAdversarialTransformProvider:
                     update = var_updates[i]
                     # if src_var has been changed when embedding watermark
                     # update src to the new name
-                    if (normalize_name(src_var).lower() == normalize_name(
-                            update[0]).lower()):
+                    if (
+                        normalize_name(src_var).lower()
+                        == normalize_name(update[0]).lower()
+                    ):
                         src_var = update[1]
 
                 dst_var = random.choice(self.all_varnames)

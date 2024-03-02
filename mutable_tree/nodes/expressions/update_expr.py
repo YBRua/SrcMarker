@@ -7,11 +7,11 @@ from .expression import is_expression
 
 
 class UpdateOps(Enum):
-    INCREMENT = '++'
-    DECREMENT = '--'
+    INCREMENT = "++"
+    DECREMENT = "--"
 
 
-_update_op_map = {'++': UpdateOps.INCREMENT, '--': UpdateOps.DECREMENT}
+_update_op_map = {"++": UpdateOps.INCREMENT, "--": UpdateOps.DECREMENT}
 
 
 def get_update_op(op: str) -> UpdateOps:
@@ -19,9 +19,9 @@ def get_update_op(op: str) -> UpdateOps:
 
 
 class UpdateExpression(Expression):
-
-    def __init__(self, node_type: NodeType, operand: Expression, op: UpdateOps,
-                 prefix: bool):
+    def __init__(
+        self, node_type: NodeType, operand: Expression, op: UpdateOps, prefix: bool
+    ):
         super().__init__(node_type)
         self.operand = operand
         self.op = op
@@ -30,12 +30,14 @@ class UpdateExpression(Expression):
 
     def _check_types(self):
         if self.node_type != NodeType.UPDATE_EXPR:
-            raise TypeError(f'Invalid type: {self.node_type} for UpdateExpression')
+            raise TypeError(f"Invalid type: {self.node_type} for UpdateExpression")
         if not is_expression(self.operand):
-            raise TypeError(f'Invalid type: {self.operand.node_type} for update operand')
+            raise TypeError(
+                f"Invalid type: {self.operand.node_type} for update operand"
+            )
 
     def get_children(self) -> List[Node]:
         return [self.operand]
 
     def get_children_names(self) -> List[str]:
-        return ['operand']
+        return ["operand"]

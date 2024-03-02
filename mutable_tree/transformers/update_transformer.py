@@ -1,15 +1,19 @@
 from mutable_tree.nodes import Node
 from .code_transformer import CodeTransformer
-from ..tree_manip.visitors import (PrefixUpdateVisitor, PostfixUpdateVisitor,
-                                   BinopUpdateVisitor, AssignUpdateVisitor)
+from ..tree_manip.visitors import (
+    PrefixUpdateVisitor,
+    PostfixUpdateVisitor,
+    BinopUpdateVisitor,
+    AssignUpdateVisitor,
+)
 
 
 class UpdateTransformer(CodeTransformer):
-    name = 'UpdateTransformer'
-    TRANSFORM_PREFIX_UPDATE = 'UpdateTransformer.prefix_update'
-    TRANSFORM_POSTFIX_UPDATE = 'UpdateTransformer.postfix_update'
-    TRANSFORM_BINOP_UPDATE = 'UpdateTransformer.binop_update'
-    TRANSFORM_ASSIGN_UPDATE = 'UpdateTransformer.assign_update'
+    name = "UpdateTransformer"
+    TRANSFORM_PREFIX_UPDATE = "UpdateTransformer.prefix_update"
+    TRANSFORM_POSTFIX_UPDATE = "UpdateTransformer.postfix_update"
+    TRANSFORM_BINOP_UPDATE = "UpdateTransformer.binop_update"
+    TRANSFORM_ASSIGN_UPDATE = "UpdateTransformer.assign_update"
 
     def __init__(self) -> None:
         super().__init__()

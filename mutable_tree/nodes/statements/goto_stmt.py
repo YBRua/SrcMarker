@@ -6,7 +6,6 @@ from typing import List
 
 
 class GotoStatement(Statement):
-
     def __init__(self, node_type: NodeType, label: Identifier):
         super().__init__(node_type)
         self.label = label
@@ -16,10 +15,10 @@ class GotoStatement(Statement):
         if self.node_type != NodeType.GOTO_STMT:
             throw_invalid_type(self.node_type, self)
         if self.label.node_type != NodeType.IDENTIFIER:
-            throw_invalid_type(self.label.node_type, self, attr='label')
+            throw_invalid_type(self.label.node_type, self, attr="label")
 
     def get_children(self) -> List[Node]:
         return [self.label]
 
     def get_children_names(self) -> List[str]:
-        return ['label']
+        return ["label"]

@@ -1,12 +1,15 @@
 from mutable_tree.nodes import Node
 from .code_transformer import CodeTransformer
-from ..tree_manip.visitors import SplitVarWithSameTypeVisitor, MergeVarWithSameTypeVisitor
+from ..tree_manip.visitors import (
+    SplitVarWithSameTypeVisitor,
+    MergeVarWithSameTypeVisitor,
+)
 
 
 class SameTypeDeclarationTransformer(CodeTransformer):
-    name = 'SameTypeDeclarationTransformer'
-    TRANSFORM_SAME_TYPE_SPLIT = 'SameTypeDeclarationTransformer.split'
-    TRANSFORM_SAME_TYPE_MERGE = 'SameTypeDeclarationTransformer.merge'
+    name = "SameTypeDeclarationTransformer"
+    TRANSFORM_SAME_TYPE_SPLIT = "SameTypeDeclarationTransformer.split"
+    TRANSFORM_SAME_TYPE_MERGE = "SameTypeDeclarationTransformer.merge"
 
     def __init__(self) -> None:
         super().__init__()

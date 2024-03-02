@@ -8,7 +8,6 @@ from typing import List
 
 
 class WhileStatement(Statement):
-
     def __init__(self, node_type: NodeType, condition: Expression, body: Statement):
         super().__init__(node_type)
         self.condition = condition
@@ -19,12 +18,12 @@ class WhileStatement(Statement):
         if self.node_type != NodeType.WHILE_STMT:
             throw_invalid_type(self.node_type, self)
         if not is_expression(self.condition):
-            throw_invalid_type(self.condition.node_type, self, attr='condition')
+            throw_invalid_type(self.condition.node_type, self, attr="condition")
         if not is_statement(self.body):
-            throw_invalid_type(self.body.node_type, self, attr='body')
+            throw_invalid_type(self.body.node_type, self, attr="body")
 
     def get_children(self) -> List[Node]:
         return [self.condition, self.body]
 
     def get_children_names(self) -> List[str]:
-        return ['condition', 'body']
+        return ["condition", "body"]

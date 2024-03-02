@@ -1,15 +1,19 @@
 from mutable_tree.nodes import Node
 from .code_transformer import CodeTransformer
-from ..tree_manip.visitors import (ToCamelCaseVisitor, ToPascalCaseVisitor,
-                                   ToSnakeCaseVisitor, ToUnderscoreCaseVisitor)
+from ..tree_manip.visitors import (
+    ToCamelCaseVisitor,
+    ToPascalCaseVisitor,
+    ToSnakeCaseVisitor,
+    ToUnderscoreCaseVisitor,
+)
 
 
 class VarNameStyleTransformer(CodeTransformer):
-    name = 'VarNameStyleTransformer'
-    TRANSFORM_CAMEL_CASE = 'VarNameStyleTransformer.camel_case'
-    TRANSFORM_PASCAL_CASE = 'VarNameStyleTransformer.pascal_case'
-    TRANSFORM_SNAKE_CASE = 'VarNameStyleTransformer.snake_case'
-    TRANSFORM_UNDERSCORE_CASE = 'VarNameStyleTransformer.underscore_case'
+    name = "VarNameStyleTransformer"
+    TRANSFORM_CAMEL_CASE = "VarNameStyleTransformer.camel_case"
+    TRANSFORM_PASCAL_CASE = "VarNameStyleTransformer.pascal_case"
+    TRANSFORM_SNAKE_CASE = "VarNameStyleTransformer.snake_case"
+    TRANSFORM_UNDERSCORE_CASE = "VarNameStyleTransformer.underscore_case"
 
     def __init__(self) -> None:
         super().__init__()

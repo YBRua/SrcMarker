@@ -10,12 +10,18 @@ class WMDetectionDataInstance:
         self.label = label
 
     def __repr__(self) -> str:
-        return (f'WMDetectionDataInstance(id={self.id}, label={self.label})')
+        return f"WMDetectionDataInstance(id={self.id}, label={self.label})"
 
 
 class DewatermarkingDataInstance:
-    def __init__(self, id: str, source: str, source_tokens: List[str], target: str,
-                 target_tokens: List[str]):
+    def __init__(
+        self,
+        id: str,
+        source: str,
+        source_tokens: List[str],
+        target: str,
+        target_tokens: List[str],
+    ):
         self.id = id
         self.source = source
         self.source_tokens = source_tokens
@@ -23,17 +29,19 @@ class DewatermarkingDataInstance:
         self.target_tokens = target_tokens
 
     def __repr__(self) -> str:
-        return f'DewatermarkingDataInstance(id={self.id})'
+        return f"DewatermarkingDataInstance(id={self.id})"
 
 
 class DataInstance:
-    def __init__(self,
-                 id: str,
-                 source: str,
-                 source_tokens: List[Token],
-                 tokens: List[str],
-                 task_label: Optional[str] = None,
-                 transform_keys: Optional[Tuple[str]] = None) -> None:
+    def __init__(
+        self,
+        id: str,
+        source: str,
+        source_tokens: List[Token],
+        tokens: List[str],
+        task_label: Optional[str] = None,
+        transform_keys: Optional[Tuple[str]] = None,
+    ) -> None:
         self.id = id
         self.source = source
         self.source_tokens = source_tokens
@@ -42,4 +50,4 @@ class DataInstance:
         self.task_label = task_label
 
     def __repr__(self) -> str:
-        return (f'DataInstance(id={self.id}, ' f'transform_keys={self.transform_keys})')
+        return f"DataInstance(id={self.id}, " f"transform_keys={self.transform_keys})"

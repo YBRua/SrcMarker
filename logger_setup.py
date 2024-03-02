@@ -8,21 +8,21 @@ class DefaultLogger:
         print(msg)
 
 
-def setup_evaluation_logger(args, prefix: str = 'eval'):
-    logger = logging.getLogger('Evaluation')
+def setup_evaluation_logger(args, prefix: str = "eval"):
+    logger = logging.getLogger("Evaluation")
     logger.setLevel(logging.INFO)
 
     timestamp = datetime.now().strftime("%Y-%m-%d-%H-%M-%S")
 
     ckpt_name = os.path.basename(os.path.dirname(args.checkpoint_path))
 
-    filename = f'{prefix}-{ckpt_name}.log'
+    filename = f"{prefix}-{ckpt_name}.log"
 
-    filename = f'{timestamp}-{filename}'
+    filename = f"{timestamp}-{filename}"
 
-    file_handler = logging.FileHandler(filename=f'./logs/{filename}',
-                                       mode='a',
-                                       encoding='utf-8')
+    file_handler = logging.FileHandler(
+        filename=f"./logs/{filename}", mode="a", encoding="utf-8"
+    )
     file_formatter = logging.Formatter("%(message)s")
     file_handler.setFormatter(file_formatter)
 
@@ -32,7 +32,7 @@ def setup_evaluation_logger(args, prefix: str = 'eval'):
 
 
 def setup_logger(args):
-    logger = logging.getLogger('Train')
+    logger = logging.getLogger("Train")
     logger.setLevel(logging.INFO)
 
     stream_handler = logging.StreamHandler()
@@ -40,16 +40,16 @@ def setup_logger(args):
     stream_formatter = logging.Formatter("%(message)s")
 
     timestamp = datetime.now().strftime("%Y-%m-%d-%H-%M-%S")
-    filename = f'{args.dataset}-{args.seed}.log'
+    filename = f"{args.dataset}-{args.seed}.log"
 
-    if hasattr(args, 'log_prefix') and args.log_prefix != '':
-        filename = f'{args.log_prefix}-{filename}'
+    if hasattr(args, "log_prefix") and args.log_prefix != "":
+        filename = f"{args.log_prefix}-{filename}"
 
-    filename = f'{timestamp}-{filename}'
+    filename = f"{timestamp}-{filename}"
 
-    file_handler = logging.FileHandler(filename=f'./logs/{filename}',
-                                       mode='a',
-                                       encoding='utf-8')
+    file_handler = logging.FileHandler(
+        filename=f"./logs/{filename}", mode="a", encoding="utf-8"
+    )
     file_formatter = logging.Formatter("[%(levelname)s %(asctime)s]: %(message)s")
 
     stream_handler.setFormatter(stream_formatter)

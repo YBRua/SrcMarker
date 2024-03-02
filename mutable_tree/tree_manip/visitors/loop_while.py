@@ -1,7 +1,12 @@
 from .visitor import TransformingVisitor
 from mutable_tree.nodes import Node, NodeType, NodeList
 from mutable_tree.nodes import node_factory
-from mutable_tree.nodes import ForStatement, WhileStatement, Statement, ContinueStatement
+from mutable_tree.nodes import (
+    ForStatement,
+    WhileStatement,
+    Statement,
+    ContinueStatement,
+)
 from mutable_tree.nodes import is_expression
 from typing import Optional, List
 
@@ -28,15 +33,20 @@ class ForToWhileVisitor(TransformingVisitor):
             for child_attr in node.get_children_names():
                 child = node.get_child_at(child_attr)
                 # note that we only collect continue statements in the same scope
-                if (child is not None and not isinstance(child, ForStatement)
-                        and not isinstance(child, WhileStatement)):
+                if (
+                    child is not None
+                    and not isinstance(child, ForStatement)
+                    and not isinstance(child, WhileStatement)
+                ):
                     continue_stmts += self._collect_continue_stmts(child, node)
             return continue_stmts
 
-    def visit_ForStatement(self,
-                           node: ForStatement,
-                           parent: Optional[Node] = None,
-                           parent_attr: Optional[str] = None):
+    def visit_ForStatement(
+        self,
+        node: ForStatement,
+        parent: Optional[Node] = None,
+        parent_attr: Optional[str] = None,
+    ):
         self.generic_visit(node, parent, parent_attr)
         new_stmts = []
         init = node.init
@@ -56,7 +66,7 @@ class ForToWhileVisitor(TransformingVisitor):
 
         # extract condition, update and body
         if condition is None:
-            condition = node_factory.create_literal('true')
+            condition = node_factory.create_literal("true")
         if update is not None:
             update_exprs = update.get_children()
         else:
@@ -74,7 +84,7 @@ class ForToWhileVisitor(TransformingVisitor):
 
         # collect all continue statements and add the updates before continues
         continues = self._collect_continue_stmts(body)
-        for (cont_node, cont_parent) in continues:
+        for cont_node, cont_parent in continues:
             if isinstance(cont_parent, NodeList):
                 new_node_list = []
                 for child_attr in cont_parent.get_children_names():
@@ -84,7 +94,8 @@ class ForToWhileVisitor(TransformingVisitor):
                             for u in update_exprs:
                                 assert is_expression(u)
                                 new_node_list.append(
-                                    node_factory.create_expression_stmt(u))
+                                    node_factory.create_expression_stmt(u)
+                                )
                             new_node_list.append(cont_node)
                         else:
                             new_node_list.append(child)
@@ -96,7 +107,8 @@ class ForToWhileVisitor(TransformingVisitor):
                     continue_block_stmts.append(node_factory.create_expression_stmt(u))
                 continue_block_stmts.append(cont_node)
                 block_stmt = node_factory.create_block_stmt(
-                    node_factory.create_statement_list(continue_block_stmts))
+                    node_factory.create_statement_list(continue_block_stmts)
+                )
 
                 for child_attr in cont_parent.get_children_names():
                     child = cont_parent.get_child_at(child_attr)
@@ -109,5 +121,6 @@ class ForToWhileVisitor(TransformingVisitor):
 
         new_stmts.append(while_stmt)
         new_block = node_factory.create_block_stmt(
-            node_factory.create_statement_list(new_stmts))
+            node_factory.create_statement_list(new_stmts)
+        )
         return (True, [new_block])

@@ -12,25 +12,29 @@ class FeatureApproximator(nn.Module):
 
 
 class TransformerApproximator(FeatureApproximator):
-    def __init__(self,
-                 vocab_size: int,
-                 transform_capacity: int,
-                 input_dim: int,
-                 output_dim: int,
-                 dropout: float = 0.2,
-                 n_heads: int = 4,
-                 n_layers: int = 1) -> None:
+    def __init__(
+        self,
+        vocab_size: int,
+        transform_capacity: int,
+        input_dim: int,
+        output_dim: int,
+        dropout: float = 0.2,
+        n_heads: int = 4,
+        n_layers: int = 1,
+    ) -> None:
         super().__init__()
         self.vocab_size = vocab_size
         self.transform_capacity = transform_capacity
 
         self.t_embeddings = nn.Embedding(transform_capacity, input_dim)
 
-        transformer_layer = nn.TransformerEncoderLayer(d_model=input_dim,
-                                                       nhead=n_heads,
-                                                       dropout=dropout,
-                                                       batch_first=True,
-                                                       dim_feedforward=768)
+        transformer_layer = nn.TransformerEncoderLayer(
+            d_model=input_dim,
+            nhead=n_heads,
+            dropout=dropout,
+            batch_first=True,
+            dim_feedforward=768,
+        )
         self.transformer = nn.TransformerEncoder(transformer_layer, num_layers=n_layers)
         self.fc1 = nn.Linear(input_dim, output_dim)
         self.act1 = nn.ReLU()
@@ -39,18 +43,26 @@ class TransformerApproximator(FeatureApproximator):
     def get_transform_embedding(self, transform_onehots: torch.Tensor):
         return torch.matmul(transform_onehots, self.t_embeddings.weight)
 
-    def forward(self, code_feature: torch.Tensor, var_embedding: torch.Tensor,
-                transform_embedding: torch.Tensor, src_mask: torch.Tensor):
+    def forward(
+        self,
+        code_feature: torch.Tensor,
+        var_embedding: torch.Tensor,
+        transform_embedding: torch.Tensor,
+        src_mask: torch.Tensor,
+    ):
         # code_feature: B, L, H
         # embeddings: B, H
         var_embedding = var_embedding.unsqueeze(1)
         transform_embedding = transform_embedding.unsqueeze(1)
-        cat_feature = torch.cat([var_embedding, transform_embedding, code_feature], dim=1)
+        cat_feature = torch.cat(
+            [var_embedding, transform_embedding, code_feature], dim=1
+        )
 
         # B, S -> B, (S+2), make up for the newly appended embeddings
         src_mask = torch.cat(
             [torch.zeros(src_mask.shape[0], 2).to(src_mask.device).bool(), src_mask],
-            dim=1)
+            dim=1,
+        )
 
         # B, L', H
         feature = self.transformer(cat_feature, src_key_padding_mask=src_mask)
@@ -60,13 +72,15 @@ class TransformerApproximator(FeatureApproximator):
 
 
 class WeightedSumApproximator(FeatureApproximator):
-    def __init__(self,
-                 vocab_size: int,
-                 transform_capacity: int,
-                 input_dim: int,
-                 output_dim: int,
-                 dropout: float = 0.2,
-                 bn: bool = False) -> None:
+    def __init__(
+        self,
+        vocab_size: int,
+        transform_capacity: int,
+        input_dim: int,
+        output_dim: int,
+        dropout: float = 0.2,
+        bn: bool = False,
+    ) -> None:
         super().__init__()
         self.vocab_size = vocab_size
         self.transform_capacity = transform_capacity
@@ -81,8 +95,13 @@ class WeightedSumApproximator(FeatureApproximator):
     def get_transform_embedding(self, transform_onehots: torch.Tensor):
         return torch.matmul(transform_onehots, self.t_embeddings.weight)
 
-    def forward(self, code_feature: torch.Tensor, var_embedding: torch.Tensor,
-                transform_embedding: torch.Tensor, src_mask: torch.Tensor):
+    def forward(
+        self,
+        code_feature: torch.Tensor,
+        var_embedding: torch.Tensor,
+        transform_embedding: torch.Tensor,
+        src_mask: torch.Tensor,
+    ):
         assert code_feature.shape[1] == var_embedding.shape[1]
         assert code_feature.shape[1] == transform_embedding.shape[1]
 
@@ -93,12 +112,14 @@ class WeightedSumApproximator(FeatureApproximator):
 
 
 class AdditionApproximator(FeatureApproximator):
-    def __init__(self,
-                 vocab_size: int,
-                 transform_capacity: int,
-                 input_dim: int,
-                 output_dim: int,
-                 dropout: float = 0.2) -> None:
+    def __init__(
+        self,
+        vocab_size: int,
+        transform_capacity: int,
+        input_dim: int,
+        output_dim: int,
+        dropout: float = 0.2,
+    ) -> None:
         super().__init__()
         self.vocab_size = vocab_size
         self.transform_capacity = transform_capacity
@@ -117,8 +138,13 @@ class AdditionApproximator(FeatureApproximator):
     def get_transform_embedding(self, transform_onehots: torch.Tensor):
         return torch.matmul(transform_onehots, self.t_embeddings.weight)
 
-    def forward(self, code_feature: torch.Tensor, var_embedding: torch.Tensor,
-                transform_embedding: torch.Tensor, src_mask: torch.Tensor):
+    def forward(
+        self,
+        code_feature: torch.Tensor,
+        var_embedding: torch.Tensor,
+        transform_embedding: torch.Tensor,
+        src_mask: torch.Tensor,
+    ):
         assert code_feature.shape[1] == var_embedding.shape[1]
         assert code_feature.shape[1] == transform_embedding.shape[1]
 
@@ -131,13 +157,15 @@ class AdditionApproximator(FeatureApproximator):
 
 
 class ConcatApproximator(FeatureApproximator):
-    def __init__(self,
-                 vocab_size: int,
-                 transform_capacity: int,
-                 input_dim: int,
-                 output_dim: int,
-                 dropout: float = 0.2,
-                 bn: bool = False) -> None:
+    def __init__(
+        self,
+        vocab_size: int,
+        transform_capacity: int,
+        input_dim: int,
+        output_dim: int,
+        dropout: float = 0.2,
+        bn: bool = False,
+    ) -> None:
         super().__init__()
         self.vocab_size = vocab_size
         self.transform_capacity = transform_capacity
@@ -161,8 +189,13 @@ class ConcatApproximator(FeatureApproximator):
     def get_transform_embedding(self, transform_onehots: torch.Tensor):
         return torch.matmul(transform_onehots, self.t_embeddings.weight)
 
-    def forward(self, code_feature: torch.Tensor, var_embedding: torch.Tensor,
-                transform_embedding: torch.Tensor, src_mask: torch.Tensor):
+    def forward(
+        self,
+        code_feature: torch.Tensor,
+        var_embedding: torch.Tensor,
+        transform_embedding: torch.Tensor,
+        src_mask: torch.Tensor,
+    ):
         assert code_feature.shape[1] == var_embedding.shape[1]
         assert code_feature.shape[1] == transform_embedding.shape[1]
 
@@ -175,12 +208,14 @@ class ConcatApproximator(FeatureApproximator):
 
 
 class VarApproximator(FeatureApproximator):
-    def __init__(self,
-                 vocab_size: int,
-                 input_dim: int,
-                 output_dim: int,
-                 dropout: float = 0.2,
-                 bn: bool = False) -> None:
+    def __init__(
+        self,
+        vocab_size: int,
+        input_dim: int,
+        output_dim: int,
+        dropout: float = 0.2,
+        bn: bool = False,
+    ) -> None:
         super().__init__()
         self.vocab_size = vocab_size
         self.fc1 = nn.Linear(input_dim * 2, input_dim * 2)
@@ -201,8 +236,12 @@ class VarApproximator(FeatureApproximator):
     def get_transform_embedding(self, transform_onehots: torch.Tensor):
         raise RuntimeError("VarApproximator does not support transform embedding")
 
-    def forward(self, code_feature: torch.Tensor, var_embedding: torch.Tensor,
-                src_mask: torch.Tensor):
+    def forward(
+        self,
+        code_feature: torch.Tensor,
+        var_embedding: torch.Tensor,
+        src_mask: torch.Tensor,
+    ):
         assert code_feature.shape[1] == var_embedding.shape[1]
 
         x = torch.cat([code_feature, var_embedding], dim=1)
@@ -214,12 +253,14 @@ class VarApproximator(FeatureApproximator):
 
 
 class TransformationApproximator(FeatureApproximator):
-    def __init__(self,
-                 transform_capacity: int,
-                 input_dim: int,
-                 output_dim: int,
-                 dropout: float = 0.2,
-                 bn: bool = False) -> None:
+    def __init__(
+        self,
+        transform_capacity: int,
+        input_dim: int,
+        output_dim: int,
+        dropout: float = 0.2,
+        bn: bool = False,
+    ) -> None:
         super().__init__()
         self.transform_capacity = transform_capacity
 
@@ -242,8 +283,12 @@ class TransformationApproximator(FeatureApproximator):
     def get_transform_embedding(self, transform_onehots: torch.Tensor):
         return torch.matmul(transform_onehots, self.t_embeddings.weight)
 
-    def forward(self, code_feature: torch.Tensor, transform_embedding: torch.Tensor,
-                src_mask: torch.Tensor):
+    def forward(
+        self,
+        code_feature: torch.Tensor,
+        transform_embedding: torch.Tensor,
+        src_mask: torch.Tensor,
+    ):
         assert code_feature.shape[1] == transform_embedding.shape[1]
 
         x = torch.cat([code_feature, transform_embedding], dim=1)

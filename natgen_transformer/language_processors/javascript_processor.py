@@ -12,8 +12,15 @@ class JavascriptProcessor:
         control_variable = "_i_" + str(np.random.choice(list(range(10))))
         p = np.random.uniform(0, 1)
         if p < 0.5:
-            prefix = "for ( let " + control_variable + " = 0 ; " + control_variable + " > 0 ; " + control_variable + \
-                     " ++ ) { "
+            prefix = (
+                "for ( let "
+                + control_variable
+                + " = 0 ; "
+                + control_variable
+                + " > 0 ; "
+                + control_variable
+                + " ++ ) { "
+            )
             loop = prefix + body + " } "
             return loop
         else:
@@ -26,9 +33,25 @@ class JavascriptProcessor:
         if p < 0.33:
             return "while ( false ) { " + body + " }"
         elif p < 0.66:
-            return "while ( " + control_variable + " < " + control_variable + " ) { " + body + " } "
+            return (
+                "while ( "
+                + control_variable
+                + " < "
+                + control_variable
+                + " ) { "
+                + body
+                + " } "
+            )
         else:
-            return "while ( " + control_variable + " > " + control_variable + " ) { " + body + " } "
+            return (
+                "while ( "
+                + control_variable
+                + " > "
+                + control_variable
+                + " ) { "
+                + body
+                + " } "
+            )
 
     @classmethod
     def create_dead_if(cls, body):
@@ -37,12 +60,30 @@ class JavascriptProcessor:
         if p < 0.33:
             return "if ( false ) { " + body + " }"
         elif p < 0.66:
-            return "if ( " + control_variable + " < " + control_variable + " ) { " + body + " } "
+            return (
+                "if ( "
+                + control_variable
+                + " < "
+                + control_variable
+                + " ) { "
+                + body
+                + " } "
+            )
         else:
-            return "if ( " + control_variable + " > " + control_variable + " ) { " + body + " } "
+            return (
+                "if ( "
+                + control_variable
+                + " > "
+                + control_variable
+                + " ) { "
+                + body
+                + " } "
+            )
 
     @classmethod
-    def get_tokens_insert_before(cls, code_str, root, insertion_code, insert_before_node):
+    def get_tokens_insert_before(
+        cls, code_str, root, insertion_code, insert_before_node
+    ):
         if not isinstance(insert_before_node, list):
             insert_before_node = [insert_before_node]
         if isinstance(code_str, str):
@@ -52,16 +93,17 @@ class JavascriptProcessor:
         if root.type == "comment":
             return tokens
         if "string" in str(root.type):
-            return [code_str[root.start_byte:root.end_byte].decode()]
+            return [code_str[root.start_byte : root.end_byte].decode()]
         if root in insert_before_node:
             tokens += insertion_code.split()
         children = root.children
         if len(children) == 0 or str(root.type) in ["string"]:
-            tokens.append(code_str[root.start_byte:root.end_byte].decode())
+            tokens.append(code_str[root.start_byte : root.end_byte].decode())
         else:
             for child in children:
-                ts = cls.get_tokens_insert_before(code_str, child, insertion_code,
-                                                  insert_before_node)
+                ts = cls.get_tokens_insert_before(
+                    code_str, child, insertion_code, insert_before_node
+                )
                 tokens += ts
         return tokens
 
@@ -74,10 +116,10 @@ class JavascriptProcessor:
         if root.type == "comment":
             return tokens
         if "string" in str(root.type):
-            return [code[root.start_byte:root.end_byte].decode()]
+            return [code[root.start_byte : root.end_byte].decode()]
         children = root.children
         if len(children) == 0 or str(root.type) in ["string"]:
-            tokens.append(code[root.start_byte:root.end_byte].decode())
+            tokens.append(code[root.start_byte : root.end_byte].decode())
         else:
             for child in children:
                 ts = cls.get_tokens(code, child)
@@ -86,7 +128,7 @@ class JavascriptProcessor:
 
     @classmethod
     def get_breaking_statements(cls, block):
-        breakings = ['continue_statement', 'break_statement', 'return_statement']
+        breakings = ["continue_statement", "break_statement", "return_statement"]
         statements = []
         stack = [block]
         while len(stack) > 0:
@@ -108,7 +150,8 @@ class JavascriptProcessor:
                 selected_loop = np.random.choice(loops)
                 loops.remove(selected_loop)
                 modified_root, modified_code_string, success = cls.for_to_while(
-                    code_string, root, selected_loop, parser)
+                    code_string, root, selected_loop, parser
+                )
                 if success:
                     root = modified_root
                     code_string = modified_code_string
@@ -129,7 +172,8 @@ class JavascriptProcessor:
                 selected_loop = np.random.choice(loops)
                 loops.remove(selected_loop)
                 modified_root, modified_code_string, success = cls.while_to_for(
-                    code_string, root, selected_loop, parser)
+                    code_string, root, selected_loop, parser
+                )
                 if success:
                     root = modified_root
                     code_string = modified_code_string
@@ -147,7 +191,7 @@ class JavascriptProcessor:
         while len(queue) > 0:
             current_node = queue[0]
             queue = queue[1:]
-            if str(current_node.type) == 'for_statement':
+            if str(current_node.type) == "for_statement":
                 loops.append(current_node)
             for child in current_node.children:
                 queue.append(child)
@@ -170,18 +214,26 @@ class JavascriptProcessor:
             return tokens
         if "string" in str(root.type):
             parent = root.parent
-            return [code_str[root.start_byte:root.end_byte].decode()]
+            return [code_str[root.start_byte : root.end_byte].decode()]
         children = root.children
         if len(children) == 0 or str(root.type) in ["string"]:
-            tokens.append(code_str[root.start_byte:root.end_byte].decode())
+            tokens.append(code_str[root.start_byte : root.end_byte].decode())
         else:
             for child in children:
                 if child == for_node:
-                    tokens.extend(init + ["while", "("] + cond + [")", "{"] + body +
-                                  update + ["}"])
+                    tokens.extend(
+                        init
+                        + ["while", "("]
+                        + cond
+                        + [")", "{"]
+                        + body
+                        + update
+                        + ["}"]
+                    )
                 else:
-                    tokens += cls.get_tokens_replace_for(code_str, for_node, child, init,
-                                                         cond, update, body)
+                    tokens += cls.get_tokens_replace_for(
+                        code_str, for_node, child, init, cond, update, body
+                    )
         return tokens
 
     @classmethod
@@ -203,19 +255,22 @@ class JavascriptProcessor:
                 body = children[6]
             # body_tokens = cls.get_tokens(code_string, body)
             breaking_statements = cls.get_breaking_statements(body)
-            body_tokens = cls.get_tokens_insert_before(code_string, body,
-                                                       " ".join(update_tokens),
-                                                       breaking_statements)
-            if len(body_tokens) >= 2 and (body_tokens[0] == "{"
-                                          and body_tokens[-1] == "}"):
+            body_tokens = cls.get_tokens_insert_before(
+                code_string, body, " ".join(update_tokens), breaking_statements
+            )
+            if len(body_tokens) >= 2 and (
+                body_tokens[0] == "{" and body_tokens[-1] == "}"
+            ):
                 body_tokens = body_tokens[1:-1]
-            tokens = cls.get_tokens_replace_for(code_str=code_string,
-                                                for_node=fl,
-                                                root=root,
-                                                init=init_tokens,
-                                                cond=comp_tokens,
-                                                update=update_tokens,
-                                                body=body_tokens)
+            tokens = cls.get_tokens_replace_for(
+                code_str=code_string,
+                for_node=fl,
+                root=root,
+                init=init_tokens,
+                cond=comp_tokens,
+                update=update_tokens,
+                body=body_tokens,
+            )
             code = cls.beautify_java_code(tokens)
             return parser.parse_code(code), code, True
         return root, code_string, False
@@ -227,7 +282,7 @@ class JavascriptProcessor:
         while len(queue) > 0:
             current_node = queue[0]
             queue = queue[1:]
-            if str(current_node.type) == 'while_statement':
+            if str(current_node.type) == "while_statement":
                 loops.append(current_node)
             for child in current_node.children:
                 queue.append(child)
@@ -238,17 +293,20 @@ class JavascriptProcessor:
         children = wl.children
         condition = children[1]
         body = children[2]
-        if str(condition.type) == 'parenthesized_expression':
+        if str(condition.type) == "parenthesized_expression":
             expr_tokens = cls.get_tokens(code_string, condition.children[1])
             body_tokens = cls.get_tokens(code_string, body)
-            if len(body_tokens) >= 2 and (body_tokens[0] == "{"
-                                          and body_tokens[-1] == "}"):
+            if len(body_tokens) >= 2 and (
+                body_tokens[0] == "{" and body_tokens[-1] == "}"
+            ):
                 body_tokens = body_tokens[1:-1]
-            tokens = cls.get_tokens_replace_while(code_str=code_string,
-                                                  while_node=wl,
-                                                  root=root,
-                                                  cond=expr_tokens,
-                                                  body=body_tokens)
+            tokens = cls.get_tokens_replace_while(
+                code_str=code_string,
+                while_node=wl,
+                root=root,
+                cond=expr_tokens,
+                body=body_tokens,
+            )
             code = cls.beautify_java_code(tokens)
             return parser.parse_code(code), code, True
         return root, code_string, False
@@ -262,18 +320,20 @@ class JavascriptProcessor:
         if root.type == "comment":
             return tokens
         if "string" in str(root.type):
-            return [code_str[root.start_byte:root.end_byte].decode()]
+            return [code_str[root.start_byte : root.end_byte].decode()]
         children = root.children
         if len(children) == 0 or str(root.type) in ["string"]:
-            tokens.append(code_str[root.start_byte:root.end_byte].decode())
+            tokens.append(code_str[root.start_byte : root.end_byte].decode())
         else:
             for child in children:
                 if child == while_node:
-                    tokens.extend(["for", "(", ";"] + cond + [";", ")", "{"] + body +
-                                  ["}"])
+                    tokens.extend(
+                        ["for", "(", ";"] + cond + [";", ")", "{"] + body + ["}"]
+                    )
                 else:
-                    tokens += cls.get_tokens_replace_while(code_str, while_node, child,
-                                                           cond, body)
+                    tokens += cls.get_tokens_replace_while(
+                        code_str, while_node, child, cond, body
+                    )
         return tokens
 
     @classmethod
@@ -283,7 +343,7 @@ class JavascriptProcessor:
         while len(queue) > 0:
             current_node = queue[0]
             queue = queue[1:]
-            if str(current_node.type) == 'binary_expression':
+            if str(current_node.type) == "binary_expression":
                 children_nodes = current_node.children
                 keep = ["<", ">", "<=", ">=", "==", "!=", "===", "!=="]
                 counter = 0
@@ -305,40 +365,51 @@ class JavascriptProcessor:
         if root.type == "comment":
             return tokens, None
         if "string" in str(root.type):
-            return [code[root.start_byte:root.end_byte].decode()], None
+            return [code[root.start_byte : root.end_byte].decode()], None
         children = root.children
         if len(children) == 0:
-
-            if root.start_byte == operator.start_byte and root.end_byte == operator.end_byte:
-                opt = (code[operator.start_byte:operator.end_byte].decode())
-                if opt == '<':
-                    tokens.append('>')
-                elif opt == '>':
-                    tokens.append('<')
-                elif opt == '>=':
-                    tokens.append('<=')
-                elif opt == '<=':
-                    tokens.append('>=')
-                elif opt == '==':
-                    tokens.append('==')
-                elif opt == '!=':
-                    tokens.append('!=')
-                elif opt == '===':
-                    tokens.append('===')
-                elif opt == '!==':
-                    tokens.append('!==')
+            if (
+                root.start_byte == operator.start_byte
+                and root.end_byte == operator.end_byte
+            ):
+                opt = code[operator.start_byte : operator.end_byte].decode()
+                if opt == "<":
+                    tokens.append(">")
+                elif opt == ">":
+                    tokens.append("<")
+                elif opt == ">=":
+                    tokens.append("<=")
+                elif opt == "<=":
+                    tokens.append(">=")
+                elif opt == "==":
+                    tokens.append("==")
+                elif opt == "!=":
+                    tokens.append("!=")
+                elif opt == "===":
+                    tokens.append("===")
+                elif opt == "!==":
+                    tokens.append("!==")
             else:
-                tokens.append(code[root.start_byte:root.end_byte].decode())
+                tokens.append(code[root.start_byte : root.end_byte].decode())
         for child in children:
-            if child.start_byte == left_oprd.start_byte and child.end_byte == left_oprd.end_byte:
-                ts, _ = cls.get_tokens_for_opswap(code, right_oprd, left_oprd, operator,
-                                                  right_oprd)
-            elif child.start_byte == right_oprd.start_byte and child.end_byte == right_oprd.end_byte:
-                ts, _ = cls.get_tokens_for_opswap(code, left_oprd, left_oprd, operator,
-                                                  right_oprd)
+            if (
+                child.start_byte == left_oprd.start_byte
+                and child.end_byte == left_oprd.end_byte
+            ):
+                ts, _ = cls.get_tokens_for_opswap(
+                    code, right_oprd, left_oprd, operator, right_oprd
+                )
+            elif (
+                child.start_byte == right_oprd.start_byte
+                and child.end_byte == right_oprd.end_byte
+            ):
+                ts, _ = cls.get_tokens_for_opswap(
+                    code, left_oprd, left_oprd, operator, right_oprd
+                )
             else:
-                ts, _ = cls.get_tokens_for_opswap(code, child, left_oprd, operator,
-                                                  right_oprd)
+                ts, _ = cls.get_tokens_for_opswap(
+                    code, child, left_oprd, operator, right_oprd
+                )
             tokens += ts
         return tokens, None
 
@@ -353,15 +424,16 @@ class JavascriptProcessor:
                 selected_exp = np.random.choice(expressions)
                 expressions.remove(selected_exp)
                 bin_exp = selected_exp
-                condition = code[bin_exp.start_byte:bin_exp.end_byte].decode()
+                condition = code[bin_exp.start_byte : bin_exp.end_byte].decode()
                 bin_exp = bin_exp.children
                 left_oprd = bin_exp[0]
                 operator = bin_exp[1]
                 right_oprd = bin_exp[2]
 
                 try:
-                    code_list = cls.get_tokens_for_opswap(code, root, left_oprd, operator,
-                                                          right_oprd)[0]
+                    code_list = cls.get_tokens_for_opswap(
+                        code, root, left_oprd, operator, right_oprd
+                    )[0]
                     code_string = ""
                     for w in code_list:
                         code_string = code_string + w + " "
@@ -386,10 +458,12 @@ class JavascriptProcessor:
         while len(queue) > 0:
             current_node = queue[0]
             queue = queue[1:]
-            if str(current_node.type) == 'if_statement':
-                clause = code_str[current_node.start_byte:current_node.end_byte].decode()
+            if str(current_node.type) == "if_statement":
+                clause = code_str[
+                    current_node.start_byte : current_node.end_byte
+                ].decode()
                 des = (current_node.children)[1]
-                cond = code_str[des.start_byte:des.end_byte].decode()
+                cond = code_str[des.start_byte : des.end_byte].decode()
                 stack = [des]
                 nodes = []
                 while len(stack) > 0:
@@ -430,8 +504,9 @@ class JavascriptProcessor:
         return expressions
 
     @classmethod
-    def get_tokens_for_blockswap(cls, code, root, first_block, opt_node, second_block,
-                                 flagx, flagy):
+    def get_tokens_for_blockswap(
+        cls, code, root, first_block, opt_node, second_block, flagx, flagy
+    ):
         if isinstance(code, str):
             code = code.encode()
         assert isinstance(root, Node)
@@ -440,44 +515,62 @@ class JavascriptProcessor:
         if root.type == "comment":
             return tokens, None
         if "string" in str(root.type):
-            return [code[root.start_byte:root.end_byte].decode()], None
+            return [code[root.start_byte : root.end_byte].decode()], None
 
         children = root.children
         if len(children) == 0:
-            if root.start_byte == opt_node.start_byte and root.end_byte == opt_node.end_byte:
-                op = code[root.start_byte:root.end_byte].decode()
+            if (
+                root.start_byte == opt_node.start_byte
+                and root.end_byte == opt_node.end_byte
+            ):
+                op = code[root.start_byte : root.end_byte].decode()
                 if op == "<":
                     tokens.append(">=")
                 elif op == ">":
-                    tokens.append('<=')
+                    tokens.append("<=")
                 elif op == ">=":
-                    tokens.append('<')
+                    tokens.append("<")
                 elif op == "<=":
-                    tokens.append('>')
+                    tokens.append(">")
                 elif op == "!=":
-                    tokens.append('==')
+                    tokens.append("==")
                 elif op == "==":
-                    tokens.append('!=')
+                    tokens.append("!=")
             else:
-                tokens.append(code[root.start_byte:root.end_byte].decode())
+                tokens.append(code[root.start_byte : root.end_byte].decode())
         for child in children:
             child_type = str(child.type)
-            if child.start_byte == first_block.start_byte and child.end_byte == first_block.end_byte and flagx == 0 \
-                    and str(
-                    child.type) == str(first_block.type):
+            if (
+                child.start_byte == first_block.start_byte
+                and child.end_byte == first_block.end_byte
+                and flagx == 0
+                and str(child.type) == str(first_block.type)
+            ):
                 flagx = 1
-                ts, _ = cls.get_tokens_for_blockswap(code, second_block, first_block,
-                                                     opt_node, second_block, flagx, flagy)
+                ts, _ = cls.get_tokens_for_blockswap(
+                    code,
+                    second_block,
+                    first_block,
+                    opt_node,
+                    second_block,
+                    flagx,
+                    flagy,
+                )
 
-            elif child.start_byte == second_block.start_byte and child.end_byte == second_block.end_byte and flagy ==\
-                    0 and str(
-                    child.type) == str(second_block.type):
+            elif (
+                child.start_byte == second_block.start_byte
+                and child.end_byte == second_block.end_byte
+                and flagy == 0
+                and str(child.type) == str(second_block.type)
+            ):
                 flagy = 1
-                ts, _ = cls.get_tokens_for_blockswap(code, first_block, first_block,
-                                                     opt_node, second_block, flagx, flagy)
+                ts, _ = cls.get_tokens_for_blockswap(
+                    code, first_block, first_block, opt_node, second_block, flagx, flagy
+                )
             else:
-                ts, _ = cls.get_tokens_for_blockswap(code, child, first_block, opt_node,
-                                                     second_block, flagx, flagy)
+                ts, _ = cls.get_tokens_for_blockswap(
+                    code, child, first_block, opt_node, second_block, flagx, flagy
+                )
             tokens += ts
 
         return tokens, None
@@ -486,7 +579,7 @@ class JavascriptProcessor:
     def block_swap(cls, code_str, parser):
         code = code_str.encode()
         root = parser.parse_code(code)
-        operator_list = ['<', '>', '<=', '>=', '==', '!=']
+        operator_list = ["<", ">", "<=", ">=", "==", "!="]
         pair = cls.extract_if_else(root, code, operator_list)
 
         success = False
@@ -505,8 +598,9 @@ class JavascriptProcessor:
                     root1 = st.pop()
                     if len(root1.children) == 0:
                         nodes.append(root1)
-                        if (code[root1.start_byte:root1.end_byte].decode()
-                            ) in operator_list:
+                        if (
+                            code[root1.start_byte : root1.end_byte].decode()
+                        ) in operator_list:
                             opt_node = root1
                             break
                     for child in root1.children:
@@ -514,20 +608,21 @@ class JavascriptProcessor:
                 nodes = clause.children
                 flag = 0
                 for current_node in nodes:
-                    if str(current_node.type) == 'statement_block':
+                    if str(current_node.type) == "statement_block":
                         first_block = current_node
-                    elif str(current_node.type) == 'else_clause':
+                    elif str(current_node.type) == "else_clause":
                         new_list = current_node.children
                         for w in new_list:
-                            if str(w.type) == 'statement_block':
+                            if str(w.type) == "statement_block":
                                 second_block = w
                                 break
 
                 flagx = 0
                 flagy = 0
                 try:
-                    code_list = \
-                    cls.get_tokens_for_blockswap(code, root, first_block, opt_node, second_block, flagx, flagy)[0]
+                    code_list = cls.get_tokens_for_blockswap(
+                        code, root, first_block, opt_node, second_block, flagx, flagy
+                    )[0]
                     code_string = ""
                     for w in code_list:
                         code_string = code_string + w + " "

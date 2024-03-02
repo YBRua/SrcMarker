@@ -1,6 +1,6 @@
 from metrics import calc_code_bleu
 
-transformed =""" # include < bits/stdc++.h >
+transformed = """ # include < bits/stdc++.h >
 using namespace std ;
 using ll = long long ;
 ll count_tidy ( ll_N ) {
@@ -57,10 +57,10 @@ cout << " Case # " << t << " :  " << solve_case ( ) << endl ; t ++ ;
 original = """
 """
 
-ori_trans = calc_code_bleu.evaluate_per_example(hypothesis=transformed,
-                                                reference=original,
-                                                lang='c')
-print('original vs transformed')
+ori_trans = calc_code_bleu.evaluate_per_example(
+    hypothesis=transformed, reference=original, lang="c"
+)
+print("original vs transformed")
 print(ori_trans)
 
 # ori_natgen = calc_code_bleu.evaluate_per_example(hypothesis=natgen,

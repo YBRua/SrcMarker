@@ -1,12 +1,15 @@
 from mutable_tree.nodes import Node
 from .code_transformer import CodeTransformer
-from ..tree_manip.visitors import MoveVarDeclToHeadVisitor, MoveVarDeclToBeforeUsedVisitor
+from ..tree_manip.visitors import (
+    MoveVarDeclToHeadVisitor,
+    MoveVarDeclToBeforeUsedVisitor,
+)
 
 
 class VarDeclLocationTransformer(CodeTransformer):
-    name = 'VarDeclLocationTransformer'
-    TRANSFORM_VARDECL_BLOCK_START = 'VarDeclLocationTransformer.block_start'
-    TRANSFORM_VARDECL_FIRST_USE = 'VarDeclLocationTransformer.first_use'
+    name = "VarDeclLocationTransformer"
+    TRANSFORM_VARDECL_BLOCK_START = "VarDeclLocationTransformer.block_start"
+    TRANSFORM_VARDECL_FIRST_USE = "VarDeclLocationTransformer.first_use"
 
     def __init__(self) -> None:
         super().__init__()
@@ -20,5 +23,5 @@ class VarDeclLocationTransformer(CodeTransformer):
     def mutable_tree_transform(self, node: Node, dst_style: str):
         return {
             self.TRANSFORM_VARDECL_BLOCK_START: MoveVarDeclToHeadVisitor(),
-            self.TRANSFORM_VARDECL_FIRST_USE: MoveVarDeclToBeforeUsedVisitor()
+            self.TRANSFORM_VARDECL_FIRST_USE: MoveVarDeclToBeforeUsedVisitor(),
         }[dst_style].visit(node)

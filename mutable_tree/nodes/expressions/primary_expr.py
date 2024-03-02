@@ -7,5 +7,12 @@ from .field_access import FieldAccess
 from .array_access import ArrayAccess
 from typing import Union
 
-PrimaryExpression = Union[Literal, Identifier, ThisExpression, NewExpression,
-                          CallExpression, FieldAccess, ArrayAccess]
+PrimaryExpression = Union[
+    Literal,
+    Identifier,
+    ThisExpression,
+    NewExpression,
+    CallExpression,
+    FieldAccess,
+    ArrayAccess,
+]

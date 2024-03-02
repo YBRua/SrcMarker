@@ -21,10 +21,9 @@ class WMLinearEncoder(nn.Module):
 
 
 class WMConcatEncoder(nn.Module):
-    def __init__(self,
-                 n_bits: int,
-                 embedding_dim: int = 512,
-                 output_dim: int = 512) -> None:
+    def __init__(
+        self, n_bits: int, embedding_dim: int = 512, output_dim: int = 512
+    ) -> None:
         super().__init__()
         self.n_bits = n_bits
         self.embedding = WMEmbeddingEncoder(2, embedding_dim)

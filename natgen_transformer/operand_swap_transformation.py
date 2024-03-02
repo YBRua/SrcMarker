@@ -20,9 +20,11 @@ class OperandSwapTransformer(NatGenBaseTransformer):
     """
     Swapping Operand "a>b" becomes "b<a"
     """
+
     def __init__(self, parser_path, language):
-        super(OperandSwapTransformer, self).__init__(parser_path=parser_path,
-                                                     language=language)
+        super(OperandSwapTransformer, self).__init__(
+            parser_path=parser_path, language=language
+        )
         self.language = language
         self.transformations = processor_function[language]
         processor_map = {
@@ -53,10 +55,7 @@ class OperandSwapTransformer(NatGenBaseTransformer):
             tokens, types = return_values, None
         return (
             re.sub("[ \t\n]+", " ", " ".join(tokens)),
-            {
-                "types": types,
-                "success": success
-            },
+            {"types": types, "success": success},
         )
 
     def transform_block_swap(self, code: str) -> str:
@@ -71,10 +70,10 @@ class OperandSwapTransformer(NatGenBaseTransformer):
         if transform == "operand_swap":
             return self.transform_block_swap(code)
         else:
-            raise ValueError(f'Unknown transform {transform}')
+            raise ValueError(f"Unknown transform {transform}")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     java_code = """
         void foo(){
             int time = 20;
@@ -180,10 +179,20 @@ if __name__ == '__main__':
         "go": ("go", go_code),
     }
     code_directory = os.path.realpath(
-        os.path.join(os.path.realpath(__file__), '../../../../'))
+        os.path.join(os.path.realpath(__file__), "../../../../")
+    )
     parser_path = os.path.join(code_directory, "parser/languages.so")
-    for lang in ["java", "python", "js", "c", "cpp", "php", "go", "ruby",
-                 "cs"]:  # ["c", "cpp", "java", "cs", "python",
+    for lang in [
+        "java",
+        "python",
+        "js",
+        "c",
+        "cpp",
+        "php",
+        "go",
+        "ruby",
+        "cs",
+    ]:  # ["c", "cpp", "java", "cs", "python",
         # "php", "go", "ruby"]:
         # lang = "php"
         lang, code = input_map[lang]

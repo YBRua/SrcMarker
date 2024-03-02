@@ -6,8 +6,12 @@ import numpy as np
 
 from .language_processors import JavaAndCPPProcessor, JavascriptProcessor
 
-from .language_processors.utils import (extract_statement_within_size, get_tokens,
-                                        get_tokens_insert_before, count_nodes)
+from .language_processors.utils import (
+    extract_statement_within_size,
+    get_tokens,
+    get_tokens_insert_before,
+    count_nodes,
+)
 from .transformation_base import NatGenBaseTransformer
 
 processor_function = {
@@ -65,17 +69,24 @@ class DeadCodeInserter(NatGenBaseTransformer):
                 random_stmt, insert_before = np.random.choice(statements, 2)
                 statements.remove(random_stmt)
                 dead_coed_body = " ".join(
-                    self.tokenizer_function(code_string, random_stmt)).strip()
-                dead_code_function = np.random.choice([
-                    self.processor.create_dead_for_loop,
-                    self.processor.create_dead_while_loop, self.processor.create_dead_if
-                ])
+                    self.tokenizer_function(code_string, random_stmt)
+                ).strip()
+                dead_code_function = np.random.choice(
+                    [
+                        self.processor.create_dead_for_loop,
+                        self.processor.create_dead_while_loop,
+                        self.processor.create_dead_if,
+                    ]
+                )
                 dead_code = dead_code_function(dead_coed_body)
                 modified_code = " ".join(
-                    self.insertion_function(code_str=code_string,
-                                            root=root,
-                                            insertion_code=dead_code,
-                                            insert_before_node=insert_before))
+                    self.insertion_function(
+                        code_str=code_string,
+                        root=root,
+                        insertion_code=dead_code,
+                        insert_before_node=insert_before,
+                    )
+                )
                 if modified_code != original_code:
                     modified_root = self.parse_code(" ".join(modified_code))
                     return modified_root, modified_code, True
@@ -90,17 +101,17 @@ class DeadCodeInserter(NatGenBaseTransformer):
         return code, {"success": success}
 
     def get_available_transforms(self) -> List[str]:
-        return ['dead_code_insertion']
+        return ["dead_code_insertion"]
 
     def transform(self, code: str, transform: str):
         if transform == "dead_code_insertion":
             code, _ = self.transform_code(code)
             return code
         else:
-            raise ValueError(f'Unknown transform {transform}')
+            raise ValueError(f"Unknown transform {transform}")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     java_code = """
     class A{
         int foo(int n){
@@ -209,7 +220,8 @@ if __name__ == '__main__':
         "go": ("go", go_code),
     }
     code_directory = os.path.realpath(
-        os.path.join(os.path.realpath(__file__), '../../../../'))
+        os.path.join(os.path.realpath(__file__), "../../../../")
+    )
     parser_path = os.path.join(code_directory, "parser/languages.so")
     for lang in ["c", "cpp", "java", "python", "php", "ruby", "js", "go", "cs"]:
         lang, code = input_map[lang]

@@ -10,7 +10,6 @@ from typing import List, Optional, Union
 
 
 class TryResource(Node):
-
     def __init__(
         self,
         node_type: NodeType,
@@ -26,13 +25,14 @@ class TryResource(Node):
 
         res_type = self.resource.node_type
         if res_type not in {
-                NodeType.IDENTIFIER, NodeType.FIELD_ACCESS,
-                NodeType.LOCAL_VARIABLE_DECLARATION
+            NodeType.IDENTIFIER,
+            NodeType.FIELD_ACCESS,
+            NodeType.LOCAL_VARIABLE_DECLARATION,
         }:
-            throw_invalid_type(res_type, self, attr='resource')
+            throw_invalid_type(res_type, self, attr="resource")
 
     def get_children_names(self) -> List[str]:
-        return ['resource']
+        return ["resource"]
 
     def get_children(self) -> List[Node]:
         return [self.resource]
@@ -50,17 +50,18 @@ class TryResourceList(NodeList):
             throw_invalid_type(self.node_type, self)
         for i, resource in enumerate(self.node_list):
             if resource.node_type != NodeType.TRY_RESOURCE:
-                throw_invalid_type(resource.node_type, self, attr=f'resource#{i}')
+                throw_invalid_type(resource.node_type, self, attr=f"resource#{i}")
 
 
 class TryWithResourcesStatement(Statement):
-
-    def __init__(self,
-                 node_type: NodeType,
-                 resources: TryResourceList,
-                 body: BlockStatement,
-                 handlers: Optional[TryHandlers] = None,
-                 finalizer: Optional[FinallyClause] = None):
+    def __init__(
+        self,
+        node_type: NodeType,
+        resources: TryResourceList,
+        body: BlockStatement,
+        handlers: Optional[TryHandlers] = None,
+        finalizer: Optional[FinallyClause] = None,
+    ):
         super().__init__(node_type)
         self.body = body
         self.resources = resources
@@ -72,18 +73,22 @@ class TryWithResourcesStatement(Statement):
         if self.node_type != NodeType.TRY_WITH_RESOURCES_STMT:
             throw_invalid_type(self.node_type, self)
         if self.body.node_type != NodeType.BLOCK_STMT:
-            throw_invalid_type(self.body.node_type, self, attr='body')
-        if (self.finalizer is not None
-                and self.finalizer.node_type != NodeType.FINALLY_CLAUSE):
-            throw_invalid_type(self.finalizer.node_type, self, attr='finalizer')
-        if (self.handlers is not None
-                and self.handlers.node_type != NodeType.TRY_HANDLERS):
-            throw_invalid_type(self.handlers.node_type, self, attr='handlers')
+            throw_invalid_type(self.body.node_type, self, attr="body")
+        if (
+            self.finalizer is not None
+            and self.finalizer.node_type != NodeType.FINALLY_CLAUSE
+        ):
+            throw_invalid_type(self.finalizer.node_type, self, attr="finalizer")
+        if (
+            self.handlers is not None
+            and self.handlers.node_type != NodeType.TRY_HANDLERS
+        ):
+            throw_invalid_type(self.handlers.node_type, self, attr="handlers")
         if self.resources.node_type != NodeType.TRY_RESOURCE_LIST:
-            throw_invalid_type(self.resources.node_type, self, attr='resources')
+            throw_invalid_type(self.resources.node_type, self, attr="resources")
 
     def get_children_names(self) -> List[str]:
-        return ['resources', 'body', 'handlers', 'finalizer']
+        return ["resources", "body", "handlers", "finalizer"]
 
     def get_children(self) -> List[Node]:
         children = [self.resources, self.body]

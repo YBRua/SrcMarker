@@ -8,16 +8,21 @@ class IncrementTransformer(RopGenCodeTransformer):
         super().__init__()
 
     def get_available_transforms(self):
-        return ['10.1', '10.2', '10.3', '10.4']
+        return ["10.1", "10.2", "10.3", "10.4"]
 
-    def xml_transform(self, input_xml_path: str, src_style: str, dst_style: str,
-                      output_xml_path: str):
-        incr_opr_prepost.program_transform(input_xml_path, src_style, dst_style,
-                                           output_xml_path)
+    def xml_transform(
+        self, input_xml_path: str, src_style: str, dst_style: str, output_xml_path: str
+    ):
+        incr_opr_prepost.program_transform(
+            input_xml_path, src_style, dst_style, output_xml_path
+        )
 
-    def xml_transform_all(self, input_xml_path: str, dst_style: str,
-                          output_xml_path: str):
-        incr_opr_prepost.program_transform_all(input_xml_path, dst_style, output_xml_path)
+    def xml_transform_all(
+        self, input_xml_path: str, dst_style: str, output_xml_path: str
+    ):
+        incr_opr_prepost.program_transform_all(
+            input_xml_path, dst_style, output_xml_path
+        )
 
     def etree_transform_all(self, evaluator, dst_style: str):
         incr_opr_prepost.etree_transform(evaluator, dst_style)
@@ -40,8 +45,8 @@ class IncrementTransformer(RopGenCodeTransformer):
                 incr_plus_literals_len += 1
 
         return {
-            '10.1': postfix_incrs_len,
-            '10.2': prefix_incrs_len,
-            '10.3': incr_full_len,
-            '10.4': incr_plus_literals_len
+            "10.1": postfix_incrs_len,
+            "10.2": prefix_incrs_len,
+            "10.3": incr_full_len,
+            "10.4": incr_plus_literals_len,
         }

@@ -20,5 +20,5 @@ class CodeTransformer:
         pass
 
     def throw_invalid_dst_style(self, dst_style: str):
-        msg = f'invalid dst_style: {dst_style} for {self.__class__.__name__}'
+        msg = f"invalid dst_style: {dst_style} for {self.__class__.__name__}"
         raise ValueError(msg)

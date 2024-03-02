@@ -16,33 +16,33 @@ def _join_by_rows(tokens: List[Token]):
             rows.append([])
         rows[-1].append(token.token_value)
 
-    row_strs = [' '.join(row) for row in rows]
+    row_strs = [" ".join(row) for row in rows]
     return row_strs
 
 
 def fix_join_artifacts(text: str):
     # remove spaces between dots
-    text = re.sub(r'\s?\.\s?(?=\w+)', '.', text)
+    text = re.sub(r"\s?\.\s?(?=\w+)", ".", text)
     # remove spaces between underscores
-    text = re.sub(r'_\s?(?=\w+)', '_', text)
+    text = re.sub(r"_\s?(?=\w+)", "_", text)
     # replace 0X with 0x
-    text = re.sub(r'0X', '0x', text)
+    text = re.sub(r"0X", "0x", text)
     return text
 
 
 def fix_single_quotes(input_str: str):
     # removes all spaces between single quotes to fix char pasing
-    return re.sub(r"\s+(?=(?:(?:[^']*'){2})*[^']*'[^']*$)", '', input_str)
+    return re.sub(r"\s+(?=(?:(?:[^']*'){2})*[^']*'[^']*$)", "", input_str)
 
 
 def tokens_to_strings(tokens: List[Token]):
     row_joined = _join_by_rows(tokens)
-    return ' '.join(fix_single_quotes(fix_join_artifacts(x)) for x in row_joined)
+    return " ".join(fix_single_quotes(fix_join_artifacts(x)) for x in row_joined)
 
 
 def sanitize_name(name):
     # https://github.com/eliphatfs/torch.redstone
-    return re.sub(r'\W|^(?=\d)', '_', name)
+    return re.sub(r"\W|^(?=\d)", "_", name)
 
 
 def _split_name(c_token: str) -> List[str]:
@@ -54,19 +54,19 @@ def _split_name(c_token: str) -> List[str]:
 
 
 def _try_split_snake(c_token: str) -> List[str]:
-    words = c_token.split('_')
-    res = ['_'] * (len(words) * 2 - 1)
+    words = c_token.split("_")
+    res = ["_"] * (len(words) * 2 - 1)
     res[0::2] = words
     return res
 
 
 def _try_split_camel(c_token: str) -> List[str]:
-    return re.sub(r'((?<=[a-z])[A-Z]|(?<!\A)[A-Z](?=[a-z]))', r' \1', c_token).split()
+    return re.sub(r"((?<=[a-z])[A-Z]|(?<!\A)[A-Z](?=[a-z]))", r" \1", c_token).split()
 
 
 def split_string_literal(c_token: str) -> List[str]:
     # remove escape sequences
-    stripped = re.sub(r'\\.', '', c_token)
+    stripped = re.sub(r"\\.", "", c_token)
 
     # remove enclosing quotes
     if stripped.startswith('"') or stripped.startswith("'"):
@@ -78,11 +78,11 @@ def split_string_literal(c_token: str) -> List[str]:
 
 
 def split_identifier(c_token: str) -> List[str]:
-    if '/' in c_token:  # include path
+    if "/" in c_token:  # include path
         res = []
-        for subtok in c_token.split('/'):
+        for subtok in c_token.split("/"):
             res.extend(split_identifier(subtok))
-            res.append('/')
+            res.append("/")
         return res
     else:
         return _split_name(c_token)
@@ -91,7 +91,7 @@ def split_identifier(c_token: str) -> List[str]:
 class JavaScriptTokenizer:
     def __init__(self):
         parser = tree_sitter.Parser()
-        parser_lang = tree_sitter.Language('./parser/languages.so', 'javascript')
+        parser_lang = tree_sitter.Language("./parser/languages.so", "javascript")
         parser.set_language(parser_lang)
         self.parser = parser
 
@@ -99,27 +99,48 @@ class JavaScriptTokenizer:
         tokens = []
 
         def _collect_token(node: tree_sitter.Node):
-            if node.type == 'comment':
+            if node.type == "comment":
                 return
-            elif node.type in {'number'}:
+            elif node.type in {"number"}:
                 tokens.append(
-                    Token(node.text.decode(), TokenType.CONSTANT, node.start_point[0],
-                          node.start_point[1]))
-            elif node.type in {'string', 'template_string', 'regex'}:
+                    Token(
+                        node.text.decode(),
+                        TokenType.CONSTANT,
+                        node.start_point[0],
+                        node.start_point[1],
+                    )
+                )
+            elif node.type in {"string", "template_string", "regex"}:
                 tokens.append(
-                    Token(node.text.decode(), TokenType.STRING, node.start_point[0],
-                          node.start_point[1]))
+                    Token(
+                        node.text.decode(),
+                        TokenType.STRING,
+                        node.start_point[0],
+                        node.start_point[1],
+                    )
+                )
             elif node.type in {
-                    'identifier', 'shorthand_property_identifier',
-                    'shorthand_property_identifier_pattern'
+                "identifier",
+                "shorthand_property_identifier",
+                "shorthand_property_identifier_pattern",
             }:
                 tokens.append(
-                    Token(node.text.decode(), TokenType.IDENTIFIER, node.start_point[0],
-                          node.start_point[1]))
+                    Token(
+                        node.text.decode(),
+                        TokenType.IDENTIFIER,
+                        node.start_point[0],
+                        node.start_point[1],
+                    )
+                )
             elif node.child_count == 0:
                 tokens.append(
-                    Token(node.text.decode(), TokenType.KEYWORD, node.start_point[0],
-                          node.start_point[1]))
+                    Token(
+                        node.text.decode(),
+                        TokenType.KEYWORD,
+                        node.start_point[0],
+                        node.start_point[1],
+                    )
+                )
             else:
                 assert node.child_count > 0
                 for ch in node.children:
@@ -129,22 +150,22 @@ class JavaScriptTokenizer:
         return tokens
 
     def tokenize(self, code: str) -> List[Token]:
-        tree = self.parser.parse(bytes(code, 'utf-8'))
+        tree = self.parser.parse(bytes(code, "utf-8"))
         tokens = self.collect_tokens(tree.root_node)
         return tokens
 
 
 class CodeTokenizer:
-    def __init__(self, lang: str = 'c'):
+    def __init__(self, lang: str = "c"):
         self.lang = lang
-        if lang in ('c', 'cpp'):
+        if lang in ("c", "cpp"):
             self.tokenizer = CppTokenizer()
-        elif lang == 'java':
+        elif lang == "java":
             self.tokenizer = JavaTokenizer()
-        elif lang == 'javascript':
+        elif lang == "javascript":
             self.tokenizer = JavaScriptTokenizer()
         else:
-            raise ValueError(f'Unsupported language: {lang}')
+            raise ValueError(f"Unsupported language: {lang}")
 
     def _tokens_postprocess(self, tokens: List[Token]):
         res = []
@@ -166,7 +187,7 @@ class CodeTokenizer:
             elif len(token.token_value) > 40:
                 # the tokenizer is sometimes buggy
                 # skip extremely long 'token's
-                res.append('<unk>')
+                res.append("<unk>")
             else:
                 res.append(token.token_value)
         return res
@@ -176,12 +197,12 @@ class CodeTokenizer:
         return code_tokens, self._tokens_postprocess(code_tokens)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
 
     def main(argv):
         """Driver mostly for testing purposes."""
         for filename in argv[1:]:
-            with open(filename, 'r') as f:
+            with open(filename, "r") as f:
                 source = f.read()
                 if source is None:
                     continue

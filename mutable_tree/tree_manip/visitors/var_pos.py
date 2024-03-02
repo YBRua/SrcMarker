@@ -1,15 +1,24 @@
 from .visitor import TransformingVisitor
-from mutable_tree.nodes import (Node, node_factory, LocalVariableDeclaration,
-                                StatementList, Identifier, Declarator, VariableDeclarator)
+from mutable_tree.nodes import (
+    Node,
+    node_factory,
+    LocalVariableDeclaration,
+    StatementList,
+    Identifier,
+    Declarator,
+    VariableDeclarator,
+)
 from typing import Optional, List
 from .var_same_type import split_DeclaratorList_by_Initializing
 
 
 class MoveVarDeclToHeadVisitor(TransformingVisitor):
-    def visit_StatementList(self,
-                            node: StatementList,
-                            parent: Optional[Node] = None,
-                            parent_attr: Optional[str] = None):
+    def visit_StatementList(
+        self,
+        node: StatementList,
+        parent: Optional[Node] = None,
+        parent_attr: Optional[str] = None,
+    ):
         self.generic_visit(node, parent, parent_attr)
         new_children_list = []
         decl_list = []
@@ -18,15 +27,19 @@ class MoveVarDeclToHeadVisitor(TransformingVisitor):
             if child is None:
                 continue
             if isinstance(child, LocalVariableDeclaration):
-                with_init_declarator_list, without_init_declarator_list = \
-                    split_DeclaratorList_by_Initializing(child.declarators)
+                (
+                    with_init_declarator_list,
+                    without_init_declarator_list,
+                ) = split_DeclaratorList_by_Initializing(child.declarators)
                 if with_init_declarator_list is not None:
                     new_child = node_factory.create_local_variable_declaration(
-                        child.type, with_init_declarator_list)
+                        child.type, with_init_declarator_list
+                    )
                     new_children_list.append(new_child)
                 if without_init_declarator_list is not None:
                     new_child = node_factory.create_local_variable_declaration(
-                        child.type, without_init_declarator_list)
+                        child.type, without_init_declarator_list
+                    )
                     decl_list.append(new_child)
             else:
                 new_children_list.append(child)
@@ -44,10 +57,12 @@ def get_identifier_from_declarator(node: Declarator) -> Identifier:
 
 
 class MoveVarDeclToBeforeUsedVisitor(TransformingVisitor):
-    def visit_StatementList(self,
-                            node: StatementList,
-                            parent: Optional[Node] = None,
-                            parent_attr: Optional[str] = None):
+    def visit_StatementList(
+        self,
+        node: StatementList,
+        parent: Optional[Node] = None,
+        parent_attr: Optional[str] = None,
+    ):
         new_children_list = []
         decl_map = {}
         for child_attr in node.get_children_names():
@@ -55,18 +70,23 @@ class MoveVarDeclToBeforeUsedVisitor(TransformingVisitor):
             if child is None:
                 continue
             if isinstance(child, LocalVariableDeclaration):
-                with_init_declarator_list, without_init_declarator_list = \
-                    split_DeclaratorList_by_Initializing(child.declarators)
+                (
+                    with_init_declarator_list,
+                    without_init_declarator_list,
+                ) = split_DeclaratorList_by_Initializing(child.declarators)
                 if with_init_declarator_list is not None:
                     new_child = node_factory.create_local_variable_declaration(
-                        child.type, with_init_declarator_list)
+                        child.type, with_init_declarator_list
+                    )
                     new_children_list.append(new_child)
                 if without_init_declarator_list is not None:
                     for declarator in without_init_declarator_list.node_list:
                         declarator_list = node_factory.create_declarator_list(
-                            [declarator])
+                            [declarator]
+                        )
                         new_child = node_factory.create_local_variable_declaration(
-                            child.type, declarator_list)
+                            child.type, declarator_list
+                        )
                         identifier = get_identifier_from_declarator(declarator).name
                         decl_map[identifier] = new_child
             else:

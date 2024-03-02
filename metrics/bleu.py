@@ -20,11 +20,11 @@ from .utils import ngrams
 
 
 def sentence_bleu(
-        references,
-        hypothesis,
-        weights=(0.25, 0.25, 0.25, 0.25),
-        smoothing_function=None,
-        auto_reweigh=False,
+    references,
+    hypothesis,
+    weights=(0.25, 0.25, 0.25, 0.25),
+    smoothing_function=None,
+    auto_reweigh=False,
 ):
     """
     Calculate BLEU score (Bilingual Evaluation Understudy) from
@@ -89,11 +89,11 @@ def sentence_bleu(
 
 
 def corpus_bleu(
-        list_of_references,
-        hypotheses,
-        weights=(0.25, 0.25, 0.25, 0.25),
-        smoothing_function=None,
-        auto_reweigh=False,
+    list_of_references,
+    hypotheses,
+    weights=(0.25, 0.25, 0.25, 0.25),
+    smoothing_function=None,
+    auto_reweigh=False,
 ):
     """
     Calculate a single corpus-level BLEU score (aka. system-level BLEU) for all
@@ -514,7 +514,7 @@ class SmoothingFunction:
         incvnt = 1  # From the mteval-v13a.pl, it's referred to as k.
         for i, p_i in enumerate(p_n):
             if p_i.numerator == 0:
-                p_n[i] = 1 / (2 ** incvnt * p_i.denominator)
+                p_n[i] = 1 / (2**incvnt * p_i.denominator)
                 incvnt += 1
         return p_n
 

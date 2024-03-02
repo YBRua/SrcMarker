@@ -19,4 +19,4 @@ class StatementList(NodeList):
 
         for i, stmt in enumerate(self.node_list):
             if not is_statement(stmt):
-                throw_invalid_type(stmt.node_type, self, f'stmt#{i}')
+                throw_invalid_type(stmt.node_type, self, f"stmt#{i}")

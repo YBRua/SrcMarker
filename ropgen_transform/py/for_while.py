@@ -4,42 +4,42 @@ from ropgen_transform.xml_utils import init_parser, load_doc, XML_NS
 
 
 def get_for(e):
-    return e('//src:for')
+    return e("//src:for")
 
 
 # get the initialization variable in the for loop
 def get_init(elem):
-    return elem.xpath('src:control/src:init', namespaces=XML_NS)
+    return elem.xpath("src:control/src:init", namespaces=XML_NS)
 
 
 # get the initialization expression of for
 def get_cond_expr(elem):
-    return elem.xpath('src:control/src:condition/src:expr', namespaces=XML_NS)
+    return elem.xpath("src:control/src:condition/src:expr", namespaces=XML_NS)
 
 
 # get the operation expression after the for loop
 def get_incr(elem):
-    return elem.xpath('src:control/src:incr', namespaces=XML_NS)
+    return elem.xpath("src:control/src:incr", namespaces=XML_NS)
 
 
 def get_oper_in_incr(elem):
-    return elem.xpath('src:control/src:incr/src:operator', namespaces=XML_NS)
+    return elem.xpath("src:control/src:incr/src:operator", namespaces=XML_NS)
 
 
 # get the content of the execution statement of for
 def get_block(elem):
-    return elem.xpath('src:block/src:block_content', namespaces=XML_NS)
+    return elem.xpath("src:block/src:block_content", namespaces=XML_NS)
 
 
 # get the execution statement of for
 def get_block1(elem):
-    return elem.xpath('src:block', namespaces=XML_NS)
+    return elem.xpath("src:block", namespaces=XML_NS)
 
 
 # save tree to file
 def save_tree_to_file(tree, file):
-    with open(file, 'w') as f:
-        f.write(etree.tostring(tree).decode('utf8'))
+    with open(file, "w") as f:
+        f.write(etree.tostring(tree).decode("utf8"))
 
 
 # start to transform
@@ -52,7 +52,7 @@ def trans_tree(e, ignore_list=[], instances=None):
         get_for(e) if instances is None else (instance[0] for instance in instances)
     ]
     # get the root of the tree
-    tree_root = e('/*')[0].getroottree()
+    tree_root = e("/*")[0].getroottree()
     new_ignore_list = []
     for item in for_stmts:
         for for_stmt in item:
@@ -73,8 +73,8 @@ def trans_tree(e, ignore_list=[], instances=None):
             if len(init) >= 1 and len(cond_expr) >= 1 and len(incr) >= 1:
                 flag = True
                 # for each for, change the XML tag to while
-                for_stmt.tag = 'while'
-                for_stmt.text = 'while '
+                for_stmt.tag = "while"
+                for_stmt.text = "while "
                 init = init[0]
                 cond_expr = cond_expr[0]
                 incr = incr[0]
@@ -84,23 +84,23 @@ def trans_tree(e, ignore_list=[], instances=None):
                 for_block = get_block(for_stmt)[0]
                 for_block1 = get_block1(for_stmt)[0]
                 if for_block1.text is None:
-                    for_block1.text = '{'
-                    for_block1.tail = '}'
+                    for_block1.text = "{"
+                    for_block1.tail = "}"
                 # if the initialization is empty, remove the ‘；’
                 if len(init) == 0:
-                    init.text = ''
+                    init.text = ""
                 # semicolon after removing cyclic condition
-                cond_expr.tail = ')'
+                cond_expr.tail = ")"
                 # because the loop increment has to be mentioned separately, semicolon and line feed are added after it
                 if len(incr) >= 1:
-                    incr.tail = ';\n'
+                    incr.tail = ";\n"
                     # replace x++, y++ with x++; y++;
                     if len(operator_in_incr) >= 1:
                         for i in operator_in_incr:
-                            if i.text == ',':
-                                i.text = ';'
+                            if i.text == ",":
+                                i.text = ";"
                 else:
-                    incr.tail = ''
+                    incr.tail = ""
                 for_index = for_stmt.getparent().index(for_stmt)
                 # insert the initialization statement before the for loop
                 for_stmt.getparent().insert(for_index, init)
@@ -133,7 +133,7 @@ def get_number(xml_path):
     return count(e)
 
 
-def program_transform(program_path, output_xml_path: str = './style/style.xml'):
+def program_transform(program_path, output_xml_path: str = "./style/style.xml"):
     doc = load_doc(program_path)
     e = init_parser(doc)
     trans_tree(e)

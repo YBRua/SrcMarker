@@ -24,26 +24,27 @@ from collections import defaultdict
 
 
 class CodebertWMTrainer:
-    def __init__(self,
-                 code_encoder: CodeBertEncoder,
-                 wm_encoder: nn.Module,
-                 selector: TransformSelector,
-                 approximator: FeatureApproximator,
-                 wm_decoder: nn.Module,
-                 scheduled_optimizer: optim.Optimizer,
-                 other_optimizer: optim.Optimizer,
-                 device: torch.device,
-                 train_loader: DataLoader,
-                 valid_loader: DataLoader,
-                 test_loader: DataLoader,
-                 loss_fn: nn.Module,
-                 transform_manager: InMemoryJitRuntimeDataManager,
-                 w_var: float,
-                 w_style: float,
-                 scheduler: Optional[optim.lr_scheduler._LRScheduler] = None,
-                 logger: Optional[logging.Logger] = None,
-                 ckpt_dir: str = 'my_model'):
-
+    def __init__(
+        self,
+        code_encoder: CodeBertEncoder,
+        wm_encoder: nn.Module,
+        selector: TransformSelector,
+        approximator: FeatureApproximator,
+        wm_decoder: nn.Module,
+        scheduled_optimizer: optim.Optimizer,
+        other_optimizer: optim.Optimizer,
+        device: torch.device,
+        train_loader: DataLoader,
+        valid_loader: DataLoader,
+        test_loader: DataLoader,
+        loss_fn: nn.Module,
+        transform_manager: InMemoryJitRuntimeDataManager,
+        w_var: float,
+        w_style: float,
+        scheduler: Optional[optim.lr_scheduler._LRScheduler] = None,
+        logger: Optional[logging.Logger] = None,
+        ckpt_dir: str = "my_model",
+    ):
         self.code_encoder = code_encoder
         self.selector = selector
         self.approximator = approximator
@@ -68,7 +69,7 @@ class CodebertWMTrainer:
         self.logger = logger if logger is not None else DefaultLogger()
         self.scheduler = scheduler
 
-        self.save_dir = os.path.join('./ckpts', ckpt_dir)
+        self.save_dir = os.path.join("./ckpts", ckpt_dir)
         if not os.path.exists(self.save_dir):
             os.makedirs(self.save_dir)
 
@@ -124,25 +125,29 @@ class CodebertWMTrainer:
             vs_onehots = F.gumbel_softmax(vs_logits, tau=0.1, hard=True)
             vs_ids = torch.argmax(torch.softmax(vs_output, dim=1), dim=1)
 
-            ss_output = self.selector.transform_selector_forward(code_feature,
-                                                                 wm_feature,
-                                                                 transform_mask=s_masks)
+            ss_output = self.selector.transform_selector_forward(
+                code_feature, wm_feature, transform_mask=s_masks
+            )
             ss_logits = torch.log_softmax(ss_output, dim=1)
             ss_onehots = F.gumbel_softmax(ss_logits, tau=0.1, hard=True)
             ss_ids = torch.argmax(torch.softmax(ss_output, dim=1), dim=1)
 
             vs_embds = torch.matmul(
-                vs_onehots, self.code_encoder.codebert.embeddings.word_embeddings.weight)
+                vs_onehots, self.code_encoder.codebert.embeddings.word_embeddings.weight
+            )
             ss_embds = self.approximator.get_transform_embedding(ss_onehots)
-            feat_warped = self.approximator(code_feature, vs_embds, ss_embds,
-                                            padding_mask)
+            feat_warped = self.approximator(
+                code_feature, vs_embds, ss_embds, padding_mask
+            )
 
             # transformed code feature
             ss_instances = self.transform_manager.get_transformed_codes_by_pred(
-                instance_ids, ss_ids.tolist())
+                instance_ids, ss_ids.tolist()
+            )
 
             t_instances, _ = self.transform_manager.varname_transform_on_instances_bert(
-                ss_instances, vs_ids.tolist())
+                ss_instances, vs_ids.tolist()
+            )
 
             for wmid, vs in zip(wmids.tolist(), vs_ids.tolist()):
                 word = self.transform_manager.tokenizer._convert_id_to_token(vs)
@@ -190,20 +195,21 @@ class CodebertWMTrainer:
             avg_decode_loss = tot_decode_loss / (bid + 1)
 
             progress.set_description(
-                f'| epoch {eid:03d} | acc {avg_acc:.4f} '
-                f'| r_acc {avg_real_acc:.4f} | loss {avg_loss:.4f} '
-                f'| warp {avg_warp_loss:.4f} | decode {avg_decode_loss:.4f} |')
+                f"| epoch {eid:03d} | acc {avg_acc:.4f} "
+                f"| r_acc {avg_real_acc:.4f} | loss {avg_loss:.4f} "
+                f"| warp {avg_warp_loss:.4f} | decode {avg_decode_loss:.4f} |"
+            )
 
         # for wmid, vs in var_selection.items():
         #     self.logger.info(f'wmid: {wmid} | vs: {Counter(vs)}')
 
         res_dict = {
-            'epoch': eid,
-            'acc': avg_acc,
-            'real_acc': avg_real_acc,
-            'loss': avg_loss,
-            'warp_loss': avg_warp_loss,
-            'decode_loss': avg_decode_loss,
+            "epoch": eid,
+            "acc": avg_acc,
+            "real_acc": avg_real_acc,
+            "loss": avg_loss,
+            "warp_loss": avg_warp_loss,
+            "decode_loss": avg_decode_loss,
         }
 
         return res_dict
@@ -255,23 +261,27 @@ class CodebertWMTrainer:
             vs_onehots = F.gumbel_softmax(vs_logits, tau=0.1, hard=True)
             vs_ids = torch.argmax(torch.softmax(vs_output, dim=1), dim=1)
 
-            ss_output = self.selector.transform_selector_forward(code_feature,
-                                                                 wm_feature,
-                                                                 transform_mask=s_masks)
+            ss_output = self.selector.transform_selector_forward(
+                code_feature, wm_feature, transform_mask=s_masks
+            )
             ss_logits = torch.log_softmax(ss_output, dim=1)
             ss_onehots = F.gumbel_softmax(ss_logits, tau=0.1, hard=True)
             ss_ids = torch.argmax(torch.softmax(ss_output, dim=1), dim=1)
 
             vs_embds = torch.matmul(
-                vs_onehots, self.code_encoder.codebert.embeddings.word_embeddings.weight)
+                vs_onehots, self.code_encoder.codebert.embeddings.word_embeddings.weight
+            )
             ss_embds = self.approximator.get_transform_embedding(ss_onehots)
-            feat_warped = self.approximator(code_feature, vs_embds, ss_embds,
-                                            padding_mask)
+            feat_warped = self.approximator(
+                code_feature, vs_embds, ss_embds, padding_mask
+            )
 
             instances = self.transform_manager.get_transformed_codes_by_pred(
-                instance_ids, ss_ids.tolist())
+                instance_ids, ss_ids.tolist()
+            )
             instances, _ = self.transform_manager.varname_transform_on_instances_bert(
-                instances, vs_ids.tolist())
+                instances, vs_ids.tolist()
+            )
 
             # simulated decoding process
             xx, ll, mm = self.transform_manager.load_to_tensor_bert(instances)
@@ -306,61 +316,63 @@ class CodebertWMTrainer:
         avg_msg_acc = tot_msg_acc / n_samples
 
         return {
-            'epoch': eid,
-            'oracle_acc': avg_oracle_acc,
-            'actual_acc': avg_acc,
-            'loss': avg_loss,
-            'warp_loss': avg_warp_loss,
-            'msg_acc': avg_msg_acc,
+            "epoch": eid,
+            "oracle_acc": avg_oracle_acc,
+            "actual_acc": avg_acc,
+            "loss": avg_loss,
+            "warp_loss": avg_warp_loss,
+            "msg_acc": avg_msg_acc,
         }
 
     def _save_models(self, save_fname: str):
         torch.save(
             {
-                'model': self.code_encoder.state_dict(),
-                'wm_encoder': self.wm_encoder.state_dict(),
-                'wm_decoder': self.wm_decoder.state_dict(),
-                'selector': self.selector.state_dict(),
-                'approximator': self.approximator.state_dict(),
-            }, save_fname)
+                "model": self.code_encoder.state_dict(),
+                "wm_encoder": self.wm_encoder.state_dict(),
+                "wm_decoder": self.wm_decoder.state_dict(),
+                "selector": self.selector.state_dict(),
+                "approximator": self.approximator.state_dict(),
+            },
+            save_fname,
+        )
 
     def _pprint_res_dict(self, res: Dict, prefix: str = None) -> str:
-        res_str = '|'
+        res_str = "|"
         for k, v in res.items():
             if isinstance(v, float):
-                res_str += f' {k}: {v:.4f} |'
+                res_str += f" {k}: {v:.4f} |"
             elif isinstance(v, int):
-                res_str += f' {k}: {v:3d} |'
+                res_str += f" {k}: {v:3d} |"
             else:
-                res_str += f' {k}: {v} |'
+                res_str += f" {k}: {v} |"
 
         if prefix is not None:
-            assert isinstance(prefix, str), 'prefix must be a string'
+            assert isinstance(prefix, str), "prefix must be a string"
             res_str = prefix + res_str
 
         return res_str
 
     def _new_best_metric(self, eval_res: Dict):
-        metric = eval_res['actual_acc']
+        metric = eval_res["actual_acc"]
         if metric > self.best_metric:
             self.best_metric = metric
             return True
         return False
 
     def _post_eval_actions(self, eid: int, eval_res: Dict):
-        self.logger.info(self._pprint_res_dict(eval_res, prefix='| valid '))
+        self.logger.info(self._pprint_res_dict(eval_res, prefix="| valid "))
         if self._new_best_metric(eval_res):
-            self._save_models(f'{self.save_dir}/models_best.pt')
-            self.logger.info(f'| best model saved at {eid} epoch |')
+            self._save_models(f"{self.save_dir}/models_best.pt")
+            self.logger.info(f"| best model saved at {eid} epoch |")
 
     def _post_train_actions(self, eid: int, train_res: Dict):
-        self.logger.info(self._pprint_res_dict(train_res, prefix='| train '))
+        self.logger.info(self._pprint_res_dict(train_res, prefix="| train "))
         if self.scheduler is not None:
             self.scheduler.step()
 
         if eid == 24 or eid == 49:
             # save at 25th and 50th epoch
-            self._save_models(f'{self.save_dir}/models_{eid}.pt')
+            self._save_models(f"{self.save_dir}/models_{eid}.pt")
 
     def do_train(self, num_epochs: int):
         try:
@@ -373,10 +385,10 @@ class CodebertWMTrainer:
                     self._post_eval_actions(eid, valid_res)
 
                     test_res = self._test_epoch(eid, self.test_loader)
-                    self.logger.info(self._pprint_res_dict(test_res, prefix='| test  '))
+                    self.logger.info(self._pprint_res_dict(test_res, prefix="| test  "))
         except KeyboardInterrupt:
-            self.logger.warn('interrupted')
-            self._save_models(f'{self.save_dir}/models_backup.pt')
+            self.logger.warn("interrupted")
+            self._save_models(f"{self.save_dir}/models_backup.pt")
             return
         except Exception as e:
             self.logger.error(e)

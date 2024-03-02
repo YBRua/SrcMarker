@@ -6,11 +6,12 @@ from typing import List, Optional
 
 
 class AssertStatement(Statement):
-
-    def __init__(self,
-                 node_type: NodeType,
-                 condition: Expression,
-                 message: Optional[Expression] = None):
+    def __init__(
+        self,
+        node_type: NodeType,
+        condition: Expression,
+        message: Optional[Expression] = None,
+    ):
         super().__init__(node_type)
         self.condition = condition
         self.message = message
@@ -18,12 +19,15 @@ class AssertStatement(Statement):
 
     def _check_types(self):
         if self.node_type != NodeType.ASSERT_STMT:
-            raise TypeError(f'Invalid type: {self.node_type} for AssertStatement')
+            raise TypeError(f"Invalid type: {self.node_type} for AssertStatement")
         if not is_expression(self.condition):
             raise TypeError(
-                f'Invalid type: {self.condition.node_type} for assert condition')
+                f"Invalid type: {self.condition.node_type} for assert condition"
+            )
         if self.message is not None and not is_expression(self.message):
-            raise TypeError(f'Invalid type: {self.message.node_type} for assert message')
+            raise TypeError(
+                f"Invalid type: {self.message.node_type} for assert message"
+            )
 
     def get_children(self) -> List[Node]:
         if self.message is not None:
@@ -32,4 +36,4 @@ class AssertStatement(Statement):
             return [self.condition]
 
     def get_children_names(self) -> List[str]:
-        return ['condition', 'message']
+        return ["condition", "message"]

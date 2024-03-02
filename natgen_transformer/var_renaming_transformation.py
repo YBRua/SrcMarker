@@ -37,9 +37,13 @@ class VarRenamingTransformer(NatGenBaseTransformer):
         # python: function_definition, call
         # js: function_declaration
         self.not_var_ptype = [
-            "function_declarator", "class_declaration", "method_declaration",
-            "function_definition", "function_declaration", "call",
-            "local_function_statement"
+            "function_declarator",
+            "class_declaration",
+            "method_declaration",
+            "function_definition",
+            "function_declaration",
+            "call",
+            "local_function_statement",
         ]
 
     def extract_var_names(self, root, code_string):
@@ -49,9 +53,10 @@ class VarRenamingTransformer(NatGenBaseTransformer):
         while len(queue) > 0:
             current_node = queue[0]
             queue = queue[1:]
-            if (current_node.type == "identifier"
-                    or current_node.type == "variable_name") and str(
-                        current_node.parent.type) not in self.not_var_ptype:
+            if (
+                current_node.type == "identifier"
+                or current_node.type == "variable_name"
+            ) and str(current_node.parent.type) not in self.not_var_ptype:
                 var_names.append(self.tokenizer_function(code_string, current_node)[0])
             for child in current_node.children:
                 queue.append(child)
@@ -96,10 +101,10 @@ class VarRenamingTransformer(NatGenBaseTransformer):
             code, _ = self.transform_code(code)
             return code
         else:
-            raise ValueError(f'Unknown transform: {transform}')
+            raise ValueError(f"Unknown transform: {transform}")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     java_code = """
     class A{
         int foo(int n){
@@ -207,7 +212,8 @@ if __name__ == '__main__':
         "go": ("go", go_code),
     }
     code_directory = os.path.realpath(
-        os.path.join(os.path.realpath(__file__), '../../../..'))
+        os.path.join(os.path.realpath(__file__), "../../../..")
+    )
     parser_path = os.path.join(code_directory, "parser/languages.so")
     for lang in ["c", "cpp", "java", "python", "php", "ruby", "js", "go", "cs"]:
         lang, code = input_map[lang]

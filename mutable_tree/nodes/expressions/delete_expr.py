@@ -6,8 +6,9 @@ from typing import List
 
 
 class DeleteExpression(Expression):
-
-    def __init__(self, node_type: NodeType, operand: Expression, is_array: bool = False):
+    def __init__(
+        self, node_type: NodeType, operand: Expression, is_array: bool = False
+    ):
         super().__init__(node_type)
         self.operand = operand
         self.is_array = is_array
@@ -17,10 +18,10 @@ class DeleteExpression(Expression):
         if self.node_type != NodeType.DELETE_EXPR:
             throw_invalid_type(self.node_type, self)
         if not is_expression(self.operand):
-            throw_invalid_type(self.operand.node_type, self, attr='operand')
+            throw_invalid_type(self.operand.node_type, self, attr="operand")
 
     def get_children(self) -> List[Node]:
         return [self.operand]
 
     def get_children_names(self) -> List[str]:
-        return ['operand']
+        return ["operand"]

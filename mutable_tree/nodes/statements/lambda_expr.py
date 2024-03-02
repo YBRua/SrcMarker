@@ -9,13 +9,14 @@ from typing import List, Union, Optional
 
 
 class LambdaExpression(Expression):
-
-    def __init__(self,
-                 node_type: NodeType,
-                 lambda_params: FormalParameterList,
-                 body: Union[Expression, BlockStatement],
-                 parenthesized: bool = False,
-                 modifiers: Optional[ModifierList] = None):
+    def __init__(
+        self,
+        node_type: NodeType,
+        lambda_params: FormalParameterList,
+        body: Union[Expression, BlockStatement],
+        parenthesized: bool = False,
+        modifiers: Optional[ModifierList] = None,
+    ):
         super().__init__(node_type)
         self.params = lambda_params
         self.body = body
@@ -27,15 +28,17 @@ class LambdaExpression(Expression):
         if self.node_type != NodeType.LAMBDA_EXPR:
             throw_invalid_type(self.node_type, self)
         if self.params.node_type != NodeType.FORMAL_PARAMETER_LIST:
-            throw_invalid_type(self.params.node_type, self, 'params')
-        if (self.body.node_type != NodeType.BLOCK_STMT and not is_expression(self.body)):
-            throw_invalid_type(self.body.node_type, self, 'body')
-        if (self.modifiers is not None
-                and self.modifiers.node_type != NodeType.MODIFIER_LIST):
-            throw_invalid_type(self.modifiers.node_type, self, 'modifiers')
+            throw_invalid_type(self.params.node_type, self, "params")
+        if self.body.node_type != NodeType.BLOCK_STMT and not is_expression(self.body):
+            throw_invalid_type(self.body.node_type, self, "body")
+        if (
+            self.modifiers is not None
+            and self.modifiers.node_type != NodeType.MODIFIER_LIST
+        ):
+            throw_invalid_type(self.modifiers.node_type, self, "modifiers")
 
     def get_children(self) -> List[Node]:
         return [self.params, self.body, self.modifiers]
 
     def get_children_names(self) -> List[str]:
-        return ['params', 'body', 'modifiers']
+        return ["params", "body", "modifiers"]

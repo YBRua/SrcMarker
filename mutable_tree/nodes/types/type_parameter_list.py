@@ -17,4 +17,4 @@ class TypeParameterList(NodeList):
             throw_invalid_type(self.node_type, self)
         for i, type_id in enumerate(self.node_list):
             if type_id.node_type != NodeType.TYPE_PARAMETER:
-                throw_invalid_type(type_id.node_type, self, f'type_param#{i}')
+                throw_invalid_type(type_id.node_type, self, f"type_param#{i}")

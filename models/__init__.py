@@ -1,7 +1,12 @@
-from .feature_approximator import (FeatureApproximator, ConcatApproximator,
-                                   TransformerApproximator, WeightedSumApproximator,
-                                   VarApproximator, TransformationApproximator,
-                                   AdditionApproximator)
+from .feature_approximator import (
+    FeatureApproximator,
+    ConcatApproximator,
+    TransformerApproximator,
+    WeightedSumApproximator,
+    VarApproximator,
+    TransformationApproximator,
+    AdditionApproximator,
+)
 from .transform_selector import TransformSelector
 from .transformer_encoder import TransformerEncoderExtractor
 from .gru_encoder import GRUEncoder, ExtractGRUEncoder

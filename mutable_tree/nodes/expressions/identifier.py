@@ -4,7 +4,6 @@ from typing import List
 
 
 class Identifier(Expression):
-
     def __init__(self, node_type: NodeType, name: str):
         super().__init__(node_type)
         self.name = name
@@ -12,7 +11,7 @@ class Identifier(Expression):
 
     def _check_types(self):
         if self.node_type != NodeType.IDENTIFIER:
-            raise TypeError(f'Invalid type: {self.node_type} for Identifier')
+            raise TypeError(f"Invalid type: {self.node_type} for Identifier")
 
     def get_children(self) -> List[Node]:
         return []

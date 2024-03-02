@@ -4,9 +4,9 @@ from ..tree_manip.visitors import SwitchToIfVisitor, TernaryToIfVisitor
 
 
 class ConditionTransformer(CodeTransformer):
-    name = 'ConditionTransformer'
-    TRANSFORM_COND_SWITCH = 'ConditionTransformer.switch'
-    TRANSFORM_COND_TERNARY = 'ConditionTransformer.ternary'
+    name = "ConditionTransformer"
+    TRANSFORM_COND_SWITCH = "ConditionTransformer.switch"
+    TRANSFORM_COND_TERNARY = "ConditionTransformer.ternary"
 
     def __init__(self) -> None:
         super().__init__()

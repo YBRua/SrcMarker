@@ -12,8 +12,15 @@ class JavaAndCPPProcessor:
         control_variable = "_i_" + str(np.random.choice(list(range(10))))
         p = np.random.uniform(0, 1)
         if p < 0.5:
-            prefix = "for ( int " + control_variable + " = 0 ; " + control_variable + " > 0 ; " + control_variable + \
-                     " ++ ) { "
+            prefix = (
+                "for ( int "
+                + control_variable
+                + " = 0 ; "
+                + control_variable
+                + " > 0 ; "
+                + control_variable
+                + " ++ ) { "
+            )
             loop = prefix + body + " } "
             return loop
         else:
@@ -26,9 +33,25 @@ class JavaAndCPPProcessor:
         if p < 0.33:
             return "while ( false ) { " + body + " }"
         elif p < 0.66:
-            return "while ( " + control_variable + " < " + control_variable + " ) { " + body + " } "
+            return (
+                "while ( "
+                + control_variable
+                + " < "
+                + control_variable
+                + " ) { "
+                + body
+                + " } "
+            )
         else:
-            return "while ( " + control_variable + " > " + control_variable + " ) { " + body + " } "
+            return (
+                "while ( "
+                + control_variable
+                + " > "
+                + control_variable
+                + " ) { "
+                + body
+                + " } "
+            )
 
     @classmethod
     def create_dead_if(cls, body):
@@ -37,9 +60,25 @@ class JavaAndCPPProcessor:
         if p < 0.33:
             return "if ( false ) { " + body + " }"
         elif p < 0.66:
-            return "if ( " + control_variable + " < " + control_variable + " ) { " + body + " } "
+            return (
+                "if ( "
+                + control_variable
+                + " < "
+                + control_variable
+                + " ) { "
+                + body
+                + " } "
+            )
         else:
-            return "if ( " + control_variable + " > " + control_variable + " ) { " + body + " } "
+            return (
+                "if ( "
+                + control_variable
+                + " > "
+                + control_variable
+                + " ) { "
+                + body
+                + " } "
+            )
 
     @classmethod
     def for_to_while_random(cls, code_string, parser):
@@ -50,8 +89,13 @@ class JavaAndCPPProcessor:
             while not success and len(loops) > 0:
                 selected_loop = np.random.choice(loops)
                 loops.remove(selected_loop)
-                modified_root, modified_code_string, success = JavaAndCPPProcessor.for_to_while(
-                    code_string, root, selected_loop, parser)
+                (
+                    modified_root,
+                    modified_code_string,
+                    success,
+                ) = JavaAndCPPProcessor.for_to_while(
+                    code_string, root, selected_loop, parser
+                )
                 if success:
                     root = modified_root
                     code_string = modified_code_string
@@ -70,8 +114,13 @@ class JavaAndCPPProcessor:
             while not success and len(loops) > 0:
                 selected_loop = np.random.choice(loops)
                 loops.remove(selected_loop)
-                modified_root, modified_code_string, success = JavaAndCPPProcessor.while_to_for(
-                    code_string, root, selected_loop, parser)
+                (
+                    modified_root,
+                    modified_code_string,
+                    success,
+                ) = JavaAndCPPProcessor.while_to_for(
+                    code_string, root, selected_loop, parser
+                )
                 if success:
                     root = modified_root
                     code_string = modified_code_string
@@ -88,7 +137,7 @@ class JavaAndCPPProcessor:
         while len(queue) > 0:
             current_node = queue[0]
             queue = queue[1:]
-            if str(current_node.type) == 'for_statement':
+            if str(current_node.type) == "for_statement":
                 loops.append(current_node)
             for child in current_node.children:
                 queue.append(child)
@@ -111,17 +160,19 @@ class JavaAndCPPProcessor:
         if root.type == "comment":
             return tokens
         if "string" in str(root.type):
-            return [code_str[root.start_byte:root.end_byte].decode()]
+            return [code_str[root.start_byte : root.end_byte].decode()]
         children = root.children
         if len(children) == 0:
-            tokens.append(code_str[root.start_byte:root.end_byte].decode())
+            tokens.append(code_str[root.start_byte : root.end_byte].decode())
         for child in children:
             if child == for_node:
-                tokens.extend(init + ["while", "("] + cond + [")", "{"] + body + update +
-                              ["}"])
+                tokens.extend(
+                    init + ["while", "("] + cond + [")", "{"] + body + update + ["}"]
+                )
             else:
                 tokens += JavaAndCPPProcessor.get_tokens_replace_for(
-                    code_str, for_node, child, init, cond, update, body)
+                    code_str, for_node, child, init, cond, update, body
+                )
         return tokens
 
     @classmethod
@@ -131,8 +182,9 @@ class JavaAndCPPProcessor:
         if str(init_part.type).endswith("expression"):
             next_part_start = 4
             init_tokens = get_tokens(code_string, init_part) + [";"]
-        elif str(init_part.type).endswith("statement") or str(
-                init_part.type).endswith("declaration"):
+        elif str(init_part.type).endswith("statement") or str(init_part.type).endswith(
+            "declaration"
+        ):
             next_part_start = 3
             init_tokens = get_tokens(code_string, init_part)
         else:
@@ -154,13 +206,15 @@ class JavaAndCPPProcessor:
             next_part_start += 1
         block_part = children[next_part_start]
         breaking_statements = cls.get_breaking_statements(block_part)
-        block_tokens = cls.get_tokens_insert_before(code_string, block_part,
-                                                    " ".join(update_tokens),
-                                                    breaking_statements)
+        block_tokens = cls.get_tokens_insert_before(
+            code_string, block_part, " ".join(update_tokens), breaking_statements
+        )
         return init_tokens, comp_tokens, update_tokens, block_tokens
 
     @classmethod
-    def get_tokens_insert_before(cls, code_str, root, insertion_code, insert_before_node):
+    def get_tokens_insert_before(
+        cls, code_str, root, insertion_code, insert_before_node
+    ):
         if not isinstance(insert_before_node, list):
             insert_before_node = [insert_before_node]
         if isinstance(code_str, str):
@@ -174,21 +228,22 @@ class JavaAndCPPProcessor:
             if len(parent.children) == 1:
                 return tokens
             else:
-                return [code_str[root.start_byte:root.end_byte].decode()]
+                return [code_str[root.start_byte : root.end_byte].decode()]
         if root in insert_before_node:
             tokens += insertion_code.split()
         children = root.children
         if len(children) == 0:
-            tokens.append(code_str[root.start_byte:root.end_byte].decode())
+            tokens.append(code_str[root.start_byte : root.end_byte].decode())
         for child in children:
-            ts = cls.get_tokens_insert_before(code_str, child, insertion_code,
-                                              insert_before_node)
+            ts = cls.get_tokens_insert_before(
+                code_str, child, insertion_code, insert_before_node
+            )
             tokens += ts
         return tokens
 
     @classmethod
     def get_breaking_statements(cls, block):
-        breakings = ['continue_statement', 'break_statement', 'return_statement']
+        breakings = ["continue_statement", "break_statement", "return_statement"]
         statements = []
         stack = [block]
         while len(stack) > 0:
@@ -204,16 +259,19 @@ class JavaAndCPPProcessor:
     def for_to_while(cls, code_string, root, fl, parser):
         original_tokenized_code = " ".join(get_tokens(code_string, root))
         init_tokens, comp_tokens, update_tokens, body_tokens = cls.extract_for_contents(
-            fl, code_string)
+            fl, code_string
+        )
         if len(body_tokens) >= 2 and (body_tokens[0] == "{" and body_tokens[-1] == "}"):
             body_tokens = body_tokens[1:-1]
-        tokens = cls.get_tokens_replace_for(code_str=code_string,
-                                            for_node=fl,
-                                            root=root,
-                                            init=init_tokens,
-                                            cond=comp_tokens,
-                                            update=update_tokens,
-                                            body=body_tokens)
+        tokens = cls.get_tokens_replace_for(
+            code_str=code_string,
+            for_node=fl,
+            root=root,
+            init=init_tokens,
+            cond=comp_tokens,
+            update=update_tokens,
+            body=body_tokens,
+        )
         if original_tokenized_code == " ".join(tokens):
             return root, original_tokenized_code, False
         code = cls.beautify_java_code(tokens)
@@ -226,7 +284,7 @@ class JavaAndCPPProcessor:
         while len(queue) > 0:
             current_node = queue[0]
             queue = queue[1:]
-            if str(current_node.type) == 'while_statement':
+            if str(current_node.type) == "while_statement":
                 loops.append(current_node)
             for child in current_node.children:
                 queue.append(child)
@@ -237,17 +295,20 @@ class JavaAndCPPProcessor:
         children = wl.children
         condition = children[1]
         body = children[2]
-        if str(condition.type) == 'parenthesized_expression':
+        if str(condition.type) == "parenthesized_expression":
             expr_tokens = get_tokens(code_string, condition.children[1])
             body_tokens = get_tokens(code_string, body)
-            if len(body_tokens) >= 2 and (body_tokens[0] == "{"
-                                          and body_tokens[-1] == "}"):
+            if len(body_tokens) >= 2 and (
+                body_tokens[0] == "{" and body_tokens[-1] == "}"
+            ):
                 body_tokens = body_tokens[1:-1]
-            tokens = cls.get_tokens_replace_while(code_str=code_string,
-                                                  while_node=wl,
-                                                  root=root,
-                                                  cond=expr_tokens,
-                                                  body=body_tokens)
+            tokens = cls.get_tokens_replace_while(
+                code_str=code_string,
+                while_node=wl,
+                root=root,
+                cond=expr_tokens,
+                body=body_tokens,
+            )
             code = cls.beautify_java_code(tokens)
             return parser.parse_code(code), code, True
         return root, code_string, False
@@ -261,16 +322,17 @@ class JavaAndCPPProcessor:
         if root.type == "comment":
             return tokens
         if "string" in str(root.type):
-            return [code_str[root.start_byte:root.end_byte].decode()]
+            return [code_str[root.start_byte : root.end_byte].decode()]
         children = root.children
         if len(children) == 0:
-            tokens.append(code_str[root.start_byte:root.end_byte].decode())
+            tokens.append(code_str[root.start_byte : root.end_byte].decode())
         for child in children:
             if child == while_node:
                 tokens.extend(["for", "(", ";"] + cond + [";", ")", "{"] + body + ["}"])
             else:
                 tokens += JavaAndCPPProcessor.get_tokens_replace_while(
-                    code_str, while_node, child, cond, body)
+                    code_str, while_node, child, cond, body
+                )
         return tokens
 
     # -----Confusion removal C------
@@ -278,27 +340,32 @@ class JavaAndCPPProcessor:
     def conditional_removal(cls, code_string, parser):
         # This function is for C, equavalent to extract_ternary_expression for Java
         root = parser.parse_code(code_string)
-        assi_cond_expr, varde_cond_expr, ret_cond_expr = cls.extract_conditional_expression(
-            root)
+        (
+            assi_cond_expr,
+            varde_cond_expr,
+            ret_cond_expr,
+        ) = cls.extract_conditional_expression(root)
         success = False
         if len(assi_cond_expr) > 0:
             try:
                 modified_tokens = cls.assignment_conditional_removal(
-                    code_string, assi_cond_expr, root, parser)
+                    code_string, assi_cond_expr, root, parser
+                )
                 code_string = cls.beautify_java_code(modified_tokens)
                 root = parser.parse_code(code_string)
                 success = True
                 _, varde_cond_expr, ret_cond_expr = cls.extract_conditional_expression(
-                    root)
+                    root
+                )
             except:
                 # print("assignment ternary expression removal failed.")
                 pass
 
         if len(varde_cond_expr) > 0:
             try:
-                modified_tokens = cls.var_decl_ternary_removal(code_string,
-                                                               varde_cond_expr, root,
-                                                               parser)
+                modified_tokens = cls.var_decl_ternary_removal(
+                    code_string, varde_cond_expr, root, parser
+                )
                 code_string = cls.beautify_java_code(modified_tokens)
                 root = parser.parse_code(code_string)
                 success = True
@@ -309,8 +376,9 @@ class JavaAndCPPProcessor:
 
         if len(ret_cond_expr) > 0:
             try:
-                modified_tokens = cls.return_ternary_removal(code_string, ret_cond_expr,
-                                                             root, parser)
+                modified_tokens = cls.return_ternary_removal(
+                    code_string, ret_cond_expr, root, parser
+                )
                 code_string = cls.beautify_java_code(modified_tokens)
                 root = parser.parse_code(code_string)
                 success = True
@@ -334,22 +402,32 @@ class JavaAndCPPProcessor:
                 if str(child.children[0].type) == "conditional_expression":
                     cond_children = child.children[0].children
                     if str(cond_children[0].type) == "assignment_expression":
-                        assignee_token = get_tokens(code_string,
-                                                    cond_children[0].children[0])[0]
-                        condition_tokens = get_tokens(code_string,
-                                                      cond_children[0].children[2])
-                        if str(cond_children[0].children[2].type
-                               ) == 'parenthesized_expression':
+                        assignee_token = get_tokens(
+                            code_string, cond_children[0].children[0]
+                        )[0]
+                        condition_tokens = get_tokens(
+                            code_string, cond_children[0].children[2]
+                        )
+                        if (
+                            str(cond_children[0].children[2].type)
+                            == "parenthesized_expression"
+                        ):
                             condition_tokens = condition_tokens[1:-1]
                         br1_tokens = get_tokens(code_string, cond_children[2])
                         br2_tokens = get_tokens(code_string, cond_children[4])
-                        tokens.extend(["if", "("] + condition_tokens +
-                                      [")", "{", assignee_token, "="] + br1_tokens +
-                                      [";", "}", "else", "{", assignee_token, "="] +
-                                      br2_tokens + [";", "}"])
+                        tokens.extend(
+                            ["if", "("]
+                            + condition_tokens
+                            + [")", "{", assignee_token, "="]
+                            + br1_tokens
+                            + [";", "}", "else", "{", assignee_token, "="]
+                            + br2_tokens
+                            + [";", "}"]
+                        )
             else:
                 tokens += JavaAndCPPProcessor.assignment_conditional_removal(
-                    code_string, assi_tern_expr, child, parser)
+                    code_string, assi_tern_expr, child, parser
+                )
         return tokens
 
     @classmethod
@@ -361,16 +439,24 @@ class JavaAndCPPProcessor:
         while len(queue) > 0:
             current_node = queue[0]
             queue = queue[1:]
-            if str(current_node.type) == 'conditional_expression' and str(
-                    current_node.children[0].type) == "assignment_expression":
+            if (
+                str(current_node.type) == "conditional_expression"
+                and str(current_node.children[0].type) == "assignment_expression"
+            ):
                 assi_con_expr.append(
-                    current_node.parent)  # include the ";" for now and later we skip it
-            if str(current_node.type) == 'conditional_expression' and str(
-                    current_node.parent.type) == "init_declarator":
+                    current_node.parent
+                )  # include the ";" for now and later we skip it
+            if (
+                str(current_node.type) == "conditional_expression"
+                and str(current_node.parent.type) == "init_declarator"
+            ):
                 varde_con_expr.append(
-                    current_node.parent.parent)  # node type: declaration
-            if str(current_node.type) == 'conditional_expression' and str(
-                    current_node.parent.type) == "return_statement":
+                    current_node.parent.parent
+                )  # node type: declaration
+            if (
+                str(current_node.type) == "conditional_expression"
+                and str(current_node.parent.type) == "return_statement"
+            ):
                 ret_con_expr.append(current_node.parent)
             for child in current_node.children:
                 queue.append(child)
@@ -381,15 +467,18 @@ class JavaAndCPPProcessor:
     @classmethod
     def ternary_removal(cls, code_string, parser):
         code_string = cls.remove_package_and_import(
-            code_string)  # TODO: Check whether this will mess up the code
+            code_string
+        )  # TODO: Check whether this will mess up the code
         root = parser.parse_code(code_string)
         assi_tern_expr, varde_tern_expr, ret_tern_expr = cls.extract_ternary_expression(
-            root)
+            root
+        )
         success = False
         if len(assi_tern_expr) > 0:
             try:
                 modified_tokens = cls.assignment_ternary_removal(
-                    code_string, assi_tern_expr, root, parser)
+                    code_string, assi_tern_expr, root, parser
+                )
                 code_string = cls.beautify_java_code(modified_tokens)
                 root = parser.parse_code(code_string)
                 success = True
@@ -400,9 +489,9 @@ class JavaAndCPPProcessor:
 
         if len(varde_tern_expr) > 0:
             try:
-                modified_tokens = cls.var_decl_ternary_removal(code_string,
-                                                               varde_tern_expr, root,
-                                                               parser)
+                modified_tokens = cls.var_decl_ternary_removal(
+                    code_string, varde_tern_expr, root, parser
+                )
                 code_string = cls.beautify_java_code(modified_tokens)
                 root = parser.parse_code(code_string)
                 success = True
@@ -413,8 +502,9 @@ class JavaAndCPPProcessor:
 
         if len(ret_tern_expr) > 0:
             try:
-                modified_tokens = cls.return_ternary_removal(code_string, ret_tern_expr,
-                                                             root, parser)
+                modified_tokens = cls.return_ternary_removal(
+                    code_string, ret_tern_expr, root, parser
+                )
                 code_string = cls.beautify_java_code(modified_tokens)
                 root = parser.parse_code(code_string)
                 success = True
@@ -428,24 +518,35 @@ class JavaAndCPPProcessor:
     def ternary_body_write(cls, body, code_string, assignee, tokens, ret=False):
         body_children = body.children
         condition_tokens = get_tokens(code_string, body_children[0])
-        if str(body_children[0].type) == 'parenthesized_expression':
+        if str(body_children[0].type) == "parenthesized_expression":
             condition_tokens = condition_tokens[1:-1]
         br1_tokens = get_tokens(code_string, body_children[2])
-        if str(body_children[2].type) == 'parenthesized_expression':
+        if str(body_children[2].type) == "parenthesized_expression":
             br1_tokens = br1_tokens[1:-1]
         br2_tokens = get_tokens(code_string, body_children[4])
-        if str(body_children[4].type) == 'parenthesized_expression':
+        if str(body_children[4].type) == "parenthesized_expression":
             br2_tokens = br2_tokens[1:-1]
         assignee_token = get_tokens(code_string, assignee)[0]
         if ret:  # in return statement, assignee is the keyword "return"
-            tokens.extend(["if", "("] + condition_tokens + [")", "{", assignee_token] +
-                          br1_tokens + [";", "}", "else", "{", assignee_token] +
-                          br2_tokens + [";", "}"])
+            tokens.extend(
+                ["if", "("]
+                + condition_tokens
+                + [")", "{", assignee_token]
+                + br1_tokens
+                + [";", "}", "else", "{", assignee_token]
+                + br2_tokens
+                + [";", "}"]
+            )
         else:
-            tokens.extend(["if", "("] + condition_tokens +
-                          [")", "{", assignee_token, "="] + br1_tokens +
-                          [";", "}", "else", "{", assignee_token, "="] + br2_tokens +
-                          [";", "}"])
+            tokens.extend(
+                ["if", "("]
+                + condition_tokens
+                + [")", "{", assignee_token, "="]
+                + br1_tokens
+                + [";", "}", "else", "{", assignee_token, "="]
+                + br2_tokens
+                + [";", "}"]
+            )
         return tokens
 
     @classmethod
@@ -467,7 +568,8 @@ class JavaAndCPPProcessor:
                 break
             else:
                 tokens += JavaAndCPPProcessor.assignment_ternary_removal(
-                    code_string, assi_tern_expr, child, parser)
+                    code_string, assi_tern_expr, child, parser
+                )
         return tokens
 
     @classmethod
@@ -485,8 +587,10 @@ class JavaAndCPPProcessor:
                 for c in child.children:
                     if str(c.type) == ";":
                         continue
-                    elif str(c.type) == "variable_declarator" or str(
-                            c.type) == "init_declarator":  # the former is
+                    elif (
+                        str(c.type) == "variable_declarator"
+                        or str(c.type) == "init_declarator"
+                    ):  # the former is
                         # for java and the latter is for c:
                         te_children = c.children
                         assignee = te_children[0]
@@ -494,13 +598,15 @@ class JavaAndCPPProcessor:
                         tokens.extend([assignee_token, ";"])
                         # children[1] should be "="
                         body = te_children[2]
-                        tokens = cls.ternary_body_write(body, code_string, assignee,
-                                                        tokens)
+                        tokens = cls.ternary_body_write(
+                            body, code_string, assignee, tokens
+                        )
                     else:
                         tokens += get_tokens(code_string, c)
             else:
                 tokens += JavaAndCPPProcessor.var_decl_ternary_removal(
-                    code_string, var_decl_tern_expr, child, parser)
+                    code_string, var_decl_tern_expr, child, parser
+                )
         return tokens
 
     @classmethod
@@ -518,15 +624,14 @@ class JavaAndCPPProcessor:
                 assignee = te_children[0]
                 # children[1] should be "="
                 body = te_children[1]
-                tokens = cls.ternary_body_write(body,
-                                                code_string,
-                                                assignee,
-                                                tokens,
-                                                ret=True)
+                tokens = cls.ternary_body_write(
+                    body, code_string, assignee, tokens, ret=True
+                )
                 break
             else:
                 tokens += JavaAndCPPProcessor.return_ternary_removal(
-                    code_string, ret_tern_expr, child, parser)
+                    code_string, ret_tern_expr, child, parser
+                )
         return tokens
 
     @classmethod
@@ -538,14 +643,20 @@ class JavaAndCPPProcessor:
         while len(queue) > 0:
             current_node = queue[0]
             queue = queue[1:]
-            if str(current_node.type) == 'ternary_expression' and str(
-                    current_node.parent.type) == "assignment_expression":
+            if (
+                str(current_node.type) == "ternary_expression"
+                and str(current_node.parent.type) == "assignment_expression"
+            ):
                 assi_ten_expr.append(current_node.parent)
-            if str(current_node.type) == 'ternary_expression' and str(
-                    current_node.parent.type) == "variable_declarator":
+            if (
+                str(current_node.type) == "ternary_expression"
+                and str(current_node.parent.type) == "variable_declarator"
+            ):
                 varde_ten_expr.append(current_node.parent.parent)
-            if str(current_node.type) == 'ternary_expression' and str(
-                    current_node.parent.type) == "return_statement":
+            if (
+                str(current_node.type) == "ternary_expression"
+                and str(current_node.parent.type) == "return_statement"
+            ):
                 ret_ten_expr.append(current_node.parent)
             for child in current_node.children:
                 queue.append(child)
@@ -560,8 +671,9 @@ class JavaAndCPPProcessor:
         success = False
         if len(pre_expr) > 0:
             try:
-                modified_tokens = cls.pre_incre_decre_removal(code_string, pre_expr, root,
-                                                              parser)
+                modified_tokens = cls.pre_incre_decre_removal(
+                    code_string, pre_expr, root, parser
+                )
                 code_string = cls.beautify_java_code(modified_tokens)
                 root = parser.parse_code(code_string)
                 success = True
@@ -572,8 +684,9 @@ class JavaAndCPPProcessor:
 
         if len(post_expr) > 0:
             try:
-                modified_tokens = cls.post_incre_decre_removal(code_string, post_expr,
-                                                               root, parser)
+                modified_tokens = cls.post_incre_decre_removal(
+                    code_string, post_expr, root, parser
+                )
                 code_string = cls.beautify_java_code(modified_tokens)
                 root = parser.parse_code(code_string)
                 success = True
@@ -605,13 +718,23 @@ class JavaAndCPPProcessor:
                     op = "+="
                 assigner = expr.children[2].children[-1]
                 assigner_token = get_tokens(code_string, assigner)[0]
-                tokens.extend([
-                    assigner_token, op, "1", ";", assignee_token, "=", assigner_token, ";"
-                ])
+                tokens.extend(
+                    [
+                        assigner_token,
+                        op,
+                        "1",
+                        ";",
+                        assignee_token,
+                        "=",
+                        assigner_token,
+                        ";",
+                    ]
+                )
                 # break
             else:
                 tokens += JavaAndCPPProcessor.pre_incre_decre_removal(
-                    code_string, pre_expr, child, parser)
+                    code_string, pre_expr, child, parser
+                )
         return tokens
 
     @classmethod
@@ -635,13 +758,23 @@ class JavaAndCPPProcessor:
                     op = "+="
                 assigner = expr.children[2].children[0]
                 assigner_token = get_tokens(code_string, assigner)[0]
-                tokens.extend([
-                    assignee_token, "=", assigner_token, ";", assigner_token, op, "1", ";"
-                ])
+                tokens.extend(
+                    [
+                        assignee_token,
+                        "=",
+                        assigner_token,
+                        ";",
+                        assigner_token,
+                        op,
+                        "1",
+                        ";",
+                    ]
+                )
                 # break
             else:
                 tokens += JavaAndCPPProcessor.post_incre_decre_removal(
-                    code_string, post_expr, child, parser)
+                    code_string, post_expr, child, parser
+                )
         return tokens
 
     @classmethod
@@ -652,18 +785,24 @@ class JavaAndCPPProcessor:
         while len(queue) > 0:
             current_node = queue[0]
             queue = queue[1:]
-            if (str(current_node.type) == '++' or str(current_node.type) == "--") and \
-                    (str(current_node.parent.type) == "update_expression" or str(
-                        current_node.parent.type) == "postfix_unary_expression" or str(
-                        current_node.parent.type) == "prefix_unary_expression") and \
-                    str(current_node.parent.parent.type) == "assignment_expression":
+            if (
+                (str(current_node.type) == "++" or str(current_node.type) == "--")
+                and (
+                    str(current_node.parent.type) == "update_expression"
+                    or str(current_node.parent.type) == "postfix_unary_expression"
+                    or str(current_node.parent.type) == "prefix_unary_expression"
+                )
+                and str(current_node.parent.parent.type) == "assignment_expression"
+            ):
                 nodes = current_node.parent.parent.children
-                if len(nodes) == 3 and str(
-                        nodes[0].type
-                ) == "identifier":  # this line is to double check whether the
+                if (
+                    len(nodes) == 3 and str(nodes[0].type) == "identifier"
+                ):  # this line is to double check whether the
                     # unary operation happens inside an assinemnt expression
-                    if str(nodes[2].children[0].type) == "++" or str(
-                            nodes[2].children[0].type) == "--":
+                    if (
+                        str(nodes[2].children[0].type) == "++"
+                        or str(nodes[2].children[0].type) == "--"
+                    ):
                         pre_expr.append(current_node.parent.parent.parent)
                     else:
                         post_expr.append(current_node.parent.parent.parent)
@@ -676,8 +815,9 @@ class JavaAndCPPProcessor:
         if root_node.type == "comment":
             str_const = ""
         else:
-            str_const = code_string[root_node.start_byte:root_node.end_byte].decode(
-                "utf-8")
+            str_const = code_string[root_node.start_byte : root_node.end_byte].decode(
+                "utf-8"
+            )
         return str_const
 
     @classmethod
@@ -688,8 +828,11 @@ class JavaAndCPPProcessor:
         lines = [line.rstrip("\n") for line in code]
         current_code_lines = []
         for line in lines:
-            if line.strip().startswith("import") or line.strip().startswith(
-                    "package") or line.strip().startswith("#include"):
+            if (
+                line.strip().startswith("import")
+                or line.strip().startswith("package")
+                or line.strip().startswith("#include")
+            ):
                 # TODO: How to deal with the #if_def kind of code?
                 continue
             current_code_lines.append(line)
@@ -703,7 +846,7 @@ class JavaAndCPPProcessor:
         while len(queue) > 0:
             current_node = queue[0]
             queue = queue[1:]
-            if str(current_node.type) == 'binary_expression':
+            if str(current_node.type) == "binary_expression":
                 children_nodes = current_node.children
                 keep = ["<", ">", "<=", ">=", "==", "!="]
                 counter = 0
@@ -725,36 +868,47 @@ class JavaAndCPPProcessor:
         if root.type == "comment":
             return tokens, None
         if "string" in str(root.type):
-            return [code[root.start_byte:root.end_byte].decode()], None
+            return [code[root.start_byte : root.end_byte].decode()], None
         children = root.children
         if len(children) == 0:
-
-            if root.start_byte == operator.start_byte and root.end_byte == operator.end_byte:
-                opt = (code[operator.start_byte:operator.end_byte].decode())
-                if opt == '<':
-                    tokens.append('>')
-                elif opt == '>':
-                    tokens.append('<')
-                elif opt == '>=':
-                    tokens.append('<=')
-                elif opt == '<=':
-                    tokens.append('>=')
-                elif opt == '==':
-                    tokens.append('==')
-                elif opt == '!=':
-                    tokens.append('!=')
+            if (
+                root.start_byte == operator.start_byte
+                and root.end_byte == operator.end_byte
+            ):
+                opt = code[operator.start_byte : operator.end_byte].decode()
+                if opt == "<":
+                    tokens.append(">")
+                elif opt == ">":
+                    tokens.append("<")
+                elif opt == ">=":
+                    tokens.append("<=")
+                elif opt == "<=":
+                    tokens.append(">=")
+                elif opt == "==":
+                    tokens.append("==")
+                elif opt == "!=":
+                    tokens.append("!=")
             else:
-                tokens.append(code[root.start_byte:root.end_byte].decode())
+                tokens.append(code[root.start_byte : root.end_byte].decode())
         for child in children:
-            if child.start_byte == left_oprd.start_byte and child.end_byte == left_oprd.end_byte:
-                ts, _ = cls.get_tokens_for_opswap(code, right_oprd, left_oprd, operator,
-                                                  right_oprd)
-            elif child.start_byte == right_oprd.start_byte and child.end_byte == right_oprd.end_byte:
-                ts, _ = cls.get_tokens_for_opswap(code, left_oprd, left_oprd, operator,
-                                                  right_oprd)
+            if (
+                child.start_byte == left_oprd.start_byte
+                and child.end_byte == left_oprd.end_byte
+            ):
+                ts, _ = cls.get_tokens_for_opswap(
+                    code, right_oprd, left_oprd, operator, right_oprd
+                )
+            elif (
+                child.start_byte == right_oprd.start_byte
+                and child.end_byte == right_oprd.end_byte
+            ):
+                ts, _ = cls.get_tokens_for_opswap(
+                    code, left_oprd, left_oprd, operator, right_oprd
+                )
             else:
-                ts, _ = cls.get_tokens_for_opswap(code, child, left_oprd, operator,
-                                                  right_oprd)
+                ts, _ = cls.get_tokens_for_opswap(
+                    code, child, left_oprd, operator, right_oprd
+                )
             tokens += ts
         return tokens, None
 
@@ -769,15 +923,16 @@ class JavaAndCPPProcessor:
                 selected_exp = np.random.choice(expressions)
                 expressions.remove(selected_exp)
                 bin_exp = selected_exp
-                condition = code[bin_exp.start_byte:bin_exp.end_byte].decode()
+                condition = code[bin_exp.start_byte : bin_exp.end_byte].decode()
                 bin_exp = bin_exp.children
                 left_oprd = bin_exp[0]
                 operator = bin_exp[1]
                 right_oprd = bin_exp[2]
 
                 try:
-                    code_list = cls.get_tokens_for_opswap(code, root, left_oprd, operator,
-                                                          right_oprd)[0]
+                    code_list = cls.get_tokens_for_opswap(
+                        code, root, left_oprd, operator, right_oprd
+                    )[0]
                     code_string = ""
                     for w in code_list:
                         code_string = code_string + w + " "
@@ -802,10 +957,12 @@ class JavaAndCPPProcessor:
         while len(queue) > 0:
             current_node = queue[0]
             queue = queue[1:]
-            if str(current_node.type) == 'if_statement':
-                clause = code_str[current_node.start_byte:current_node.end_byte].decode()
+            if str(current_node.type) == "if_statement":
+                clause = code_str[
+                    current_node.start_byte : current_node.end_byte
+                ].decode()
                 des = (current_node.children)[1]
-                cond = code_str[des.start_byte:des.end_byte].decode()
+                cond = code_str[des.start_byte : des.end_byte].decode()
                 stack = [des]
                 nodes = []
                 while len(stack) > 0:
@@ -843,8 +1000,9 @@ class JavaAndCPPProcessor:
         return expressions
 
     @classmethod
-    def get_tokens_for_blockswap(cls, code, root, first_block, opt_node, second_block,
-                                 flagx, flagy):
+    def get_tokens_for_blockswap(
+        cls, code, root, first_block, opt_node, second_block, flagx, flagy
+    ):
         if isinstance(code, str):
             code = code.encode()
         assert isinstance(root, Node)
@@ -853,44 +1011,62 @@ class JavaAndCPPProcessor:
         if root.type == "comment":
             return tokens, None
         if "string" in str(root.type):
-            return [code[root.start_byte:root.end_byte].decode()], None
+            return [code[root.start_byte : root.end_byte].decode()], None
         children = root.children
         if len(children) == 0:
-            if root.start_byte == opt_node.start_byte and root.end_byte == opt_node.end_byte:
-                op = code[root.start_byte:root.end_byte].decode()
+            if (
+                root.start_byte == opt_node.start_byte
+                and root.end_byte == opt_node.end_byte
+            ):
+                op = code[root.start_byte : root.end_byte].decode()
                 if op == "<":
                     tokens.append(">=")
                 elif op == ">":
-                    tokens.append('<=')
+                    tokens.append("<=")
                 elif op == ">=":
-                    tokens.append('<')
+                    tokens.append("<")
                 elif op == "<=":
-                    tokens.append('>')
+                    tokens.append(">")
                 elif op == "!=":
-                    tokens.append('==')
+                    tokens.append("==")
                 elif op == "==":
-                    tokens.append('!=')
+                    tokens.append("!=")
             else:
-                tokens.append(code[root.start_byte:root.end_byte].decode())
+                tokens.append(code[root.start_byte : root.end_byte].decode())
         for child in children:
             child_type = str(child.type)
-            if child.start_byte == first_block.start_byte and child.end_byte == first_block.end_byte and flagx == 0 \
-                    and str(
-                child.type) == str(first_block.type):
+            if (
+                child.start_byte == first_block.start_byte
+                and child.end_byte == first_block.end_byte
+                and flagx == 0
+                and str(child.type) == str(first_block.type)
+            ):
                 flagx = 1
-                ts, _ = cls.get_tokens_for_blockswap(code, second_block, first_block,
-                                                     opt_node, second_block, flagx, flagy)
+                ts, _ = cls.get_tokens_for_blockswap(
+                    code,
+                    second_block,
+                    first_block,
+                    opt_node,
+                    second_block,
+                    flagx,
+                    flagy,
+                )
 
-            elif child.start_byte == second_block.start_byte and child.end_byte == second_block.end_byte and flagy == \
-                    0 and str(
-                child.type) == str(second_block.type):
+            elif (
+                child.start_byte == second_block.start_byte
+                and child.end_byte == second_block.end_byte
+                and flagy == 0
+                and str(child.type) == str(second_block.type)
+            ):
                 flagy = 1
-                ts, _ = cls.get_tokens_for_blockswap(code, first_block, first_block,
-                                                     opt_node, second_block, flagx, flagy)
+                ts, _ = cls.get_tokens_for_blockswap(
+                    code, first_block, first_block, opt_node, second_block, flagx, flagy
+                )
 
             else:
-                ts, _ = cls.get_tokens_for_blockswap(code, child, first_block, opt_node,
-                                                     second_block, flagx, flagy)
+                ts, _ = cls.get_tokens_for_blockswap(
+                    code, child, first_block, opt_node, second_block, flagx, flagy
+                )
             tokens += ts
 
         return tokens, None
@@ -899,7 +1075,7 @@ class JavaAndCPPProcessor:
     def block_swap_java(cls, code_str, parser):
         code = code_str.encode()
         root = parser.parse_code(code)
-        operator_list = ['<', '>', '<=', '>=', '==', '!=']
+        operator_list = ["<", ">", "<=", ">=", "==", "!="]
         pair = cls.extract_if_else(root, code, operator_list)
         success = False
         lst = list(range(0, len(pair)))
@@ -915,8 +1091,9 @@ class JavaAndCPPProcessor:
                     root1 = st.pop()
                     if len(root1.children) == 0:
                         nodes.append(root1)
-                        if (code[root1.start_byte:root1.end_byte].decode()
-                            ) in operator_list:
+                        if (
+                            code[root1.start_byte : root1.end_byte].decode()
+                        ) in operator_list:
                             opt_node = root1
                             break
                     for child in root1.children:
@@ -926,7 +1103,7 @@ class JavaAndCPPProcessor:
 
                 flag = 0
                 for current_node in nodes:
-                    if str(current_node.type) == 'block':
+                    if str(current_node.type) == "block":
                         if flag == 0:
                             first_block = current_node
                             flag = 1
@@ -936,8 +1113,9 @@ class JavaAndCPPProcessor:
                 flagx = 0
                 flagy = 0
                 try:
-                    code_list = \
-                        cls.get_tokens_for_blockswap(code, root, first_block, opt_node, second_block, flagx, flagy)[0]
+                    code_list = cls.get_tokens_for_blockswap(
+                        code, root, first_block, opt_node, second_block, flagx, flagy
+                    )[0]
                     code_string = ""
                     for w in code_list:
                         code_string = code_string + w + " "
@@ -956,7 +1134,7 @@ class JavaAndCPPProcessor:
     def block_swap_c(cls, code_str, parser):
         code = code_str.encode()
         root = parser.parse_code(code)
-        operator_list = ['<', '>', '<=', '>=', '==', '!=']
+        operator_list = ["<", ">", "<=", ">=", "==", "!="]
         pair = cls.extract_if_else(root, code, operator_list)
         success = False
         lst = list(range(0, len(pair)))
@@ -972,8 +1150,9 @@ class JavaAndCPPProcessor:
                     root1 = st.pop()
                     if len(root1.children) == 0:
                         nodes.append(root1)
-                        if (code[root1.start_byte:root1.end_byte].decode()
-                            ) in operator_list:
+                        if (
+                            code[root1.start_byte : root1.end_byte].decode()
+                        ) in operator_list:
                             opt_node = root1
                             break
                     for child in root1.children:
@@ -981,7 +1160,7 @@ class JavaAndCPPProcessor:
                 nodes = clause.children
                 flag = 0
                 for current_node in nodes:
-                    if str(current_node.type) == 'compound_statement':
+                    if str(current_node.type) == "compound_statement":
                         if flag == 0:
                             first_block = current_node
                             flag = 1
@@ -990,8 +1169,9 @@ class JavaAndCPPProcessor:
                 flagx = 0
                 flagy = 0
                 try:
-                    code_list = \
-                        cls.get_tokens_for_blockswap(code, root, first_block, opt_node, second_block, flagx, flagy)[0]
+                    code_list = cls.get_tokens_for_blockswap(
+                        code, root, first_block, opt_node, second_block, flagx, flagy
+                    )[0]
                     code_string = ""
                     for w in code_list:
                         code_string = code_string + w + " "

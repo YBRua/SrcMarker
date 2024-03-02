@@ -18,5 +18,8 @@ class ExpressionList(NodeList):
             throw_invalid_type(self.node_type, self)
 
         for i, expr in enumerate(self.node_list):
-            if not is_expression(expr) and expr.node_type != NodeType.FUNCTION_DEFINITION:
-                throw_invalid_type(expr.node_type, self, f'expr#{i}')
+            if (
+                not is_expression(expr)
+                and expr.node_type != NodeType.FUNCTION_DEFINITION
+            ):
+                throw_invalid_type(expr.node_type, self, f"expr#{i}")

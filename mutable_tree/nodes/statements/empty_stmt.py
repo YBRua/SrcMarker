@@ -5,7 +5,6 @@ from typing import List
 
 
 class EmptyStatement(Statement):
-
     def __init__(self, node_type: NodeType):
         super().__init__(node_type)
         self._check_types()

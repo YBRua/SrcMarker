@@ -1,20 +1,35 @@
 from .visitor import TransformingVisitor
-from mutable_tree.nodes import (Node, NodeType, node_factory, LocalVariableDeclaration,
-                                StatementList, Declarator, InitializingDeclarator,
-                                VariableDeclarator, AssignmentOps, ExpressionStatement,
-                                AssignmentExpression, PointerDeclarator,
-                                ReferenceDeclarator, ArrayDeclarator, FunctionDeclarator,
-                                Identifier, DestructuringDeclarator)
+from mutable_tree.nodes import (
+    Node,
+    NodeType,
+    node_factory,
+    LocalVariableDeclaration,
+    StatementList,
+    Declarator,
+    InitializingDeclarator,
+    VariableDeclarator,
+    AssignmentOps,
+    ExpressionStatement,
+    AssignmentExpression,
+    PointerDeclarator,
+    ReferenceDeclarator,
+    ArrayDeclarator,
+    FunctionDeclarator,
+    Identifier,
+    DestructuringDeclarator,
+)
 from mutable_tree.stringifiers import BaseStringifier
 from typing import Optional, List, Dict, Set
 from .var_same_type import split_DeclaratorList_by_Initializing
 
 
 class SplitVarInitAndDeclVisitor(TransformingVisitor):
-    def visit_StatementList(self,
-                            node: StatementList,
-                            parent: Optional[Node] = None,
-                            parent_attr: Optional[str] = None):
+    def visit_StatementList(
+        self,
+        node: StatementList,
+        parent: Optional[Node] = None,
+        parent_attr: Optional[str] = None,
+    ):
         self.generic_visit(node, parent, parent_attr)
         new_children_list = []
         for child_attr in node.get_children_names():
@@ -25,12 +40,14 @@ class SplitVarInitAndDeclVisitor(TransformingVisitor):
                 # do not split auto and constants
                 stringifier = BaseStringifier()
                 child_type_str = stringifier.stringify(child.type)
-                if 'auto' in child_type_str or 'const' in child_type_str:
+                if "auto" in child_type_str or "const" in child_type_str:
                     new_children_list.append(child)
                     continue
 
-                with_init_declarator_list, without_init_declarator_list = \
-                    split_DeclaratorList_by_Initializing(child.declarators)
+                (
+                    with_init_declarator_list,
+                    without_init_declarator_list,
+                ) = split_DeclaratorList_by_Initializing(child.declarators)
 
                 if without_init_declarator_list is not None:
                     declarators = without_init_declarator_list.node_list
@@ -44,30 +61,36 @@ class SplitVarInitAndDeclVisitor(TransformingVisitor):
                             declarators.append(initializing_declarator)
                             continue
 
-                        assert isinstance(initializing_declarator, InitializingDeclarator)
+                        assert isinstance(
+                            initializing_declarator, InitializingDeclarator
+                        )
 
                         # dont split destructuring declarators
-                        if isinstance(initializing_declarator.declarator,
-                                      DestructuringDeclarator):
+                        if isinstance(
+                            initializing_declarator.declarator, DestructuringDeclarator
+                        ):
                             declarators.append(initializing_declarator)
                             continue
 
                         # dont split arrays, argument lists or new exprs
                         if initializing_declarator.value.node_type in {
-                                NodeType.ARRAY_EXPR, NodeType.EXPRESSION_LIST,
-                                NodeType.NEW_EXPR
+                            NodeType.ARRAY_EXPR,
+                            NodeType.EXPRESSION_LIST,
+                            NodeType.NEW_EXPR,
                         }:
                             declarators.append(initializing_declarator)
                             continue
 
                         variable_declarator, stmt = split_initializing_declarator(
-                            initializing_declarator)
+                            initializing_declarator
+                        )
                         declarators.append(variable_declarator)
                         stmts.append(stmt)
                 if len(declarators) > 0:
                     declarator_list = node_factory.create_declarator_list(declarators)
                     new_child = node_factory.create_local_variable_declaration(
-                        child.type, declarator_list)
+                        child.type, declarator_list
+                    )
                     new_children_list.append(new_child)
                 for stmt in stmts:
                     new_children_list.append(stmt)
@@ -81,16 +104,19 @@ def split_initializing_declarator(node: InitializingDeclarator):
     identifier = get_identifier_from_declarator(node.declarator)
     variable_declarator = node_factory.create_variable_declarator(identifier)
     assignment_expression = node_factory.create_assignment_expr(
-        identifier, node.value, AssignmentOps.EQUAL)
+        identifier, node.value, AssignmentOps.EQUAL
+    )
     stmt = node_factory.create_expression_stmt(assignment_expression)
     return variable_declarator, stmt
 
 
 class MergeVarInitAndDeclVisitor(TransformingVisitor):
-    def visit_StatementList(self,
-                            node: StatementList,
-                            parent: Optional[Node] = None,
-                            parent_attr: Optional[str] = None):
+    def visit_StatementList(
+        self,
+        node: StatementList,
+        parent: Optional[Node] = None,
+        parent_attr: Optional[str] = None,
+    ):
         self.generic_visit(node, parent, parent_attr)
         # 第一次遍历找到所有只有声明没有init的变量, 及这些变量的第一个assignment
         # 第二次遍历用assignment给变量赋初值
@@ -108,12 +134,13 @@ class MergeVarInitAndDeclVisitor(TransformingVisitor):
             if isinstance(child, LocalVariableDeclaration):
                 for declarator in child.declarators.node_list:
                     if not isinstance(declarator, InitializingDeclarator):
-
                         if isinstance(declarator, DestructuringDeclarator):
                             continue
 
-                        identifier_name = get_identifier_name_from_declarator(declarator)
-                        var_init[identifier_name] = ('un_init', declarator)
+                        identifier_name = get_identifier_name_from_declarator(
+                            declarator
+                        )
+                        var_init[identifier_name] = ("un_init", declarator)
                         uninit_vars.add(identifier_name)
 
             if is_assignment_used_in_init(child, var_init, uninit_vars):
@@ -129,13 +156,15 @@ class MergeVarInitAndDeclVisitor(TransformingVisitor):
                 declarator_list: List[Declarator] = []
                 for declarator in child.declarators.node_list:
                     if not isinstance(declarator, InitializingDeclarator):
-                        identifier_name = get_identifier_name_from_declarator(declarator)
+                        identifier_name = get_identifier_name_from_declarator(
+                            declarator
+                        )
 
                         if isinstance(declarator, DestructuringDeclarator):
                             continue
 
                         init = var_init.get(identifier_name, None)
-                        if init is not None and init[0] == 'inited':
+                        if init is not None and init[0] == "inited":
                             declarator_list.append(init[1])
                         else:
                             declarator_list.append(declarator)
@@ -143,7 +172,8 @@ class MergeVarInitAndDeclVisitor(TransformingVisitor):
                         declarator_list.append(declarator)
                 declarators = node_factory.create_declarator_list(declarator_list)
                 new_child = node_factory.create_local_variable_declaration(
-                    child.type, declarators)
+                    child.type, declarators
+                )
                 new_children_list.append(new_child)
             else:
                 new_children_list.append(child)
@@ -153,11 +183,13 @@ class MergeVarInitAndDeclVisitor(TransformingVisitor):
 
 
 def get_identifier_from_declarator(declarator: Declarator) -> Identifier:
-    assert (isinstance(declarator, VariableDeclarator)
-            or isinstance(declarator, PointerDeclarator)
-            or isinstance(declarator, ReferenceDeclarator)
-            or isinstance(declarator, ArrayDeclarator)
-            or isinstance(declarator, FunctionDeclarator)), declarator.node_type.value
+    assert (
+        isinstance(declarator, VariableDeclarator)
+        or isinstance(declarator, PointerDeclarator)
+        or isinstance(declarator, ReferenceDeclarator)
+        or isinstance(declarator, ArrayDeclarator)
+        or isinstance(declarator, FunctionDeclarator)
+    ), declarator.node_type.value
     if isinstance(declarator, VariableDeclarator):
         return declarator.decl_id
     elif isinstance(declarator, DestructuringDeclarator):
@@ -190,8 +222,9 @@ def collect_identifiers(node: Node):
 
 
 def is_assignment_used_in_init(node: Node, var_init: Dict, uninit_vars: Set) -> bool:
-    if isinstance(node, ExpressionStatement) and isinstance(node.expr,
-                                                            AssignmentExpression):
+    if isinstance(node, ExpressionStatement) and isinstance(
+        node.expr, AssignmentExpression
+    ):
         assignment_node = node.expr
         left = assignment_node.left
         right = assignment_node.right
@@ -204,10 +237,11 @@ def is_assignment_used_in_init(node: Node, var_init: Dict, uninit_vars: Set) -> 
 
         if isinstance(left, Identifier) and assignment_node.op == AssignmentOps.EQUAL:
             init = var_init.get(left.name, None)
-            if init is not None and init[0] == 'un_init':
+            if init is not None and init[0] == "un_init":
                 init_declarator = node_factory.create_initializing_declarator(
-                    init[1], right)
-                var_init[left.name] = ('inited', init_declarator)
+                    init[1], right
+                )
+                var_init[left.name] = ("inited", init_declarator)
                 return True
 
     return False

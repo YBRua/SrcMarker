@@ -7,8 +7,7 @@ class TransformerPipeline:
     def __init__(self, transformers: List[CodeTransformer]) -> None:
         self.names = [transformer.name for transformer in transformers]
         self.transformers: Dict[str, CodeTransformer] = {
-            transformer.name: transformer
-            for transformer in transformers
+            transformer.name: transformer for transformer in transformers
         }
 
     def get_transformer_names(self) -> List[str]:
@@ -19,6 +18,6 @@ class TransformerPipeline:
 
     def mutable_tree_transform(self, node: Node, keys: Sequence[str]) -> Node:
         for key in keys:
-            name = key.split('.')[0]
+            name = key.split(".")[0]
             node = self.transformers[name].mutable_tree_transform(node, key)
         return node

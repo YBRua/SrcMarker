@@ -7,10 +7,12 @@ from typing import Optional
 
 
 class NestedIfVisitor(TransformingVisitor):
-    def visit_IfStatement(self,
-                          node: IfStatement,
-                          parent: Optional[Node] = None,
-                          parent_attr: Optional[str] = None):
+    def visit_IfStatement(
+        self,
+        node: IfStatement,
+        parent: Optional[Node] = None,
+        parent_attr: Optional[str] = None,
+    ):
         self.generic_visit(node, parent, parent_attr)
 
         cond = node.condition

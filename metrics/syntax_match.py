@@ -6,33 +6,39 @@ import treelib
 import tree_sitter
 from tree_sitter import Language, Parser
 
-from .parser import (DFG_python, DFG_java, DFG_ruby, DFG_go, DFG_php, DFG_javascript,
-                     DFG_csharp)
-from .parser import (remove_comments_and_docstrings)
+from .parser import (
+    DFG_python,
+    DFG_java,
+    DFG_ruby,
+    DFG_go,
+    DFG_php,
+    DFG_javascript,
+    DFG_csharp,
+)
+from .parser import remove_comments_and_docstrings
 
 root_dir = os.path.dirname(__file__)
 dfg_function = {
-    'c': DFG_java,
-    'cpp': DFG_java,
-    'python': DFG_python,
-    'java': DFG_java,
-    'ruby': DFG_ruby,
-    'go': DFG_go,
-    'php': DFG_php,
-    'javascript': DFG_javascript,
-    'c_sharp': DFG_csharp,
+    "c": DFG_java,
+    "cpp": DFG_java,
+    "python": DFG_python,
+    "java": DFG_java,
+    "ruby": DFG_ruby,
+    "go": DFG_go,
+    "php": DFG_php,
+    "javascript": DFG_javascript,
+    "c_sharp": DFG_csharp,
 }
 
 
 def check_tree_validity(root: tree_sitter.Node, max_depth: int = -1):
-
     return not root.has_error
 
     def _check_tree(node: tree_sitter.Node, depth: int = 0, max_depth: int = -1):
         valid = True
         if max_depth > 0 and depth > max_depth:
             return True
-        if node.type == 'ERROR':
+        if node.type == "ERROR":
             return False
         for child in node.children:
             valid = valid and _check_tree(child, depth + 1, max_depth=max_depth)
@@ -48,9 +54,9 @@ def pprint_tree(root: tree_sitter.Node):
         def _format_node(node: tree_sitter.Node):
             node_text = node.text.decode()
             if node.child_count == 0:
-                node_str = f'{node.type} ({node_text})'
+                node_str = f"{node.type} ({node_text})"
             else:
-                node_str = f'{node.type}'
+                node_str = f"{node.type}"
             # if node.type == 'identifier':
             #     node_str = f'{node_str} ({str(node.text, "utf-8")})'
             return node_str
@@ -68,7 +74,7 @@ def calc_syntax_match(references, candidate, lang):
 
 
 def corpus_syntax_match(references, candidates, lang):
-    JAVA_LANGUAGE = Language(root_dir + '/parser/languages.so', lang)
+    JAVA_LANGUAGE = Language(root_dir + "/parser/languages.so", lang)
     parser = Parser()
     parser.set_language(JAVA_LANGUAGE)
     match_count = 0
@@ -79,16 +85,16 @@ def corpus_syntax_match(references, candidates, lang):
         candidate = candidates[i]
         for reference in references_sample:
             try:
-                candidate = remove_comments_and_docstrings(candidate, 'java')
+                candidate = remove_comments_and_docstrings(candidate, "java")
             except:
                 pass
             try:
-                reference = remove_comments_and_docstrings(reference, 'java')
+                reference = remove_comments_and_docstrings(reference, "java")
             except:
                 pass
 
-            candidate_tree = parser.parse(bytes(candidate, 'utf8')).root_node
-            reference_tree = parser.parse(bytes(reference, 'utf8')).root_node
+            candidate_tree = parser.parse(bytes(candidate, "utf8")).root_node
+            reference_tree = parser.parse(bytes(reference, "utf8")).root_node
 
             def get_all_sub_trees(root_node):
                 node_stack = []

@@ -5,7 +5,6 @@ from typing import List, Optional
 
 
 class DimensionSpecifier(Node):
-
     def __init__(self, node_type: NodeType, expr: Optional[Expression] = None):
         super().__init__(node_type)
         self.expr = expr
@@ -15,7 +14,7 @@ class DimensionSpecifier(Node):
         if self.node_type != NodeType.DIMENSION_SPECIFIER:
             throw_invalid_type(self.node_type, self)
         if self.expr is not None and not is_expression(self.expr):
-            throw_invalid_type(self.expr.node_type, self, 'expr')
+            throw_invalid_type(self.expr.node_type, self, "expr")
 
     def get_children(self) -> List[Node]:
         if self.expr is not None:
@@ -24,7 +23,7 @@ class DimensionSpecifier(Node):
             return []
 
     def get_children_names(self) -> List[str]:
-        return ['expr']
+        return ["expr"]
 
 
 class Dimensions(NodeList):
@@ -40,4 +39,4 @@ class Dimensions(NodeList):
             throw_invalid_type(self.node_type, self)
         for i, dim in enumerate(self.node_list):
             if dim.node_type != NodeType.DIMENSION_SPECIFIER:
-                throw_invalid_type(dim.node_type, self, f'dim#{i}')
+                throw_invalid_type(dim.node_type, self, f"dim#{i}")

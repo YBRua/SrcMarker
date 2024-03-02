@@ -6,11 +6,12 @@ from typing import Optional
 
 
 class WhileToForVisitor(TransformingVisitor):
-
-    def visit_WhileStatement(self,
-                             node: WhileStatement,
-                             parent: Optional[Node] = None,
-                             parent_attr: Optional[str] = None):
+    def visit_WhileStatement(
+        self,
+        node: WhileStatement,
+        parent: Optional[Node] = None,
+        parent_attr: Optional[str] = None,
+    ):
         self.generic_visit(node, parent, parent_attr)
         new_stmts = []
         condition = node.condition

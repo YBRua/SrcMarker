@@ -9,12 +9,12 @@ from ropgen_transform.xml_utils import init_parser, load_doc, XML_NS
 
 
 def get_while(e):
-    return e('//src:while')
+    return e("//src:while")
 
 
 # get the loop condition of while
 def get_condition(elem):
-    return elem.xpath('src:condition', namespaces=XML_NS)
+    return elem.xpath("src:condition", namespaces=XML_NS)
 
 
 # start to transform
@@ -26,19 +26,19 @@ def trans_tree(e, ignore_list=[], instances=None):
         get_while(e) if instances is None else (instance[0] for instance in instances)
     ]
     # Get the root of the tree
-    tree_root = e('/*')[0].getroottree()
+    tree_root = e("/*")[0].getroottree()
     new_ignore_list = []
     if len(while_elems) > 0:
         for item in while_elems:
             for while_elem in item:
-                '''
+                """
                 filter out the while transformed from for in the last round.
-                Because for to while inserts a statement before while, 
+                Because for to while inserts a statement before while,
                 the part not changed is to count two statements up from the while statement.
                 run 'getprevious()' twice,
-                if there are less than two statements in front of the while statement (getprevious() returns none), 
+                if there are less than two statements in front of the while statement (getprevious() returns none),
                 the last one that is not none will be retained.
-                '''
+                """
                 while_prev = while_elem.getprevious()
                 while_prev_prev = [
                     while_prev.getprevious() if while_prev is not None else while_elem
@@ -54,10 +54,10 @@ def trans_tree(e, ignore_list=[], instances=None):
 
                 # get the loop condition of while
                 elem_condition = get_condition(while_elem)[0]
-                while_elem.text = 'for'
-                while_elem.tag = 'for'
-                elem_condition.text = '(;'
-                elem_condition[-1].tail = ';)'
+                while_elem.text = "for"
+                while_elem.tag = "for"
+                elem_condition.text = "(;"
+                elem_condition[-1].tail = ";)"
 
                 # Record the unchanged position after this transformation,
                 # that is the position of the previous while statement
@@ -81,12 +81,12 @@ def get_number(xml_path):
 
 # save tree to file
 def save_tree_to_file(tree, file):
-    with open(file, 'w') as f:
-        f.write(etree.tostring(tree).decode('utf8'))
+    with open(file, "w") as f:
+        f.write(etree.tostring(tree).decode("utf8"))
 
 
 # program's input port
-def program_transform(program_path, output_xml_path: str = './style/style.xml'):
+def program_transform(program_path, output_xml_path: str = "./style/style.xml"):
     doc = load_doc(program_path)
     e = init_parser(doc)
     trans_tree(e)

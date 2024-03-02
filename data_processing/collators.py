@@ -61,7 +61,7 @@ class DynamicWMCollatorCodeBert:
             token_ids.append(torch.tensor(token_id, dtype=torch.long))
             lengths.append(len(token_id))
             instance_ids.append(instance_id)
-            wm = torch.randint(0, 2, (self.n_bits, ))
+            wm = torch.randint(0, 2, (self.n_bits,))
             watermarks.append(wm)
             wmids.append(sum([2**i * wm[i] for i in range(self.n_bits)]))
 
@@ -94,7 +94,7 @@ class DynamicWMCollator:
             token_ids.append(torch.tensor(token_id, dtype=torch.long))
             lengths.append(len(token_id))
             instance_ids.append(instance_id)
-            wm = torch.randint(0, 2, (self.n_bits, ))
+            wm = torch.randint(0, 2, (self.n_bits,))
             watermarks.append(wm)
             wmids.append(sum([2**i * wm[i] for i in range(self.n_bits)]))
 
@@ -128,7 +128,7 @@ class TaskedDynamicWMCollator:
             token_ids.append(torch.tensor(token_id, dtype=torch.long))
             lengths.append(len(token_id))
             instance_ids.append(instance_id)
-            wm = torch.randint(0, 2, (self.n_bits, ))
+            wm = torch.randint(0, 2, (self.n_bits,))
             watermarks.append(wm)
             wmids.append(sum([2**i * wm[i] for i in range(self.n_bits)]))
             labels.append(label)
@@ -151,13 +151,15 @@ class DynamicWMCollatorMLM:
     PAD_ID = 0
     MASK_ID = 1
 
-    def __init__(self,
-                 n_bits: int,
-                 vocab_size: int,
-                 nomask_token_ids: Optional[Set[int]] = None,
-                 mask_ratio: float = 0.15,
-                 replace_prob: float = 0.1,
-                 retain_prob: float = 0.1) -> None:
+    def __init__(
+        self,
+        n_bits: int,
+        vocab_size: int,
+        nomask_token_ids: Optional[Set[int]] = None,
+        mask_ratio: float = 0.15,
+        replace_prob: float = 0.1,
+        retain_prob: float = 0.1,
+    ) -> None:
         self.n_bits = n_bits
         self.vocab_size = vocab_size
         self.mask_ratio = mask_ratio
@@ -182,9 +184,9 @@ class DynamicWMCollatorMLM:
         unchanged_mask = full_mask & (torch.rand(x.shape) < self.retain_prob)
         random_mask = full_mask & (torch.rand(x.shape) < self.replace_prob)
         random_token_idx = torch.nonzero(random_mask, as_tuple=True)
-        random_tokens = torch.randint(0,
-                                      self.vocab_size, (len(random_token_idx[0]), ),
-                                      device=x.device)
+        random_tokens = torch.randint(
+            0, self.vocab_size, (len(random_token_idx[0]),), device=x.device
+        )
         mask_mask = full_mask & (~unchanged_mask) & (~random_mask)
 
         x = torch.masked_fill(x, mask_mask, self.MASK_ID)
@@ -203,7 +205,7 @@ class DynamicWMCollatorMLM:
             token_ids.append(torch.tensor(token_id, dtype=torch.long))
             lengths.append(len(token_id))
             instance_ids.append(instance_id)
-            wm = torch.randint(0, 2, (self.n_bits, ))
+            wm = torch.randint(0, 2, (self.n_bits,))
             watermarks.append(wm)
             wmids.append(sum([2**i * wm[i] for i in range(self.n_bits)]))
 
@@ -263,11 +265,11 @@ class DewatermarkingCollator:
             src_token_ids.append(torch.tensor(src, dtype=torch.long))
             tgt_token_ids.append(torch.tensor(tgt, dtype=torch.long))
 
-        src_token_ids = pad_sequence(src_token_ids,
-                                     padding_value=self.pad_idx,
-                                     batch_first=self.batch_first)
-        tgt_token_ids = pad_sequence(tgt_token_ids,
-                                     padding_value=self.pad_idx,
-                                     batch_first=self.batch_first)
+        src_token_ids = pad_sequence(
+            src_token_ids, padding_value=self.pad_idx, batch_first=self.batch_first
+        )
+        tgt_token_ids = pad_sequence(
+            tgt_token_ids, padding_value=self.pad_idx, batch_first=self.batch_first
+        )
 
         return src_token_ids, tgt_token_ids

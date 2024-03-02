@@ -6,9 +6,17 @@ from tqdm import tqdm
 from collections import Counter
 from data_processing import JsonlWMDatasetProcessor
 from code_transform_provider import CodeTransformProvider
-from mutable_tree.nodes import (Node, Identifier, LocalVariableDeclaration,
-                                FunctionDeclarator, Declarator, VariableDeclarator,
-                                CallExpression, FunctionHeader, FieldAccess)
+from mutable_tree.nodes import (
+    Node,
+    Identifier,
+    LocalVariableDeclaration,
+    FunctionDeclarator,
+    Declarator,
+    VariableDeclarator,
+    CallExpression,
+    FunctionHeader,
+    FieldAccess,
+)
 from typing import List
 
 
@@ -73,34 +81,34 @@ def variable_collector(node: Node) -> List[str]:
 
 def main(args):
     if len(args) != 1:
-        print('Usage: python collect_variable_names_jsonl.py <dataset>')
+        print("Usage: python collect_variable_names_jsonl.py <dataset>")
         return
 
     DATASET = args[0]
-    if DATASET in {'csn_java', 'github_java_funcs', 'mbjp'}:
-        LANG = 'java'
-    elif DATASET in {'github_c_funcs', 'mbcpp'}:
-        LANG = 'cpp'
-    elif DATASET in {'csn_js', 'mbjsp'}:
-        LANG = 'javascript'
+    if DATASET in {"csn_java", "github_java_funcs", "mbjp"}:
+        LANG = "java"
+    elif DATASET in {"github_c_funcs", "mbcpp"}:
+        LANG = "cpp"
+    elif DATASET in {"csn_js", "mbjsp"}:
+        LANG = "javascript"
     else:
-        raise ValueError(f'Unknown dataset: {DATASET}')
+        raise ValueError(f"Unknown dataset: {DATASET}")
 
-    DATA_DIR = f'./datasets/{DATASET}'
+    DATA_DIR = f"./datasets/{DATASET}"
 
     parser = tree_sitter.Parser()
-    parser_lang = tree_sitter.Language('./parser/languages.so', LANG)
+    parser_lang = tree_sitter.Language("./parser/languages.so", LANG)
     parser.set_language(parser_lang)
     transform_computer = CodeTransformProvider(LANG, parser, [])
 
     data_processor = JsonlWMDatasetProcessor(LANG)
-    if DATASET in {'mbjsp', 'mbjp', 'mbcpp'}:
-        all_instances = data_processor._load_jsonl_fast(DATA_DIR, split='test')
+    if DATASET in {"mbjsp", "mbjp", "mbcpp"}:
+        all_instances = data_processor._load_jsonl_fast(DATA_DIR, split="test")
     else:
         instances = data_processor.load_jsonls_fast(DATA_DIR, show_progress=False)
-        train_instances = instances['train']
-        valid_instances = instances['valid']
-        test_instances = instances['test']
+        train_instances = instances["train"]
+        valid_instances = instances["valid"]
+        test_instances = instances["test"]
 
         all_instances = train_instances + valid_instances + test_instances
 
@@ -115,12 +123,14 @@ def main(args):
         all_variable_names.update(variable_names)
 
     res_dict = {
-        'all_variable_names': list(all_variable_names),
-        'variable_names_per_file': variable_names_per_file,
+        "all_variable_names": list(all_variable_names),
+        "variable_names_per_file": variable_names_per_file,
     }
 
-    json.dump(res_dict, open(f'./datasets/variable_names_{DATASET}.json', 'w'), indent=2)
-    variable_names_per_file = res_dict['variable_names_per_file']
+    json.dump(
+        res_dict, open(f"./datasets/variable_names_{DATASET}.json", "w"), indent=2
+    )
+    variable_names_per_file = res_dict["variable_names_per_file"]
 
     var_counts = []
     tot_files = 0
@@ -132,11 +142,11 @@ def main(args):
     pprint.pp(var_counter)
 
     tot_vars = sum(var_counts)
-    print(f'total files: {tot_files}')
+    print(f"total files: {tot_files}")
     print(f'total var names: {len(res_dict["all_variable_names"])}')
-    print(f'total var count: {tot_vars}')
-    print(f'avg vars per file: {tot_vars / tot_files:.2f}')
+    print(f"total var count: {tot_vars}")
+    print(f"avg vars per file: {tot_vars / tot_files:.2f}")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main(sys.argv[1:])

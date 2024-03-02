@@ -18,7 +18,8 @@ class NatGenBaseTransformer:
         if not os.path.exists(parser_path):
             raise ValueError(
                 f"Language parser does not exist at {parser_path}. Please run `setup.sh` to properly set the "
-                f"environment!")
+                f"environment!"
+            )
         self.lang_object = Language(parser_path, language)
         self.parser = Parser()
         self.parser.set_language(self.lang_object)
@@ -53,9 +54,9 @@ class NatGenBaseTransformer:
             if "list" not in str(parent.type) and len(parent.children) == 1:
                 return tokens
             else:
-                return [code[root.start_byte:root.end_byte].decode()]
+                return [code[root.start_byte : root.end_byte].decode()]
         if len(root.children) == 0:
-            tokens.append(code[root.start_byte:root.end_byte].decode())
+            tokens.append(code[root.start_byte : root.end_byte].decode())
         else:
             for child in root.children:
                 tokens += self.get_tokens(code, child)
@@ -72,8 +73,8 @@ class NatGenBaseTransformer:
         return " ".join(tokens)
 
     def get_tokens_with_node_type(
-            self, code: bytes,
-            root: tree_sitter.Node) -> Tuple[List[str], List[List[str]]]:
+        self, code: bytes, root: tree_sitter.Node
+    ) -> Tuple[List[str], List[List[str]]]:
         """
         This function extracts the tokens and types of the tokens.
         It returns a list of string as tokens, and a list of list of string as types.
@@ -88,9 +89,9 @@ class NatGenBaseTransformer:
         if root.type == "comment":
             return tokens, types
         if "string" in str(root.type):
-            return [code[root.start_byte:root.end_byte].decode()], [["string"]]
+            return [code[root.start_byte : root.end_byte].decode()], [["string"]]
         if len(root.children) == 0:
-            tokens.append(code[root.start_byte:root.end_byte].decode())
+            tokens.append(code[root.start_byte : root.end_byte].decode())
             types.append(get_ancestor_type_chains(root))
         else:
             for child in root.children:

@@ -5,7 +5,6 @@ from typing import List
 
 
 class Program(Node):
-
     def __init__(self, node_type: NodeType, stmts: StatementList):
         super().__init__(node_type)
         self.main = stmts
@@ -15,10 +14,10 @@ class Program(Node):
         if self.node_type != NodeType.PROGRAM:
             throw_invalid_type(self.node_type, self)
         if self.main.node_type != NodeType.STATEMENT_LIST:
-            throw_invalid_type(self.main.node_type, self, 'main')
+            throw_invalid_type(self.main.node_type, self, "main")
 
     def get_children(self) -> List[Node]:
         return [self.main]
 
     def get_children_names(self) -> List[str]:
-        return ['main']
+        return ["main"]

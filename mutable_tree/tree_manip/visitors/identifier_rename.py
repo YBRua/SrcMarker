@@ -16,24 +16,28 @@ class IdentifierAppendingVisitor(StatefulTransformingVisitor):
         self.norm_src = normalize_name(src_var).lower()
         self.norm_dst = normalize_name(dst_var).lower()
 
-    def visit_FunctionDeclarator(self,
-                                 node: FunctionDeclarator,
-                                 parent: Optional[Node] = None,
-                                 parent_attr: Optional[str] = None):
+    def visit_FunctionDeclarator(
+        self,
+        node: FunctionDeclarator,
+        parent: Optional[Node] = None,
+        parent_attr: Optional[str] = None,
+    ):
         if parent.node_type == NodeType.FUNCTION_HEADER:
-            self.generic_visit(node.parameters, node, 'parameters')
+            self.generic_visit(node.parameters, node, "parameters")
             return False, []
         else:
             return self.generic_visit(node, parent, parent_attr)
 
-    def visit_Identifier(self,
-                         node: Identifier,
-                         parent: Optional[Node] = None,
-                         parent_attr: Optional[str] = None):
-        if parent.node_type == NodeType.FIELD_ACCESS and parent_attr == 'field':
+    def visit_Identifier(
+        self,
+        node: Identifier,
+        parent: Optional[Node] = None,
+        parent_attr: Optional[str] = None,
+    ):
+        if parent.node_type == NodeType.FIELD_ACCESS and parent_attr == "field":
             return False, []
 
-        if parent.node_type == NodeType.CALL_EXPR and parent_attr == 'callee':
+        if parent.node_type == NodeType.CALL_EXPR and parent_attr == "callee":
             return False, []
 
         normalized_name = normalize_name(node.name).lower()
@@ -57,24 +61,28 @@ class IdentifierRenamingVisitor(StatefulTransformingVisitor):
         self.norm_src = normalize_name(src_var).lower()
         self.norm_dst = normalize_name(dst_var).lower()
 
-    def visit_FunctionDeclarator(self,
-                                 node: FunctionDeclarator,
-                                 parent: Optional[Node] = None,
-                                 parent_attr: Optional[str] = None):
+    def visit_FunctionDeclarator(
+        self,
+        node: FunctionDeclarator,
+        parent: Optional[Node] = None,
+        parent_attr: Optional[str] = None,
+    ):
         if parent.node_type == NodeType.FUNCTION_HEADER:
-            self.generic_visit(node.parameters, node, 'parameters')
+            self.generic_visit(node.parameters, node, "parameters")
             return False, []
         else:
             return self.generic_visit(node, parent, parent_attr)
 
-    def visit_Identifier(self,
-                         node: Identifier,
-                         parent: Optional[Node] = None,
-                         parent_attr: Optional[str] = None):
-        if parent.node_type == NodeType.FIELD_ACCESS and parent_attr == 'field':
+    def visit_Identifier(
+        self,
+        node: Identifier,
+        parent: Optional[Node] = None,
+        parent_attr: Optional[str] = None,
+    ):
+        if parent.node_type == NodeType.FIELD_ACCESS and parent_attr == "field":
             return False, []
 
-        if parent.node_type == NodeType.CALL_EXPR and parent_attr == 'callee':
+        if parent.node_type == NodeType.CALL_EXPR and parent_attr == "callee":
             return False, []
 
         normalized_name = normalize_name(node.name).lower()

@@ -21,11 +21,12 @@ class PositionalEncoding(nn.Module):
         pos_embedding = pos_embedding.unsqueeze(-2)
 
         self.dropout = nn.Dropout(dropout)
-        self.register_buffer('pos_embedding', pos_embedding)
+        self.register_buffer("pos_embedding", pos_embedding)
 
     def forward(self, token_embedding: Tensor):
-        return self.dropout(token_embedding +
-                            self.pos_embedding[:token_embedding.size(0), :])
+        return self.dropout(
+            token_embedding + self.pos_embedding[: token_embedding.size(0), :]
+        )
 
 
 # helper Module to convert tensor of input indices
@@ -42,50 +43,73 @@ class TokenEmbedding(nn.Module):
 
 # Seq2Seq Network
 class Seq2SeqTransformer(nn.Module):
-    def __init__(self,
-                 num_encoder_layers: int,
-                 num_decoder_layers: int,
-                 emb_size: int,
-                 nhead: int,
-                 vocab_size: int,
-                 dim_feedforward: int = 512,
-                 dropout: float = 0.1,
-                 batch_first: bool = False):
+    def __init__(
+        self,
+        num_encoder_layers: int,
+        num_decoder_layers: int,
+        emb_size: int,
+        nhead: int,
+        vocab_size: int,
+        dim_feedforward: int = 512,
+        dropout: float = 0.1,
+        batch_first: bool = False,
+    ):
         super(Seq2SeqTransformer, self).__init__()
-        self.transformer = Transformer(d_model=emb_size,
-                                       nhead=nhead,
-                                       num_encoder_layers=num_encoder_layers,
-                                       num_decoder_layers=num_decoder_layers,
-                                       dim_feedforward=dim_feedforward,
-                                       dropout=dropout,
-                                       batch_first=batch_first)
+        self.transformer = Transformer(
+            d_model=emb_size,
+            nhead=nhead,
+            num_encoder_layers=num_encoder_layers,
+            num_decoder_layers=num_decoder_layers,
+            dim_feedforward=dim_feedforward,
+            dropout=dropout,
+            batch_first=batch_first,
+        )
         self.generator = nn.Linear(emb_size, vocab_size)
         self.tok_emb = TokenEmbedding(vocab_size, emb_size)
         self.positional_encoding = PositionalEncoding(emb_size, dropout=dropout)
 
-    def forward(self, src: Tensor, tgt: Tensor, src_mask: Tensor, tgt_mask: Tensor,
-                src_padding_mask: Tensor, tgt_padding_mask: Tensor,
-                memory_key_padding_mask: Tensor):
+    def forward(
+        self,
+        src: Tensor,
+        tgt: Tensor,
+        src_mask: Tensor,
+        tgt_mask: Tensor,
+        src_padding_mask: Tensor,
+        tgt_padding_mask: Tensor,
+        memory_key_padding_mask: Tensor,
+    ):
         src_emb = self.positional_encoding(self.tok_emb(src))
         tgt_emb = self.positional_encoding(self.tok_emb(tgt))
-        outs = self.transformer(src_emb, tgt_emb, src_mask, tgt_mask, None,
-                                src_padding_mask, tgt_padding_mask,
-                                memory_key_padding_mask)
+        outs = self.transformer(
+            src_emb,
+            tgt_emb,
+            src_mask,
+            tgt_mask,
+            None,
+            src_padding_mask,
+            tgt_padding_mask,
+            memory_key_padding_mask,
+        )
         return self.generator(outs)
 
     def encode(self, src: Tensor, src_mask: Tensor):
-        return self.transformer.encoder(self.positional_encoding(self.tok_emb(src)),
-                                        src_mask)
+        return self.transformer.encoder(
+            self.positional_encoding(self.tok_emb(src)), src_mask
+        )
 
     def decode(self, tgt: Tensor, memory: Tensor, tgt_mask: Tensor):
-        return self.transformer.decoder(self.positional_encoding(self.tok_emb(tgt)),
-                                        memory, tgt_mask)
+        return self.transformer.decoder(
+            self.positional_encoding(self.tok_emb(tgt)), memory, tgt_mask
+        )
 
 
 def generate_square_subsequent_mask(sz: int, device: torch.device):
     mask = (torch.triu(torch.ones((sz, sz), device=device)) == 1).transpose(0, 1)
-    mask = mask.float().masked_fill(mask == 0,
-                                    float('-inf')).masked_fill(mask == 1, float(0.0))
+    mask = (
+        mask.float()
+        .masked_fill(mask == 0, float("-inf"))
+        .masked_fill(mask == 1, float(0.0))
+    )
     return mask
 
 
@@ -119,11 +143,9 @@ class BahdanauAttention(nn.Module):
 
 
 class Seq2SeqAttentionGRU(nn.Module):
-    def __init__(self,
-                 vocab_size: int,
-                 hidden_size: int,
-                 bos_idx: int,
-                 dropout_p: float = 0.1) -> None:
+    def __init__(
+        self, vocab_size: int, hidden_size: int, bos_idx: int, dropout_p: float = 0.1
+    ) -> None:
         super().__init__()
         self.embedding = nn.Embedding(vocab_size, hidden_size)
         self.hidden_size = hidden_size
@@ -150,28 +172,34 @@ class Seq2SeqAttentionGRU(nn.Module):
         embedded = self.encoder_dropout(self.embedding(input_ids))
         encoder_outputs, encoder_hidden = self.encoder_gru(embedded)
 
-        decoder_input = torch.empty(batch_size, 1, dtype=torch.long,
-                                    device=device).fill_(self.bos_idx)
+        decoder_input = torch.empty(
+            batch_size, 1, dtype=torch.long, device=device
+        ).fill_(self.bos_idx)
         decoder_hidden = encoder_hidden
         decoder_outputs = []
 
         for i in range(max_len):
             decoder_output, decoder_hidden, _ = self.forward_step(
-                decoder_input, decoder_hidden, encoder_outputs)
+                decoder_input, decoder_hidden, encoder_outputs
+            )
             decoder_outputs.append(decoder_output)
 
             if target_ids_input is not None:
                 # Teacher forcing: Feed the target as the next input
                 should_teacher_force = torch.rand(1).item() < 0.5
                 if should_teacher_force:
-                    decoder_input = target_ids_input[:, i].unsqueeze(1)  # Teacher forcing
+                    decoder_input = target_ids_input[:, i].unsqueeze(
+                        1
+                    )  # Teacher forcing
                 else:
                     _, topi = decoder_output.topk(1)
                     decoder_input = topi.squeeze(-1).detach()
             else:
                 # Without teacher forcing: use its own predictions as the next input
                 _, topi = decoder_output.topk(1)
-                decoder_input = topi.squeeze(-1).detach()  # detach from history as input
+                decoder_input = topi.squeeze(
+                    -1
+                ).detach()  # detach from history as input
 
         decoder_outputs = torch.cat(decoder_outputs, dim=1)
         decoder_outputs = F.log_softmax(decoder_outputs, dim=-1)

@@ -4,9 +4,9 @@ from ..tree_manip.visitors import SplitVarInitAndDeclVisitor, MergeVarInitAndDec
 
 
 class VarInitTransformer(CodeTransformer):
-    name = 'VarInitTransformer'
-    TRANSFORM_INIT_SPLIT = 'VarInitTransformer.split'
-    TRANSFORM_INIT_MERGE = 'VarInitTransformer.merge'
+    name = "VarInitTransformer"
+    TRANSFORM_INIT_SPLIT = "VarInitTransformer.split"
+    TRANSFORM_INIT_MERGE = "VarInitTransformer.merge"
 
     def __init__(self) -> None:
         super().__init__()
@@ -20,5 +20,5 @@ class VarInitTransformer(CodeTransformer):
     def mutable_tree_transform(self, node: Node, dst_style: str):
         return {
             self.TRANSFORM_INIT_SPLIT: SplitVarInitAndDeclVisitor(),
-            self.TRANSFORM_INIT_MERGE: MergeVarInitAndDeclVisitor()
+            self.TRANSFORM_INIT_MERGE: MergeVarInitAndDeclVisitor(),
         }[dst_style].visit(node)

@@ -12,8 +12,9 @@ class MLPDetector(nn.Module):
         self.act1 = nn.ReLU()
         self.out = nn.Linear(hidden_size, 1)
 
-    def forward(self, x: torch.Tensor, lengths: torch.Tensor,
-                src_key_padding_mask: torch.Tensor):
+    def forward(
+        self, x: torch.Tensor, lengths: torch.Tensor, src_key_padding_mask: torch.Tensor
+    ):
         x = self.embeddings(x)
         x = self.act1(self.fc1(x))
 
@@ -23,38 +24,46 @@ class MLPDetector(nn.Module):
 
 
 class GRUWMDetector(nn.Module):
-    def __init__(self, vocab_size: int, embedding_size: int, hidden_size: int,
-                 num_layers: int) -> None:
+    def __init__(
+        self, vocab_size: int, embedding_size: int, hidden_size: int, num_layers: int
+    ) -> None:
         super().__init__()
-        self.encoder = GRUEncoder(vocab_size,
-                                  embedding_size,
-                                  hidden_size,
-                                  num_layers,
-                                  bidirectional=True,
-                                  dropout=0.2)
+        self.encoder = GRUEncoder(
+            vocab_size,
+            embedding_size,
+            hidden_size,
+            num_layers,
+            bidirectional=True,
+            dropout=0.2,
+        )
         self.linear = nn.Linear(hidden_size, 1)
 
-    def forward(self, x: torch.Tensor, lengths: torch.Tensor,
-                src_key_padding_mask: torch.Tensor):
+    def forward(
+        self, x: torch.Tensor, lengths: torch.Tensor, src_key_padding_mask: torch.Tensor
+    ):
         feature = self.encoder(x, lengths, src_key_padding_mask)
         logits = self.linear(feature)
         return logits
 
 
 class TransformerWMDetector(nn.Module):
-    def __init__(self, vocab_size: int, embedding_size: int, hidden_size: int,
-                 num_layers: int, n_heads: int) -> None:
+    def __init__(
+        self,
+        vocab_size: int,
+        embedding_size: int,
+        hidden_size: int,
+        num_layers: int,
+        n_heads: int,
+    ) -> None:
         super().__init__()
-        self.encoder = TransformerEncoderExtractor(vocab_size,
-                                                   embedding_size,
-                                                   hidden_size,
-                                                   num_layers,
-                                                   n_heads,
-                                                   dropout=0.1)
+        self.encoder = TransformerEncoderExtractor(
+            vocab_size, embedding_size, hidden_size, num_layers, n_heads, dropout=0.1
+        )
         self.linear = nn.Linear(hidden_size, 1)
 
-    def forward(self, x: torch.Tensor, lengths: torch.Tensor,
-                src_key_padding_mask: torch.Tensor):
+    def forward(
+        self, x: torch.Tensor, lengths: torch.Tensor, src_key_padding_mask: torch.Tensor
+    ):
         feature = self.encoder(x, lengths, src_key_padding_mask)
         logits = self.linear(feature)
         return logits

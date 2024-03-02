@@ -6,11 +6,12 @@ from typing import Optional
 
 
 class CompoundIfVisitor(TransformingVisitor):
-
     def _create_logical_and(self, lhs: Expression, rhs: Expression) -> BinaryExpression:
         singleton_types = {
-            NodeType.LITERAL, NodeType.IDENTIFIER, NodeType.CALL_EXPR,
-            NodeType.PARENTHESIZED_EXPR
+            NodeType.LITERAL,
+            NodeType.IDENTIFIER,
+            NodeType.CALL_EXPR,
+            NodeType.PARENTHESIZED_EXPR,
         }
         if lhs.node_type not in singleton_types:
             lhs = node_factory.create_parenthesized_expr(lhs)
@@ -46,10 +47,12 @@ class CompoundIfVisitor(TransformingVisitor):
         # return the if statement if it is a valid candidate
         return nested_if
 
-    def visit_IfStatement(self,
-                          node: IfStatement,
-                          parent: Optional[Node] = None,
-                          parent_attr: Optional[str] = None):
+    def visit_IfStatement(
+        self,
+        node: IfStatement,
+        parent: Optional[Node] = None,
+        parent_attr: Optional[str] = None,
+    ):
         self.generic_visit(node, parent, parent_attr)
 
         candidate = self._find_nested_if(node)

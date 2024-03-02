@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright (c) Microsoft Corporation. 
+# Copyright (c) Microsoft Corporation.
 # Licensed under the MIT license.
 
 # Natural Language Toolkit: BLEU Score
@@ -22,11 +22,11 @@ from .utils import ngrams
 
 
 def sentence_bleu(
-        references,
-        hypothesis,
-        weights=(0.25, 0.25, 0.25, 0.25),
-        smoothing_function=None,
-        auto_reweigh=False,
+    references,
+    hypothesis,
+    weights=(0.25, 0.25, 0.25, 0.25),
+    smoothing_function=None,
+    auto_reweigh=False,
 ):
     """
     Calculate BLEU score (Bilingual Evaluation Understudy) from
@@ -91,11 +91,11 @@ def sentence_bleu(
 
 
 def corpus_bleu(
-        list_of_references,
-        hypotheses,
-        weights=(0.25, 0.25, 0.25, 0.25),
-        smoothing_function=None,
-        auto_reweigh=False,
+    list_of_references,
+    hypotheses,
+    weights=(0.25, 0.25, 0.25, 0.25),
+    smoothing_function=None,
+    auto_reweigh=False,
 ):
     """
     Calculate a single corpus-level BLEU score (aka. system-level BLEU) for all
@@ -178,10 +178,7 @@ def corpus_bleu(
             weights = (1 / hyp_lengths,) * hyp_lengths
 
     # Collects the various recall values for the different ngram orders.
-    p_n = [
-        (p_numerators[i], p_denominators[i])
-        for i, _ in enumerate(weights, start=1)
-    ]
+    p_n = [(p_numerators[i], p_denominators[i]) for i, _ in enumerate(weights, start=1)]
 
     # Returns 0 if there's no matching n-grams
     # We only need to check for p_numerators[1] == 0, since if there's
@@ -236,14 +233,18 @@ def modified_recall(references, hypothesis, n):
         # for ngram in reference_counts:
         #     max_counts[ngram] = max(max_counts.get(ngram, 0), counts[ngram])
         clipped_counts = {
-            ngram: min(count, counts[ngram]) for ngram, count in reference_counts.items()
+            ngram: min(count, counts[ngram])
+            for ngram, count in reference_counts.items()
         }
         # reweight
         if n == 1 and len(weights) == len(reference_counts):
+
             def weighted_sum(weights, counts):
                 sum_counts = 0
                 for ngram, count in counts.items():
-                    sum_counts += count * (weights[ngram[0]] if ngram[0] in weights else 1)
+                    sum_counts += count * (
+                        weights[ngram[0]] if ngram[0] in weights else 1
+                    )
                 return sum_counts
 
             numerator += weighted_sum(weights, clipped_counts)
@@ -445,10 +446,7 @@ class SmoothingFunction:
         Smoothing method 1: Add *epsilon* counts to precision with 0 counts.
         """
         return [
-            ((p_i[0] + self.epsilon), p_i[1])
-            if p_i[0] == 0
-            else p_i
-            for p_i in p_n
+            ((p_i[0] + self.epsilon), p_i[1]) if p_i[0] == 0 else p_i for p_i in p_n
         ]
 
     def method2(self, p_n, *args, **kwargs):
@@ -458,10 +456,7 @@ class SmoothingFunction:
         machine translation quality using longest common subsequence and
         skip-bigram statistics. In ACL04.
         """
-        return [
-            (p_i[0] + 1, p_i[1] + 1)
-            for p_i in p_n
-        ]
+        return [(p_i[0] + 1, p_i[1] + 1) for p_i in p_n]
 
     def method3(self, p_n, *args, **kwargs):
         """
@@ -481,7 +476,7 @@ class SmoothingFunction:
         incvnt = 1  # From the mteval-v13a.pl, it's referred to as k.
         for i, p_i in enumerate(p_n):
             if p_i.numerator == 0:
-                p_n[i] = 1 / (2 ** incvnt * p_i.denominator)
+                p_n[i] = 1 / (2**incvnt * p_i.denominator)
                 incvnt += 1
         return p_n
 

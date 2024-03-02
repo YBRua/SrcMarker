@@ -9,14 +9,22 @@ from .language_processors import JavaAndCPPProcessor, JavascriptProcessor
 from .transformation_base import NatGenBaseTransformer
 
 processor_function = {
-    "java":
-    [JavaAndCPPProcessor.for_to_while_random, JavaAndCPPProcessor.while_to_for_random],
-    "c":
-    [JavaAndCPPProcessor.for_to_while_random, JavaAndCPPProcessor.while_to_for_random],
-    "cpp":
-    [JavaAndCPPProcessor.for_to_while_random, JavaAndCPPProcessor.while_to_for_random],
-    "javascript":
-    [JavascriptProcessor.for_to_while_random, JavascriptProcessor.while_to_for_random],
+    "java": [
+        JavaAndCPPProcessor.for_to_while_random,
+        JavaAndCPPProcessor.while_to_for_random,
+    ],
+    "c": [
+        JavaAndCPPProcessor.for_to_while_random,
+        JavaAndCPPProcessor.while_to_for_random,
+    ],
+    "cpp": [
+        JavaAndCPPProcessor.for_to_while_random,
+        JavaAndCPPProcessor.while_to_for_random,
+    ],
+    "javascript": [
+        JavascriptProcessor.for_to_while_random,
+        JavascriptProcessor.while_to_for_random,
+    ],
 }
 
 
@@ -24,9 +32,11 @@ class ForWhileTransformer(NatGenBaseTransformer):
     """
     Change the `for` loops with `while` loops and vice versa.
     """
+
     def __init__(self, parser_path, language):
-        super(ForWhileTransformer, self).__init__(parser_path=parser_path,
-                                                  language=language)
+        super(ForWhileTransformer, self).__init__(
+            parser_path=parser_path, language=language
+        )
         self.language = language
         self.transformations = processor_function[language]
         processor_map = {
@@ -55,10 +65,10 @@ class ForWhileTransformer(NatGenBaseTransformer):
             tokens, types = return_values
         else:
             tokens, types = return_values, None
-        return (re.sub("[ \t\n]+", " ", " ".join(tokens)), {
-            "types": types,
-            "success": success
-        })
+        return (
+            re.sub("[ \t\n]+", " ", " ".join(tokens)),
+            {"types": types, "success": success},
+        )
 
     def transform_for_to_while(self, code: Union[str, bytes]) -> str:
         function = self.transformations[0]  # for-to-while
@@ -71,18 +81,18 @@ class ForWhileTransformer(NatGenBaseTransformer):
         return modified_code
 
     def get_available_transforms(self) -> List[str]:
-        return ['for_to_while', 'while_to_for']
+        return ["for_to_while", "while_to_for"]
 
     def transform(self, code: str, transform: str):
-        if transform == 'for_to_while':
+        if transform == "for_to_while":
             return self.transform_for_to_while(code)
-        elif transform == 'while_to_for':
+        elif transform == "while_to_for":
             return self.transform_while_to_for(code)
         else:
-            raise ValueError(f'Unknown transform {transform}')
+            raise ValueError(f"Unknown transform {transform}")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     java_code = """
     class A{
         int foo(int n){

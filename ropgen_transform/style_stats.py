@@ -2,8 +2,9 @@ from collections import defaultdict
 from typing import List, Dict, Optional
 
 
-def calculate_proportion(file_styles: List[Dict[int, Dict[str, int]]],
-                         num_files: Optional[int] = None):
+def calculate_proportion(
+    file_styles: List[Dict[int, Dict[str, int]]], num_files: Optional[int] = None
+):
     """normalizes a list of file styles to a single dict of style attribute proportions.
 
     Args:
@@ -26,7 +27,7 @@ def calculate_proportion(file_styles: List[Dict[int, Dict[str, int]]],
             # special handling for numeric attribute #23 (num of lines per function)
             if style_key == 23:
                 for j in range(0, 2):
-                    style_counter[style_key]['23'][j] += cur_style[style_key]['23'][j]
+                    style_counter[style_key]["23"][j] += cur_style[style_key]["23"][j]
                 continue
 
             # accumulate the number of occurrences of each style attribute
@@ -37,22 +38,22 @@ def calculate_proportion(file_styles: List[Dict[int, Dict[str, int]]],
         # another special handling for #23
         if style_key == 23:
             for j in range(0, 2):
-                avg_val = (style_counter[style_key]['23'][j] / num_files)
-                style_counter[style_key]['23'][j] = round(avg_val, 1)
+                avg_val = style_counter[style_key]["23"][j] / num_files
+                style_counter[style_key]["23"][j] = round(avg_val, 1)
             continue
 
         # special handling for #4, #11 and #12
         if style_key == 4:
-            if style_counter[style_key]['4.1'] > 0:
-                style_counter[style_key]['4.1'] = 100.0
+            if style_counter[style_key]["4.1"] > 0:
+                style_counter[style_key]["4.1"] = 100.0
                 continue
         if style_key == 11:
-            if style_counter[style_key]['11.1'] > 0:
-                style_counter[style_key]['11.1'] = 100.0
+            if style_counter[style_key]["11.1"] > 0:
+                style_counter[style_key]["11.1"] = 100.0
                 continue
         if style_key == 12:
-            if style_counter[style_key]['12.1'] > 0:
-                style_counter[style_key]['12.1'] = 100.0
+            if style_counter[style_key]["12.1"] > 0:
+                style_counter[style_key]["12.1"] = 100.0
                 continue
 
         total = sum(style_counter[style_key].values())
@@ -60,7 +61,8 @@ def calculate_proportion(file_styles: List[Dict[int, Dict[str, int]]],
             continue
         for key in style_counter[style_key]:
             style_counter[style_key][key] = round(
-                (style_counter[style_key][key] / total) * 100, 1)
+                (style_counter[style_key][key] / total) * 100, 1
+            )
     return style_counter
 
 
@@ -72,11 +74,11 @@ def get_dominating_styles(style_proportions: Dict[int, Dict]) -> List[str]:
 
         for style_attr in style_dict:
             num_attrs = len(style_dict)
-            if style_attr == '21.1' or style_attr == '21.2':
+            if style_attr == "21.1" or style_attr == "21.2":
                 if style_dict[style_attr] > 0:
                     dominating_styles.append(style_attr)
-            elif style_attr == '23':
-                dominating_styles.append({'23': style_dict[style_attr]})
+            elif style_attr == "23":
+                dominating_styles.append({"23": style_dict[style_attr]})
             elif num_attrs == 2:
                 if style_dict[style_attr] >= 70:
                     dominating_styles.append(style_attr)
