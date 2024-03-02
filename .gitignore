@@ -21,3 +21,6 @@ parser/
 
 # wandb
 wandb/
+
+# csn datasets
+datasets/csn_*/*.jsonl
