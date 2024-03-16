@@ -18,6 +18,12 @@ ckpts/
 tree-sitter/
 parser/
 *.so
+# windows compiled artifacts
+*.exp
+*.lib
+
+# recover parser/ under metrics/
+!metrics/parser/
 
 # wandb
 wandb/
