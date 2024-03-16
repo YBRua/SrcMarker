@@ -8,7 +8,7 @@ if __name__ == "__main__":
     dataset_dir = "./data/github_c"
 
     MAX_DEPTH = -1
-    JAVA_LANGUAGE = Language(root_dir + "/parser/languages.so", lang)
+    JAVA_LANGUAGE = Language(root_dir + "/../parser/languages.so", lang)
     parser = Parser()
     parser.set_language(JAVA_LANGUAGE)
 

@@ -7,7 +7,7 @@ if __name__ == "__main__":
     JSONL_DATASET_NAME = f"{os.path.basename(DATASET)}.jsonl"
 
     lang = "java"
-    language = Language("./metrics/parser/languages.so", lang)
+    language = Language("./parser/languages.so", lang)
     parser = Parser()
     parser.set_language(language)
 
