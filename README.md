@@ -1,7 +1,25 @@
 # SrcMarker: Dual-Channel Source Code Watermarking via Scalable Code Transformations
 
 > This repository provides the script to reproduce the major experiments in the paper
-> *SrcMarker: Dual-Channel Source Code Watermarking via Scalable Code Transformations*
+> *SrcMarker: Dual-Channel Source Code Watermarking via Scalable Code Transformations* (To appear in IEEE S&P 2024)
+
+## Overview
+
+- Table of contents
+- [Getting Started](#getting-started)
+  - [Setting up the environment](#setting-up-the-environment)
+  - [Preparing datasets](#datasets)
+  - [Preprocessing](#preprocessing)
+- [Running the Experiments](#running-the-scripts)
+  - [Training](#training)
+  - Evaluations
+    - [Evaluation](#main-evaluation-script)
+    - [MBXP evaluation](#evaluate-on-mbxp)
+    - [Re-watermarking](#re-watermarking)
+    - [De-watermarking](#de-watermarking)
+    - [Project-level watermark verification](#project-level-watermark-verification)
+  - [MutableAST benchmark](#benchmarking-mutableast-on-mbxp)
+- [Citation](#citation)
 
 ## Getting Started
 
@@ -152,7 +170,7 @@ python collect_feasible_transforms_jsonl.py mbjp
 python collect_feasible_transforms_jsonl.py mbjsp
 ```
 
-## Running the scripts
+## Running the Experiments
 
 - [Training](#training)
 - Evaluations
@@ -397,8 +415,6 @@ where
 
 #### Project-level Watermark Verification
 
-#### Project-level Watermark Aggregation
-
 To run the project level watermark verification, you will first need to run `eval_main.py` on CSN datasets (`csn_java` or `csn_js`), with the `--write_output` argument. Please refer to the documentations in [Main Evaluation Script](#main-evaluation-script).
 
 The evaluation script will then group the ground truths and extracted watermarks by repository and store them into a pickle file, located in `./results`. The pickle file will be named as `<checkpoint_name>_<dataset>_long.pkl`.
@@ -408,8 +424,6 @@ The evaluation script will then group the ground truths and extracted watermarks
 If an attack is performed (e.g., 50% random variable substitution), the script will also store the watermark extracted from the attacked code in *another* pickle file, named as `<checkpint_name>_<dataset>_<attack>_long.pkl`.
 
 - For example, `4bit_transformer_main_42_csn_js_vadv75_long.pkl`.
-
-#### Project-level Verification
 
 One can then verify the project-level watermark with `null_hypothesis_test.py`
 
@@ -427,3 +441,16 @@ python benchmark_mbxp.py java|javascript|cpp
 ```
 
 Note that you will need the corresponding compiler and/or runtime environment to run the benchmark. Further, for RopGen, you will also need to install SrcML.
+
+## Citation
+
+```bibtex
+@inproceedings {yang2024srcmarker,
+    author = {B. Yang and W. Li and L. Xiang and B. Li},
+    title = {SrcMarker: Dual-Channel Source Code Watermarking via Scalable Code Transformations},
+    booktitle = {2024 IEEE Symposium on Security and Privacy (SP)},
+    publisher = {IEEE},
+    year = {2024},
+    doi = {10.1109/SP54263.2024.00097},
+}
+```
