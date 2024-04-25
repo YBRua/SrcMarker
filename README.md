@@ -6,6 +6,7 @@
 ## Overview
 
 - Table of contents
+- [Overview of this repository](#overview-of-this-repository)
 - [Getting Started](#getting-started)
   - [Setting up the environment](#setting-up-the-environment)
   - [Preparing datasets](#datasets)
@@ -20,6 +21,23 @@
     - [Project-level watermark verification](#project-level-watermark-verification)
   - [MutableAST benchmark](#benchmarking-mutableast-on-mbxp)
 - [Citation](#citation)
+
+### Overview of this repository
+
+- **Training and evaluation scripts**
+  - Please refer to [Running the Experiment](#running-the-experiments) section for instructions on running these files.
+  - `script_*.sh`. Shell scripts to reproduce the experiments.
+  - `train_main.py`. Main Python training scripts.
+  - `eval_*.py`. Various Python evaluation scripts.
+- **Training procedures**
+  - `metrics/` contains metrics used in our experiments, mainly migrated from [CodeXGLUE](https://github.com/microsoft/CodeXGLUE).
+  - `models/` contains a few implementations of our models (Transformer and GRU).
+  - `trainers/` contains the main training procedure, wrapped as trainer classes.
+- **Code transformations**
+  - `mutable_tree/` contains our implementation of MutableAST. MutableAST is also available at [this GitHub repository](https://github.com/YBRua/mutable_tree).
+  - `natgen_transformer/` contains the transformations in NatGen. We migrate their implementation from [NatGen's GitHub repository](https://github.com/saikat107/NatGen).
+  - `ropgen_transformer/` contains the transformations in RopGen. We migrate their implementation from [RopGen's GitHub repository](https://github.com/RoPGen/RoPGen).
+- **Other files** include data pre-processing and utility functions.
 
 ## Getting Started
 
@@ -178,7 +196,7 @@ python collect_feasible_transforms_jsonl.py mbjsp
   - [MBXP evaluation](#evaluate-on-mbxp)
   - [Re-watermarking](#re-watermarking)
   - [De-watermarking](#de-watermarking)
-  - [Project-level watermark verification](#project-level-verification)
+  - [Project-level watermark verification](#project-level-watermark-verification)
 - [MutableAST benchmark](#benchmarking-mutableast-on-mbxp)
 
 ### Training
@@ -443,6 +461,8 @@ python benchmark_mbxp.py java|javascript|cpp
 Note that you will need the corresponding compiler and/or runtime environment to run the benchmark. Further, for RopGen, you will also need to install SrcML.
 
 ## Citation
+
+Please kindly cite our paper if you use this code.
 
 ```bibtex
 @inproceedings {yang2024srcmarker,
