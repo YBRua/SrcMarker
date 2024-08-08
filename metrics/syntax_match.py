@@ -75,7 +75,7 @@ def calc_syntax_match(references, candidate, lang):
 
 def corpus_syntax_match(references, candidates, lang):
     # track the compiled parser under parent directory
-    JAVA_LANGUAGE = Language(root_dir + "../parser/languages.so", lang)
+    JAVA_LANGUAGE = Language(os.path.join(root_dir, "..", "parser", "languages.so"), lang)
     parser = Parser()
     parser.set_language(JAVA_LANGUAGE)
     match_count = 0
