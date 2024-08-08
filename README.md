@@ -1,7 +1,43 @@
 # SrcMarker: Dual-Channel Source Code Watermarking via Scalable Code Transformations
 
 > This repository provides the script to reproduce the major experiments in the paper
-> *SrcMarker: Dual-Channel Source Code Watermarking via Scalable Code Transformations*
+> *SrcMarker: Dual-Channel Source Code Watermarking via Scalable Code Transformations* (To appear in IEEE S&P 2024)
+
+## Overview
+
+- Table of contents
+- [Overview of this repository](#overview-of-this-repository)
+- [Getting Started](#getting-started)
+  - [Setting up the environment](#setting-up-the-environment)
+  - [Preparing datasets](#datasets)
+  - [Preprocessing](#preprocessing)
+- [Running the Experiments](#running-the-scripts)
+  - [Training](#training)
+  - Evaluations
+    - [Evaluation](#main-evaluation-script)
+    - [MBXP evaluation](#evaluate-on-mbxp)
+    - [Re-watermarking](#re-watermarking)
+    - [De-watermarking](#de-watermarking)
+    - [Project-level watermark verification](#project-level-watermark-verification)
+  - [MutableAST benchmark](#benchmarking-mutableast-on-mbxp)
+- [Citation](#citation)
+
+### Overview of this repository
+
+- **Training and evaluation scripts**
+  - Please refer to [Running the Experiment](#running-the-experiments) section for instructions on running these files.
+  - `script_*.sh`. Shell scripts to reproduce the experiments.
+  - `train_main.py`. Main Python training scripts.
+  - `eval_*.py`. Various Python evaluation scripts.
+- **Training procedures**
+  - `metrics/` contains metrics used in our experiments, mainly migrated from [CodeXGLUE](https://github.com/microsoft/CodeXGLUE).
+  - `models/` contains a few implementations of our models (Transformer and GRU).
+  - `trainers/` contains the main training procedure, wrapped as trainer classes.
+- **Code transformations**
+  - `mutable_tree/` contains our implementation of MutableAST. MutableAST is also available at [this GitHub repository](https://github.com/YBRua/mutable_tree).
+  - `natgen_transformer/` contains the transformations in NatGen. We migrate their implementation from [NatGen's GitHub repository](https://github.com/saikat107/NatGen).
+  - `ropgen_transformer/` contains the transformations in RopGen. We migrate their implementation from [RopGen's GitHub repository](https://github.com/RoPGen/RoPGen).
+- **Other files** include data pre-processing and utility functions.
 
 ## Getting Started
 
@@ -152,7 +188,7 @@ python collect_feasible_transforms_jsonl.py mbjp
 python collect_feasible_transforms_jsonl.py mbjsp
 ```
 
-## Running the scripts
+## Running the Experiments
 
 - [Training](#training)
 - Evaluations
@@ -160,7 +196,7 @@ python collect_feasible_transforms_jsonl.py mbjsp
   - [MBXP evaluation](#evaluate-on-mbxp)
   - [Re-watermarking](#re-watermarking)
   - [De-watermarking](#de-watermarking)
-  - [Project-level watermark verification](#project-level-verification)
+  - [Project-level watermark verification](#project-level-watermark-verification)
 - [MutableAST benchmark](#benchmarking-mutableast-on-mbxp)
 
 ### Training
@@ -397,8 +433,6 @@ where
 
 #### Project-level Watermark Verification
 
-#### Project-level Watermark Aggregation
-
 To run the project level watermark verification, you will first need to run `eval_main.py` on CSN datasets (`csn_java` or `csn_js`), with the `--write_output` argument. Please refer to the documentations in [Main Evaluation Script](#main-evaluation-script).
 
 The evaluation script will then group the ground truths and extracted watermarks by repository and store them into a pickle file, located in `./results`. The pickle file will be named as `<checkpoint_name>_<dataset>_long.pkl`.
@@ -408,8 +442,6 @@ The evaluation script will then group the ground truths and extracted watermarks
 If an attack is performed (e.g., 50% random variable substitution), the script will also store the watermark extracted from the attacked code in *another* pickle file, named as `<checkpint_name>_<dataset>_<attack>_long.pkl`.
 
 - For example, `4bit_transformer_main_42_csn_js_vadv75_long.pkl`.
-
-#### Project-level Verification
 
 One can then verify the project-level watermark with `null_hypothesis_test.py`
 
@@ -427,3 +459,18 @@ python benchmark_mbxp.py java|javascript|cpp
 ```
 
 Note that you will need the corresponding compiler and/or runtime environment to run the benchmark. Further, for RopGen, you will also need to install SrcML.
+
+## Citation
+
+Please kindly cite our paper if you use this code.
+
+```bibtex
+@inproceedings {yang2024srcmarker,
+    author = {B. Yang and W. Li and L. Xiang and B. Li},
+    title = {SrcMarker: Dual-Channel Source Code Watermarking via Scalable Code Transformations},
+    booktitle = {2024 IEEE Symposium on Security and Privacy (SP)},
+    publisher = {IEEE},
+    year = {2024},
+    doi = {10.1109/SP54263.2024.00097},
+}
+```
