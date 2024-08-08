@@ -69,6 +69,8 @@ The following packages are optional, only required by certain experiment scripts
 
 #### Building tree-sitter Parsers
 
+**:warning: Please use `tree-sitter==0.20` or `tree-sitter==0.21`.** Newer versions of tree-sitter introduced breaking changes that are incompatible with our code.
+
 We use `tree-sitter` for MutableAST construction, syntax checking and codebleu computation. Follow the steps below to build a parser for `tree-sitter`.
 
 Notice that our current implementation of MutableAST is based on specific versions of tree-sitter parsers. The latest tree-sitter parsers might have updated their grammar, which could be incompatible with MutableAST. Therefore please checkout to the commits as is specified in the shell script below, or otherwise MutableAST might break.
@@ -218,7 +220,7 @@ python train_main.py \
     --model_arch=gru \
     --shared_encoder \
     --varmask_prob 0.5 \
-    --seed 1337
+    --seed 42
 
 # training a 4-bit Transformer model on CSN-JavaScript
 python train_main.py \
@@ -232,8 +234,7 @@ python train_main.py \
     --model_arch=transformer \
     --shared_encoder \
     --varmask_prob 0.5 \
-    --seed 1337 \
-    --scheduler
+    --seed 42
 ```
 
 Alternatively, you can also use the `script_train.sh` to conveniently start training. However, you might have to manually modify some of the arguments in it.

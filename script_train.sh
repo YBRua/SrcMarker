@@ -25,7 +25,7 @@ else
 fi
 
 NBITS=4  # Number of bits
-MODEL=transformer  # Model architecture
+MODEL=gru  # Model architecture, "gru" or "transformer"
 VARMASK_PROB=0.5  # Probability of random variable mask
 # NOTE: also remember to change the log_prefix parameter
 
@@ -35,19 +35,9 @@ CUDA_VISIBLE_DEVICES=$GPU_ID python train_main.py \
     --dataset_dir=./datasets/$1 \
     --n_bits=$NBITS \
     --epochs=50 \
-    --log_prefix="$NBITS"bit_"$MODEL"_seed \
+    --log_prefix="$NBITS"bit_"$MODEL" \
     --batch_size 64 \
     --model_arch=$MODEL \
     --shared_encoder \
     --varmask_prob $VARMASK_PROB \
-    --seed 1337 \
-    --scheduler
-
-# CUDA_VISIBLE_DEVICES=$GPU_ID python codebert_train.py \
-#     --lang=$LANG \
-#     --dataset=$1 \
-#     --dataset_dir=./datasets/$1 \
-#     --n_bits=$NBITS \
-#     --epochs=15 \
-#     --log_prefix=4bit_codebert \
-#     --batch_size 16
+    --seed 42
